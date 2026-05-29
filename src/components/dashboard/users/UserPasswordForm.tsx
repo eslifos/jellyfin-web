@@ -152,6 +152,9 @@ const UserPasswordForm: FunctionComponent<IProps> = ({ user }: IProps) => {
                 style={{ margin: '0 auto 2em' }}
             >
                 <div className='detailSection'>
+                    <h2 className='jf-section-title' style={{ fontSize: '1rem', fontWeight: 600, color: 'rgba(255,255,255,0.7)', marginBottom: '1.2rem', marginTop: 0 }}>
+                        {globalize.translate('ChangePassword')}
+                    </h2>
                     <div id='fldCurrentPassword' className='inputContainer hide'>
                         <Input
                             type='password'

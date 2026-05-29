@@ -11,10 +11,14 @@
       "id": "blueradiance",
       "color": "#011432"
     }, {
+      "name": "Cosmic Dark",
+      "id": "cosmic",
+      "color": "#080810",
+      "default": true
+    }, {
       "name": "Dark",
       "id": "dark",
-      "color": "#202020",
-      "default": true
+      "color": "#202020"
     }, {
       "name": "Light",
       "id": "light",

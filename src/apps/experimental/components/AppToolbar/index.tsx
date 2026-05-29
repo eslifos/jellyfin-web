@@ -48,16 +48,13 @@ const ExperimentalAppToolbar: FC<AppToolbarProps> = ({
             isBackButtonAvailable={isBackButtonAvailable}
             isUserMenuAvailable={!isPublicPath}
         >
-            {!isDrawerAvailable && (
+            {!isDrawerAvailable && !isPublicPath && (
                 <Stack
                     direction='row'
                     spacing={0.5}
                 >
                     <ServerButton />
-
-                    {!isPublicPath && (
-                        <UserViewNav />
-                    )}
+                    <UserViewNav />
                 </Stack>
             )}
         </AppToolbar>

@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Navigate, RouteObject } from 'react-router-dom';
 
 import ConnectionRequired from 'components/ConnectionRequired';
@@ -10,6 +10,17 @@ import FallbackRoute from 'components/router/FallbackRoute';
 import { ASYNC_USER_ROUTES } from './asyncRoutes';
 import { LEGACY_PUBLIC_ROUTES, LEGACY_USER_ROUTES } from './legacyRoutes';
 import VideoPage from './video';
+
+const LoginPage          = lazy(() => import('apps/stable/routes/session/login'));
+const AddServerPage      = lazy(() => import('apps/stable/routes/session/addServer'));
+const SelectServerPage   = lazy(() => import('apps/stable/routes/session/selectServer'));
+const ForgotPinPage      = lazy(() => import('apps/stable/routes/session/forgotPasswordPin'));
+
+const withSuspense = (Component: React.ComponentType) => (
+    <Suspense fallback={null}><Component /></Suspense>
+);
+
+const MIGRATED_PUBLIC = [ 'login', 'addserver', 'selectserver', 'forgotpasswordpin' ];
 
 export const EXPERIMENTAL_APP_ROUTES: RouteObject[] = [
     {
@@ -24,12 +35,7 @@ export const EXPERIMENTAL_APP_ROUTES: RouteObject[] = [
                 children: [
                     ...ASYNC_USER_ROUTES.map(toAsyncPageRoute),
                     ...LEGACY_USER_ROUTES.map(toViewManagerPageRoute),
-
-                    // The video page is special since it combines new controls with the legacy view
-                    {
-                        path: 'video',
-                        Component: VideoPage
-                    }
+                    { path: 'video', Component: VideoPage }
                 ],
                 ErrorBoundary
             },
@@ -38,16 +44,14 @@ export const EXPERIMENTAL_APP_ROUTES: RouteObject[] = [
                 /* Public routes */
                 element: <ConnectionRequired level='public' />,
                 children: [
-                    ...LEGACY_PUBLIC_ROUTES.map(toViewManagerPageRoute),
-
-                    /* Fallback route for invalid paths */
-                    {
-                        path: '*',
-                        Component: FallbackRoute
-                    }
+                    { path: 'login',            element: withSuspense(LoginPage) },
+                    { path: 'addserver',         element: withSuspense(AddServerPage) },
+                    { path: 'selectserver',      element: withSuspense(SelectServerPage) },
+                    { path: 'forgotpasswordpin', element: withSuspense(ForgotPinPage) },
+                    ...LEGACY_PUBLIC_ROUTES.filter(r => !MIGRATED_PUBLIC.includes(r.path)).map(toViewManagerPageRoute),
+                    { path: '*', Component: FallbackRoute }
                 ]
             }
-
         ]
     }
 ];

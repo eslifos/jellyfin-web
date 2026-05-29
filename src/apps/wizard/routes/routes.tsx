@@ -1,75 +1,46 @@
-import React from 'react';
+import React, { lazy, Suspense } from 'react';
 import { Navigate, RouteObject } from 'react-router-dom';
+import CircularProgress from '@mui/material/CircularProgress';
+import Box from '@mui/material/Box';
 
-import AppLayout from 'apps/stable/AppLayout';
-import { AppType } from 'constants/appType';
 import ConnectionRequired from 'components/ConnectionRequired';
 import ErrorBoundary from 'components/router/ErrorBoundary';
-import { type LegacyRoute, toViewManagerPageRoute } from 'components/router/LegacyRoute';
 
-const ROUTES: LegacyRoute[] = [
-    {
-        path: 'remoteaccess',
-        pageProps: {
-            appType: AppType.Wizard,
-            controller: 'remote/index',
-            view: 'remote/index.html'
-        }
-    },
-    {
-        path: 'finish',
-        pageProps: {
-            appType: AppType.Wizard,
-            controller: 'finish/index',
-            view: 'finish/index.html'
-        }
-    },
-    {
-        path: 'library',
-        pageProps: {
-            appType: AppType.Wizard,
-            controller: 'library',
-            view: 'library.html'
-        }
-    },
-    {
-        path: 'settings',
-        pageProps: {
-            appType: AppType.Wizard,
-            controller: 'settings/index',
-            view: 'settings/index.html'
-        }
-    },
-    {
-        path: 'start',
-        pageProps: {
-            appType: AppType.Wizard,
-            controller: 'start/index',
-            view: 'start/index.html'
-        }
-    },
-    {
-        path: 'user',
-        pageProps: {
-            appType: AppType.Wizard,
-            controller: 'user/index',
-            view: 'user/index.html'
-        }
-    }
-];
+const WizardStartPage = lazy(() => import('../pages/WizardStartPage'));
+const WizardUserPage = lazy(() => import('../pages/WizardUserPage'));
+const WizardLibraryPage = lazy(() => import('../pages/WizardLibraryPage'));
+const WizardSettingsPage = lazy(() => import('../pages/WizardSettingsPage'));
+const WizardRemotePage = lazy(() => import('../pages/WizardRemotePage'));
+const WizardFinishPage = lazy(() => import('../pages/WizardFinishPage'));
+
+const WizardFallback = () => (
+    <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080810' }}>
+        <CircularProgress sx={{ color: '#00a4dc' }} />
+    </Box>
+);
+
+const withSuspense = (Component: React.ComponentType) => (
+    <Suspense fallback={<WizardFallback />}>
+        <Component />
+    </Suspense>
+);
 
 export const WIZARD_APP_ROUTES: RouteObject[] = [
     {
         element: <ConnectionRequired level='wizard' />,
         children: [
             {
-                Component: AppLayout,
                 path: 'wizard',
+                ErrorBoundary,
                 children: [
                     { index: true, element: <Navigate replace to='start' /> },
-                    ...ROUTES.map(toViewManagerPageRoute)
-                ],
-                ErrorBoundary
+                    { path: 'start',        element: withSuspense(WizardStartPage) },
+                    { path: 'user',         element: withSuspense(WizardUserPage) },
+                    { path: 'library',      element: withSuspense(WizardLibraryPage) },
+                    { path: 'settings',     element: withSuspense(WizardSettingsPage) },
+                    { path: 'remoteaccess', element: withSuspense(WizardRemotePage) },
+                    { path: 'finish',       element: withSuspense(WizardFinishPage) }
+                ]
             }
         ]
     }
