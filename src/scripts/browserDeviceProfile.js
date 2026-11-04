@@ -526,6 +526,7 @@ export default function (options) {
     };
 
     let videoAudioCodecs = [];
+    let mkvAudioCodecs = [];
     let hlsInTsVideoAudioCodecs = [];
     let hlsInFmp4VideoAudioCodecs = [];
 
@@ -562,12 +563,14 @@ export default function (options) {
     // Prefer AAC, MP3 to other codecs when audio transcoding.
     if (canPlayAacVideoAudio) {
         videoAudioCodecs.push('aac');
+        mkvAudioCodecs.push('aac');
         hlsInTsVideoAudioCodecs.push('aac');
         hlsInFmp4VideoAudioCodecs.push('aac');
     }
 
     if (supportsMp3VideoAudio) {
         videoAudioCodecs.push('mp3');
+        mkvAudioCodecs.push('mp3');
     }
 
     // Safari supports mp3 with HLS, but only in mpegts container, and the supportsMp3VideoAudio will return false.
@@ -584,12 +587,14 @@ export default function (options) {
     // Do not use AC3 for audio transcoding unless AAC and MP3 are not supported.
     if (canPlayAc3VideoAudio) {
         videoAudioCodecs.push('ac3');
+        mkvAudioCodecs.push('ac3');
         if (browser.edgeChromium) {
             hlsInFmp4VideoAudioCodecs.push('ac3');
         }
 
         if (canPlayEac3VideoAudio) {
             videoAudioCodecs.push('eac3');
+            mkvAudioCodecs.push('eac3');
             if (browser.edgeChromium) {
                 hlsInFmp4VideoAudioCodecs.push('eac3');
             }
@@ -608,6 +613,7 @@ export default function (options) {
 
     if (supportsMp2VideoAudio) {
         videoAudioCodecs.push('mp2');
+        mkvAudioCodecs.push('mp2');
         hlsInTsVideoAudioCodecs.push('mp2');
         hlsInFmp4VideoAudioCodecs.push('mp2');
     }
@@ -620,30 +626,37 @@ export default function (options) {
     if (supportsDts) {
         videoAudioCodecs.push('dca');
         videoAudioCodecs.push('dts');
+        mkvAudioCodecs.push('dca', 'dts');
     }
 
     if (browser.tizen || browser.web0s) {
         videoAudioCodecs.push('pcm_s16le');
         videoAudioCodecs.push('pcm_s24le');
+        mkvAudioCodecs.push('pcm_s16le', 'pcm_s24le');
     }
 
     if (appSettings.enableTrueHd() || options.supportsTrueHd) {
         videoAudioCodecs.push('truehd');
+        mkvAudioCodecs.push('truehd');
     }
 
     if (browser.tizen) {
         videoAudioCodecs.push('aac_latm');
+        mkvAudioCodecs.push('aac_latm');
     }
 
     if (canPlayAudioFormat('opus')) {
-        videoAudioCodecs.push('opus');
-        webmAudioCodecs.push('opus');
-        if (browser.tizen) {
-            hlsInTsVideoAudioCodecs.push('opus');
+        // On Tizen 3/4/5, OPUS is supported only in MKV/WebM
+        // On Tizen 6, OPUS appears to be supported in MP4 as well, but not in TS (that requires refactoring of TS profile generation)
+        if (!browser.tizen) {
+            videoAudioCodecs.push('opus');
         }
+        mkvAudioCodecs.push('opus');
+        webmAudioCodecs.push('opus');
         hlsInFmp4VideoAudioCodecs.push('opus');
     } else if (safariSupportsOpus) {
         videoAudioCodecs.push('opus');
+        mkvAudioCodecs.push('opus');
         webmAudioCodecs.push('opus');
         hlsInFmp4VideoAudioCodecs.push('opus');
     }
@@ -651,17 +664,21 @@ export default function (options) {
     // FLAC audio in video plays with a delay on Tizen
     if (canPlayAudioFormat('flac') && !browser.tizen) {
         videoAudioCodecs.push('flac');
+        mkvAudioCodecs.push('flac');
         hlsInFmp4VideoAudioCodecs.push('flac');
     }
 
     if (canPlayAudioFormat('alac')) {
         videoAudioCodecs.push('alac');
+        mkvAudioCodecs.push('alac');
         hlsInFmp4VideoAudioCodecs.push('alac');
     }
 
     videoAudioCodecs = videoAudioCodecs.filter(function (c) {
         return (options.disableVideoAudioCodecs || []).indexOf(c) === -1;
     });
+
+    mkvAudioCodecs = mkvAudioCodecs.filter(c => !(options.disableVideoAudioCodecs || []).includes(c));
 
     hlsInTsVideoAudioCodecs = hlsInTsVideoAudioCodecs.filter(function (c) {
         return (options.disableHlsVideoAudioCodecs || []).indexOf(c) === -1;
@@ -750,6 +767,7 @@ export default function (options) {
 
     if ((!browser.safari && canPlayVp8) || browser.tizen) {
         videoAudioCodecs.push('vorbis');
+        mkvAudioCodecs.push('vorbis');
     }
 
     if (webmVideoCodecs.length) {
@@ -775,7 +793,7 @@ export default function (options) {
             Container: 'mkv',
             Type: 'Video',
             VideoCodec: mp4VideoCodecs.join(','),
-            AudioCodec: videoAudioCodecs.join(',')
+            AudioCodec: mkvAudioCodecs.join(',')
         });
     }
 
@@ -853,6 +871,12 @@ export default function (options) {
     const hlsBreakOnNonKeyFrames = browser.iOS || browser.osx || browser.edge || !canPlayNativeHls();
     let enableFmp4Hls = userSettings.preferFmp4HlsContainer();
     if ((browser.safari || browser.tizen || browser.web0s) && !canPlayNativeHlsInFmp4()) {
+        enableFmp4Hls = false;
+    }
+
+    // fMP4 in Firefox 149 is largely broken due to bad moof::traf::tfdt handling
+    // https://bugzilla.mozilla.org/show_bug.cgi?id=2026875
+    if (browser.firefox && browser.versionMajor == 149) {
         enableFmp4Hls = false;
     }
 
@@ -1519,10 +1543,13 @@ export default function (options) {
     });
 
     if (browser.web0s && supportsDolbyVision(options)) {
-        // Disallow direct playing of DOVI media in containers not ts or mp4.
+        // Adjust DOVI container rules based on WebOS version.
+        // On WebOS 25 and newer, mp4, ts, and mkv containers are allowed.
+        // On WebOS 24 and lower, only mp4 and ts containers are allowed.
+        const allowedContainers = browser.web0sVersion >= 25 ? ['mp4', 'ts', 'mkv'] : ['mp4', 'ts'];
         profile.CodecProfiles.push({
             Type: 'Video',
-            Container: '-mp4,ts',
+            Container: '-' + allowedContainers.join(','),
             Codec: 'hevc',
             Conditions: [
                 {
@@ -1606,6 +1633,11 @@ export default function (options) {
             && subtitleBurninSetting !== 'allcomplexformats' && subtitleBurninSetting !== 'onlyimageformats') {
             profile.SubtitleProfiles.push({
                 Format: 'pgssub',
+                Method: 'External'
+            });
+            profile.SubtitleProfiles.push({
+                Format: 'vobsub',
+                Container: 'mks',
                 Method: 'External'
             });
         }
