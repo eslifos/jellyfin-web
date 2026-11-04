@@ -11,7 +11,11 @@ import Typography from '@mui/material/Typography';
 import Avatar from '@mui/material/Avatar';
 import PersonIcon from '@mui/icons-material/Person';
 import LockIcon from '@mui/icons-material/Lock';
-import { useSearchParams } from 'react-router-dom';
+import { useSearchParams, useNavigate } from 'react-router-dom';
+import Dialog from '@mui/material/Dialog';
+import DialogContent from '@mui/material/DialogContent';
+import Divider from '@mui/material/Divider';
+import PhonelinkLockIcon from '@mui/icons-material/PhonelinkLock';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
@@ -31,6 +35,8 @@ interface PublicUser {
 
 const LoginPage = () => {
     const [ searchParams ] = useSearchParams();
+    const navigate = useNavigate();
+    const [ qcCode, setQcCode ] = useState<string | null>(null);
     const [ users, setUsers ] = useState<PublicUser[]>([]);
     const [ loading, setLoading ] = useState(true);
     const [ showManual, setShowManual ] = useState(false);
@@ -118,12 +124,13 @@ const LoginPage = () => {
             .then((res: Response) => res.json())
             .then((json: { Secret?: string; Code?: string }) => {
                 if (!json.Secret || !json.Code) return;
-                alert(`Código QuickConnect: ${json.Code}`);
+                setQcCode(json.Code);
                 const connectUrl = apiClient.getUrl(`/QuickConnect/Connect?Secret=${json.Secret}`);
                 quickConnectTimer.current = setInterval(async () => {
                     const data = await apiClient.getJSON(connectUrl) as { Authenticated: boolean; Secret: string };
                     if (data.Authenticated) {
                         clearInterval(quickConnectTimer.current!);
+                        setQcCode(null);
                         const result = await apiClient.quickConnect(data.Secret);
                         Dashboard.onServerChanged(result.User?.Id, result.AccessToken, apiClient);
                         Dashboard.navigate(getTargetUrl());
@@ -180,6 +187,48 @@ const LoginPage = () => {
     return (
         <>
             {bgPortal}
+
+            {/* QuickConnect code dialog */}
+            <Dialog
+                open={!!qcCode}
+                onClose={() => { setQcCode(null); if (quickConnectTimer.current) clearInterval(quickConnectTimer.current); }}
+                sx={{ zIndex: 10001 }}
+                PaperProps={{
+                    sx: {
+                        background: 'rgba(8,10,22,0.93)', backdropFilter: 'blur(28px) saturate(1.5)',
+                        border: '1px solid rgba(0,164,220,0.25)', borderRadius: '20px',
+                        boxShadow: '0 24px 64px rgba(0,0,0,0.7)', minWidth: 320, zIndex: 10000,
+                        '&::before': { content: '""', position: 'absolute', top: 0, left: '2rem', right: '2rem', height: '2px', background: 'linear-gradient(90deg, transparent, #00a4dc 40%, #aa5cc3 60%, transparent)', borderRadius: '0 0 4px 4px' }
+                    }
+                }}
+            >
+                <DialogContent sx={{ textAlign: 'center', pt: 4, pb: 4, px: 4 }}>
+                    <PhonelinkLockIcon sx={{ fontSize: '3rem', color: '#00a4dc', mb: 2, filter: 'drop-shadow(0 0 12px rgba(0,164,220,0.5))' }} />
+                    <Typography variant='h6' sx={{ fontWeight: 700, mb: 1, background: 'linear-gradient(135deg, #fff 30%, #00a4dc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                        QuickConnect
+                    </Typography>
+                    <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.88rem', mb: 2.5 }}>
+                        Ingresa este código en tu dispositivo Jellyfin para iniciar sesión:
+                    </Typography>
+                    <Box sx={{ background: 'rgba(0,164,220,0.1)', border: '1px solid rgba(0,164,220,0.3)', borderRadius: 2, py: 2, px: 3, mb: 2.5 }}>
+                        <Typography sx={{ fontSize: '2.2rem', fontWeight: 800, letterSpacing: '0.3em', color: '#00a4dc', fontFamily: 'monospace' }}>
+                            {qcCode}
+                        </Typography>
+                    </Box>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center', mb: 2 }}>
+                        <CircularProgress size={14} sx={{ color: '#00a4dc' }} />
+                        <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>
+                            Esperando autorización...
+                        </Typography>
+                    </Box>
+                    <Button
+                        onClick={() => { setQcCode(null); if (quickConnectTimer.current) clearInterval(quickConnectTimer.current); }}
+                        sx={{ color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 2, fontSize: '0.82rem', '&:hover': { borderColor: 'rgba(0,164,220,0.4)', color: '#00a4dc' } }}
+                    >
+                        Cancelar
+                    </Button>
+                </DialogContent>
+            </Dialog>
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'fixed', inset: 0, zIndex: 9999, p: 2, overflowY: 'auto' }}>
 
             {/* Logo */}
@@ -299,10 +348,10 @@ const LoginPage = () => {
                                     Usar conexión rápida
                                 </Button>
                             )}
-                            <Button variant='outlined' onClick={() => Dashboard.navigate('forgotpassword')} sx={ghostSx}>
+                            <Button variant='outlined' onClick={() => navigate('/forgotpassword')} sx={ghostSx}>
                                 Contraseña olvidada
                             </Button>
-                            <Button variant='outlined' onClick={() => Dashboard.selectServer()} sx={ghostSx}>
+                            <Button variant='outlined' onClick={() => navigate('/selectserver')} sx={ghostSx}>
                                 Cambiar servidor
                             </Button>
                         </Box>

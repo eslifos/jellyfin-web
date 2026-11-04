@@ -11,16 +11,17 @@ import { ASYNC_USER_ROUTES } from './asyncRoutes';
 import { LEGACY_PUBLIC_ROUTES, LEGACY_USER_ROUTES } from './legacyRoutes';
 import VideoPage from './video';
 
-const LoginPage          = lazy(() => import('apps/stable/routes/session/login'));
-const AddServerPage      = lazy(() => import('apps/stable/routes/session/addServer'));
-const SelectServerPage   = lazy(() => import('apps/stable/routes/session/selectServer'));
-const ForgotPinPage      = lazy(() => import('apps/stable/routes/session/forgotPasswordPin'));
+const LoginPage           = lazy(() => import('apps/stable/routes/session/login'));
+const AddServerPage       = lazy(() => import('apps/stable/routes/session/addServer'));
+const SelectServerPage    = lazy(() => import('apps/stable/routes/session/selectServer'));
+const ForgotPinPage       = lazy(() => import('apps/stable/routes/session/forgotPasswordPin'));
+const ForgotPasswordPage  = lazy(() => import('apps/stable/routes/session/forgotPassword'));
 
 const withSuspense = (Component: React.ComponentType) => (
     <Suspense fallback={null}><Component /></Suspense>
 );
 
-const MIGRATED_PUBLIC = [ 'login', 'addserver', 'selectserver', 'forgotpasswordpin' ];
+const MIGRATED_PUBLIC = [ 'login', 'addserver', 'selectserver', 'forgotpasswordpin', 'forgotpassword' ];
 
 export const EXPERIMENTAL_APP_ROUTES: RouteObject[] = [
     {
@@ -48,6 +49,7 @@ export const EXPERIMENTAL_APP_ROUTES: RouteObject[] = [
                     { path: 'addserver',         element: withSuspense(AddServerPage) },
                     { path: 'selectserver',      element: withSuspense(SelectServerPage) },
                     { path: 'forgotpasswordpin', element: withSuspense(ForgotPinPage) },
+                    { path: 'forgotpassword',    element: withSuspense(ForgotPasswordPage) },
                     ...LEGACY_PUBLIC_ROUTES.filter(r => !MIGRATED_PUBLIC.includes(r.path)).map(toViewManagerPageRoute),
                     { path: '*', Component: FallbackRoute }
                 ]

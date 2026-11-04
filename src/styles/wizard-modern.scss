@@ -981,3 +981,41 @@
     color: rgba(255, 255, 255, 0.6) !important;
     font-size: 0.88rem !important;
 }
+#forgotPasswordPage {
+    &::before {
+        content: '';
+        position: fixed;
+        inset: 0;
+        z-index: -1;
+        pointer-events: none;
+        background:
+            radial-gradient(ellipse at 18% 45%, rgba(0, 55, 85, 0.65) 0%, transparent 55%),
+            radial-gradient(ellipse at 82% 18%, rgba(75, 0, 105, 0.55) 0%, transparent 55%),
+            #080810;
+    }
+    .padded-left.padded-right.padded-bottom-page {
+        max-width: 480px !important;
+        margin: 4rem auto 0 !important;
+    }
+    .forgotPasswordForm {
+        background: rgba(10, 12, 22, 0.78) !important;
+        backdrop-filter: blur(28px) saturate(1.5) !important;
+        -webkit-backdrop-filter: blur(28px) saturate(1.5) !important;
+        border: 1px solid rgba(0, 164, 220, 0.2) !important;
+        border-radius: 24px !important;
+        padding: 2.4rem 2.5rem !important;
+        position: relative !important;
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 2rem; right: 2rem;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, #00a4dc 40%, #aa5cc3 60%, transparent);
+            border-radius: 0 0 4px 4px;
+        }
+    }
+    h1 { background: linear-gradient(135deg, #fff 30%, #00a4dc 100%) !important; -webkit-background-clip: text !important; -webkit-text-fill-color: transparent !important; background-clip: text !important; }
+    .emby-input { background: rgba(255,255,255,0.05) !important; border: 1.5px solid rgba(0,164,220,0.22) !important; border-radius: 12px !important; color: #fff !important; &:focus { border-color: #00a4dc !important; } }
+    .submit { background: linear-gradient(135deg, #00a4dc, #0077b6) !important; color: #fff !important; border: none !important; border-radius: 12px !important; &:hover { transform: translateY(-2px) !important; } }
+    .cancel { background: rgba(255,255,255,0.06) !important; border: 1px solid rgba(255,255,255,0.13) !important; border-radius: 12px !important; color: rgba(255,255,255,0.6) !important; &:hover { border-color: rgba(0,164,220,0.35) !important; color: #00a4dc !important; } }
+}
