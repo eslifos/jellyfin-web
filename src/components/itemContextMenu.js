@@ -16,6 +16,14 @@ import { playbackManager } from './playback/playbackmanager';
 import toast from './toast/toast';
 import * as userSettings from '../scripts/settings/userSettings';
 
+/** Item types that support on demand intro / credits detection. */
+const INTRO_CREDITS_TYPES = [
+    BaseItemKind.Movie,
+    BaseItemKind.Episode,
+    BaseItemKind.Season,
+    BaseItemKind.Series
+];
+
 /** Item types that support downloading all children. */
 const DOWNLOAD_ALL_TYPES = [
     BaseItemKind.BoxSet,
@@ -298,6 +306,14 @@ export async function getCommands(options) {
         }
     }
 
+    if (user?.Policy?.IsAdministrator && INTRO_CREDITS_TYPES.includes(item.Type) && item.LocationType !== 'Virtual') {
+        commands.push({
+            name: globalize.translate('IntroCreditsMenu'),
+            id: 'introcredits',
+            icon: 'auto_fix_high'
+        });
+    }
+
     if (itemHelper.canRefreshMetadata(item, user)) {
         commands.push({
             name: globalize.translate('RefreshMetadata'),
@@ -536,6 +552,10 @@ function executeCommand(item, id, options) {
                     const card = dom.parentWithClass(options.positionTo, 'card');
                     startMultiSelect(card);
                 });
+                break;
+            case 'introcredits':
+                import('./introCredits/IntroCreditsDialog').then(({ showIntroCreditsDialog }) => showIntroCreditsDialog(item));
+                getResolveFunction(resolve, id)();
                 break;
             case 'refresh':
                 refresh(apiClient, item);

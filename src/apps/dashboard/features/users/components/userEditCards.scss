@@ -1,0 +1,217 @@
+// Cosmic Dark cards for the user edit tabs (Profile, Access, Parental control, Password).
+// The forms are legacy DOM forms, so the cards only wrap/restyle them.
+
+.userEditCards {
+    --uec-accent: #00a4dc;
+    --uec-accent2: #aa5cc3;
+
+    .hide {
+        display: none !important;
+    }
+
+    form {
+        max-width: none !important;
+    }
+
+    .uecGrid {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr);
+        gap: 20px;
+        align-items: start;
+
+        @media all and (min-width: 1200px) {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+        }
+    }
+
+    .uecColumn {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        min-width: 0;
+    }
+
+    // Explicit cards + the legacy access containers styled as cards
+    .uecCard,
+    .folderAccessContainer,
+    .channelAccessContainer,
+    .deviceAccessContainer {
+        position: relative;
+        min-width: 0;
+        padding: 18px 20px 20px;
+        background: rgba(10, 12, 22, 0.72);
+        backdrop-filter: blur(20px) saturate(1.4);
+        -webkit-backdrop-filter: blur(20px) saturate(1.4);
+        border: 1px solid rgba(0, 164, 220, 0.14);
+        border-radius: 16px;
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.35), 0 0 20px color-mix(in srgb, var(--uec-accent) 8%, transparent);
+
+        &::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 1.5rem;
+            right: 1.5rem;
+            height: 2px;
+            pointer-events: none;
+            border-radius: 0 0 4px 4px;
+            background: linear-gradient(90deg, transparent, var(--uec-accent) 40%, var(--uec-accent2) 60%, transparent);
+        }
+    }
+
+    .folderAccessContainer {
+        --uec-accent: #00a4dc;
+        --uec-accent2: #aa5cc3;
+    }
+
+    .channelAccessContainer {
+        --uec-accent: #ff9800;
+        --uec-accent2: #00a4dc;
+    }
+
+    .deviceAccessContainer {
+        --uec-accent: #4caf50;
+        --uec-accent2: #00a4dc;
+    }
+
+    .uecHeader {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 14px;
+        color: var(--uec-accent);
+    }
+
+    .uecIcon {
+        width: 32px;
+        height: 32px;
+        flex-shrink: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: color-mix(in srgb, var(--uec-accent) 14%, transparent);
+        border: 1px solid color-mix(in srgb, var(--uec-accent) 26%, transparent);
+
+        svg {
+            font-size: 1.1rem;
+        }
+    }
+
+    .uecTitle,
+    .folderAccessContainer > h2,
+    .channelAccessContainer > h2,
+    .deviceAccessContainer > h2 {
+        margin: 0;
+        font-size: 0.74rem;
+        font-weight: 700;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        color: var(--uec-accent);
+    }
+
+    .folderAccessContainer > h2,
+    .channelAccessContainer > h2,
+    .deviceAccessContainer > h2 {
+        margin-bottom: 12px;
+    }
+
+    .uecDescription {
+        margin: -6px 0 14px;
+        font-size: 0.8rem;
+        line-height: 1.5;
+        color: rgba(255, 255, 255, 0.45);
+    }
+
+    // Lists of checkboxes inside cards
+    .paperList {
+        background: rgba(255, 255, 255, 0.03) !important;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        box-shadow: none !important;
+        margin-bottom: 0.5em;
+    }
+
+    .checkboxListLabel,
+    .paperListLabel {
+        margin: 0.9em 0 0.5em;
+        font-size: 0.7rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.5);
+    }
+
+    .uecCard > .checkboxListLabel:first-of-type,
+    .uecCard > div > .checkboxListLabel:first-child {
+        margin-top: 0;
+    }
+
+    .verticalSection {
+        margin-bottom: 0;
+    }
+
+    .inputContainer,
+    .selectContainer {
+        margin-bottom: 1.2em;
+    }
+
+    .fieldDescription {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
+    .detailSectionHeader,
+    .sectionTitleContainer {
+        margin: 0 0 0.4em;
+    }
+
+    // Save / cancel buttons
+    .uecActions {
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        gap: 12px;
+        margin-top: 24px;
+
+        .button-submit,
+        .button-cancel {
+            width: auto;
+            min-width: 220px;
+            margin: 0;
+            border-radius: 12px;
+            font-weight: 600;
+        }
+
+        .button-submit {
+            background: linear-gradient(135deg, #00a4dc, #0077b6);
+            box-shadow: 0 4px 16px rgba(0, 164, 220, 0.25);
+        }
+
+        .button-cancel {
+            background: rgba(255, 255, 255, 0.06);
+            border: 1px solid rgba(255, 255, 255, 0.12);
+        }
+    }
+
+    .uecTopLink {
+        display: flex;
+        justify-content: flex-end;
+        margin-bottom: 14px;
+
+        .button-link {
+            padding: 6px 14px;
+            border-radius: 10px;
+            color: #00a4dc;
+            background: rgba(0, 164, 220, 0.1);
+            border: 1px solid rgba(0, 164, 220, 0.3);
+            text-decoration: none;
+        }
+    }
+
+    .disabledUserBanner .btn {
+        border-radius: 12px;
+        margin-bottom: 14px;
+        background: rgba(239, 83, 80, 0.15);
+        border: 1px solid rgba(239, 83, 80, 0.4);
+    }
+}

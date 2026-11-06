@@ -18,7 +18,7 @@ import { useNavigate } from 'react-router-dom';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import bannerLight from '@jellyfin/ux-web/banner-light.png';
+import { useCustomLogo } from 'utils/customLogo';
 
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import Dashboard from 'utils/dashboard';
@@ -34,6 +34,7 @@ interface Server {
 }
 
 const SelectServerPage = () => {
+    const { bannerUrl: bannerLight } = useCustomLogo();
     const navigate = useNavigate();
     const [ servers, setServers ] = useState<Server[]>([]);
     const [ loading, setLoading ] = useState(true);

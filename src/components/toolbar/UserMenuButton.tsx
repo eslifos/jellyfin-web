@@ -1,7 +1,9 @@
 import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import React, { useCallback, useState } from 'react';
+import { createPortal } from 'react-dom';
 
+import ProfileSwitchDialog from 'components/profiles/ProfileSwitchDialog';
 import UserAvatar from 'components/UserAvatar';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
@@ -21,6 +23,10 @@ const UserMenuButton = () => {
     const onUserMenuClose = useCallback(() => {
         setUserMenuAnchorEl(null);
     }, [ setUserMenuAnchorEl ]);
+
+    const [ isProfilesOpen, setIsProfilesOpen ] = useState(false);
+    const openProfiles = useCallback(() => setIsProfilesOpen(true), []);
+    const closeProfiles = useCallback(() => setIsProfilesOpen(false), []);
 
     return (
         <>
@@ -42,7 +48,13 @@ const UserMenuButton = () => {
                 open={isUserMenuOpen}
                 anchorEl={userMenuAnchorEl}
                 onMenuClose={onUserMenuClose}
+                onSwitchProfile={openProfiles}
             />
+
+            {createPortal(
+                <ProfileSwitchDialog open={isProfilesOpen} onClose={closeProfiles} />,
+                document.body
+            )}
         </>
     );
 };

@@ -18,9 +18,17 @@ import { useUpdateUser } from 'apps/dashboard/features/users/api/useUpdateUser';
 import { useUpdateUserPolicy } from 'apps/dashboard/features/users/api/useUpdateUserPolicy';
 import { useNetworkConfig } from 'apps/dashboard/features/users/api/useNetworkConfig';
 import Toast from 'apps/dashboard/components/Toast';
+import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
+import PersonIcon from '@mui/icons-material/Person';
+import PlayCircleIcon from '@mui/icons-material/PlayCircle';
+import ShieldIcon from '@mui/icons-material/Shield';
+import TuneIcon from '@mui/icons-material/Tune';
+import UserEditCard from './UserEditCard';
 
 interface ProfileProps {
     userDto: UserDto;
+    /** Secondary viewing profile: always hidden from the login screen. */
+    isProfileUser?: boolean;
 }
 
 type ResetProvider = BaseItemDto & {
@@ -32,7 +40,7 @@ const getCheckedElementDataIds = (elements: NodeListOf<Element>) => (
         .map(e => e.getAttribute('data-id'))
 );
 
-const Profile = ({ userDto }: ProfileProps) => {
+const Profile = ({ userDto, isProfileUser = false }: ProfileProps) => {
     const navigate = useNavigate();
     const [ deleteFoldersAccess, setDeleteFoldersAccess ] = useState<ResetProvider[]>([]);
     const libraryMenu = useMemo(async () => ((await import('scripts/libraryMenu')).default), []);
@@ -316,16 +324,14 @@ const Profile = ({ userDto }: ProfileProps) => {
     };
 
     return (
-        <div ref={element}>
+        <div ref={element} className='userEditCards'>
             <Toast
                 open={isErrorToastOpen}
                 onClose={handleToastClose}
+                severity='error'
                 message={globalize.translate('ErrorDefault')}
             />
-            <div
-                className='lnkEditUserPreferencesContainer'
-                style={{ paddingBottom: '1em' }}
-            >
+            <div className='lnkEditUserPreferencesContainer uecTopLink'>
                 <LinkButton className='lnkEditUserPreferences button-link' href={userDto?.Id ? `mypreferencesmenu?userId=${userDto.Id}` : undefined}>
                     {globalize.translate('ButtonEditOtherUserPreferences')}
                 </LinkButton>
@@ -341,249 +347,263 @@ const Profile = ({ userDto }: ProfileProps) => {
                         </div>
                     </div>
                 </div>
-                <div id='fldUserName' className='inputContainer'>
-                    <Input
-                        type='text'
-                        id='txtUserName'
-                        label={globalize.translate('LabelName')}
-                        required
-                    />
-                    <div className='fieldDescription'>
-                        {globalize.translate('LabelUsernameAllowedCharactersHelp')}
-                    </div>
-                </div>
-                <div className='selectContainer fldSelectLoginProvider hide'>
-                    <SelectElement
-                        id='selectLoginProvider'
-                        label='LabelAuthProvider'
-                    >
-                        {optionLoginProvider}
-                    </SelectElement>
 
-                    <div className='fieldDescription'>
-                        {globalize.translate('AuthProviderHelp')}
-                    </div>
-                </div>
-                <div className='selectContainer fldSelectPasswordResetProvider hide'>
-                    <SelectElement
-                        id='selectPasswordResetProvider'
-                        label='LabelPasswordResetProvider'
-                    >
-                        {optionPasswordResetProvider}
-                    </SelectElement>
-                    <div className='fieldDescription'>
-                        {globalize.translate('PasswordResetProviderHelp')}
-                    </div>
-                </div>
-                <div className='checkboxContainer checkboxContainer-withDescription fldRemoteAccess hide'>
-                    <CheckBoxElement
-                        className='chkRemoteAccess'
-                        title='AllowRemoteAccess'
-                    />
-                    <div className='fieldDescription checkboxFieldDescription'>
-                        {globalize.translate('AllowRemoteAccessHelp')}
-                    </div>
-                </div>
-                <CheckBoxElement
-                    labelClassName='checkboxContainer'
-                    className='chkIsAdmin'
-                    title='OptionAllowUserToManageServer'
-                />
-                <CheckBoxElement
-                    labelClassName='checkboxContainer'
-                    className='chkEnableCollectionManagement'
-                    title='AllowCollectionManagement'
-                />
-                <CheckBoxElement
-                    labelClassName='checkboxContainer'
-                    className='chkEnableSubtitleManagement'
-                    title='AllowSubtitleManagement'
-                />
-                <div id='featureAccessFields' className='verticalSection'>
-                    <h2 className='paperListLabel'>
-                        {globalize.translate('HeaderFeatureAccess')}
-                    </h2>
-                    <div className='checkboxList paperList' style={{ padding: '.5em 1em' }}>
-                        <CheckBoxElement
-                            className='chkEnableLiveTvAccess'
-                            title='OptionAllowBrowsingLiveTv'
-                        />
-                        <CheckBoxElement
-                            className='chkManageLiveTv'
-                            title='OptionAllowManageLiveTv'
-                        />
-                    </div>
-                </div>
-                <div className='verticalSection'>
-                    <h2 className='paperListLabel'>
-                        {globalize.translate('HeaderPlayback')}
-                    </h2>
-                    <div className='checkboxList paperList' style={{ padding: '.5em 1em' }}>
-                        <CheckBoxElement
-                            className='chkEnableMediaPlayback'
-                            title='OptionAllowMediaPlayback'
-                        />
-                        <CheckBoxElement
-                            className='chkEnableAudioPlaybackTranscoding'
-                            title='OptionAllowAudioPlaybackTranscoding'
-                        />
-                        <CheckBoxElement
-                            className='chkEnableVideoPlaybackTranscoding'
-                            title='OptionAllowVideoPlaybackTranscoding'
-                        />
-                        <CheckBoxElement
-                            className='chkEnableVideoPlaybackRemuxing'
-                            title='OptionAllowVideoPlaybackRemuxing'
-                        />
-                        <CheckBoxElement
-                            className='chkForceRemoteSourceTranscoding'
-                            title='OptionForceRemoteSourceTranscoding'
-                        />
-                    </div>
-                    <div className='fieldDescription'>
-                        {globalize.translate('OptionAllowMediaPlaybackTranscodingHelp')}
-                    </div>
-                </div>
-                <br />
-                <div className='verticalSection'>
-                    <div className='inputContainer'>
-                        <Input
-                            type='number'
-                            id='txtRemoteClientBitrateLimit'
-                            label={globalize.translate('LabelRemoteClientBitrateLimit')}
-                            inputMode='decimal'
-                            pattern='[0-9]*(.[0-9]+)?'
-                            min='0'
-                            step='.25'
-                        />
-                        <div className='fieldDescription'>
-                            {globalize.translate('LabelRemoteClientBitrateLimitHelp')}
-                        </div>
-                        <div className='fieldDescription'>
-                            {globalize.translate('LabelUserRemoteClientBitrateLimitHelp')}
-                        </div>
-                    </div>
-                </div>
-                <div className='verticalSection'>
-                    <div className='selectContainer fldSelectSyncPlayAccess'>
-                        <SelectElement
-                            id='selectSyncPlayAccess'
-                            label='LabelSyncPlayAccess'
-                        >
-                            {optionSyncPlayAccess()}
-                        </SelectElement>
-                        <div className='fieldDescription'>
-                            {globalize.translate('SyncPlayAccessHelp')}
-                        </div>
-                    </div>
-                </div>
-                <div className='verticalSection'>
-                    <h2 className='checkboxListLabel' style={{ marginBottom: '1em' }}>
-                        {globalize.translate('HeaderAllowMediaDeletionFrom')}
-                    </h2>
-                    <div className='checkboxList paperList checkboxList-paperList'>
-                        <CheckBoxElement
-                            labelClassName='checkboxContainer'
-                            className='chkEnableDeleteAllFolders'
-                            title='AllLibraries'
-                        />
-                        <div className='deleteAccess'>
-                            {deleteFoldersAccess.map(Item => (
-                                <CheckBoxElement
-                                    key={Item.Id}
-                                    className='chkFolder'
-                                    itemId={Item.Id}
-                                    itemName={Item.Name}
-                                    itemCheckedAttribute={Item.checkedAttribute}
+                <div className='uecGrid'>
+                    {/* ── Columna izquierda ── */}
+                    <div className='uecColumn'>
+                        <UserEditCard title={globalize.translate('UserEditAccount')} icon={<PersonIcon />} accent='#00a4dc'>
+                            <div id='fldUserName' className='inputContainer'>
+                                <Input
+                                    type='text'
+                                    id='txtUserName'
+                                    label={globalize.translate('LabelName')}
+                                    required
                                 />
-                            ))}
-                        </div>
+                                <div className='fieldDescription'>
+                                    {globalize.translate('LabelUsernameAllowedCharactersHelp')}
+                                </div>
+                            </div>
+                            <div className='selectContainer fldSelectLoginProvider hide'>
+                                <SelectElement
+                                    id='selectLoginProvider'
+                                    label='LabelAuthProvider'
+                                >
+                                    {optionLoginProvider}
+                                </SelectElement>
+
+                                <div className='fieldDescription'>
+                                    {globalize.translate('AuthProviderHelp')}
+                                </div>
+                            </div>
+                            <div className='selectContainer fldSelectPasswordResetProvider hide'>
+                                <SelectElement
+                                    id='selectPasswordResetProvider'
+                                    label='LabelPasswordResetProvider'
+                                >
+                                    {optionPasswordResetProvider}
+                                </SelectElement>
+                                <div className='fieldDescription'>
+                                    {globalize.translate('PasswordResetProviderHelp')}
+                                </div>
+                            </div>
+                            <div className='checkboxContainer checkboxContainer-withDescription fldRemoteAccess hide'>
+                                <CheckBoxElement
+                                    className='chkRemoteAccess'
+                                    title='AllowRemoteAccess'
+                                />
+                                <div className='fieldDescription checkboxFieldDescription'>
+                                    {globalize.translate('AllowRemoteAccessHelp')}
+                                </div>
+                            </div>
+                            <CheckBoxElement
+                                labelClassName='checkboxContainer'
+                                className='chkIsAdmin'
+                                title='OptionAllowUserToManageServer'
+                            />
+                            <CheckBoxElement
+                                labelClassName='checkboxContainer'
+                                className='chkEnableCollectionManagement'
+                                title='AllowCollectionManagement'
+                            />
+                            <CheckBoxElement
+                                labelClassName='checkboxContainer'
+                                className='chkEnableSubtitleManagement'
+                                title='AllowSubtitleManagement'
+                            />
+                        </UserEditCard>
+
+                        <UserEditCard title={globalize.translate('HeaderPlayback')} icon={<PlayCircleIcon />} accent='#4caf50'>
+                            <div className='verticalSection'>
+                                <div className='checkboxList paperList' style={{ padding: '.5em 1em' }}>
+                                    <CheckBoxElement
+                                        className='chkEnableMediaPlayback'
+                                        title='OptionAllowMediaPlayback'
+                                    />
+                                    <CheckBoxElement
+                                        className='chkEnableAudioPlaybackTranscoding'
+                                        title='OptionAllowAudioPlaybackTranscoding'
+                                    />
+                                    <CheckBoxElement
+                                        className='chkEnableVideoPlaybackTranscoding'
+                                        title='OptionAllowVideoPlaybackTranscoding'
+                                    />
+                                    <CheckBoxElement
+                                        className='chkEnableVideoPlaybackRemuxing'
+                                        title='OptionAllowVideoPlaybackRemuxing'
+                                    />
+                                    <CheckBoxElement
+                                        className='chkForceRemoteSourceTranscoding'
+                                        title='OptionForceRemoteSourceTranscoding'
+                                    />
+                                </div>
+                                <div className='fieldDescription' style={{ marginBottom: '1.2em' }}>
+                                    {globalize.translate('OptionAllowMediaPlaybackTranscodingHelp')}
+                                </div>
+                            </div>
+                            <div className='verticalSection'>
+                                <div className='inputContainer'>
+                                    <Input
+                                        type='number'
+                                        id='txtRemoteClientBitrateLimit'
+                                        label={globalize.translate('LabelRemoteClientBitrateLimit')}
+                                        inputMode='decimal'
+                                        pattern='[0-9]*(.[0-9]+)?'
+                                        min='0'
+                                        step='.25'
+                                    />
+                                    <div className='fieldDescription'>
+                                        {globalize.translate('LabelRemoteClientBitrateLimitHelp')}
+                                    </div>
+                                    <div className='fieldDescription'>
+                                        {globalize.translate('LabelUserRemoteClientBitrateLimitHelp')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className='verticalSection'>
+                                <div className='selectContainer fldSelectSyncPlayAccess'>
+                                    <SelectElement
+                                        id='selectSyncPlayAccess'
+                                        label='LabelSyncPlayAccess'
+                                    >
+                                        {optionSyncPlayAccess()}
+                                    </SelectElement>
+                                    <div className='fieldDescription'>
+                                        {globalize.translate('SyncPlayAccessHelp')}
+                                    </div>
+                                </div>
+                            </div>
+                        </UserEditCard>
+                    </div>
+
+                    {/* ── Columna derecha ── */}
+                    <div className='uecColumn'>
+                        <UserEditCard title={globalize.translate('HeaderFeatureAccess')} icon={<TuneIcon />} accent='#aa5cc3'>
+                            <div id='featureAccessFields' className='verticalSection'>
+                                <h3 className='paperListLabel'>
+                                    {globalize.translate('LiveTV')}
+                                </h3>
+                                <div className='checkboxList paperList' style={{ padding: '.5em 1em' }}>
+                                    <CheckBoxElement
+                                        className='chkEnableLiveTvAccess'
+                                        title='OptionAllowBrowsingLiveTv'
+                                    />
+                                    <CheckBoxElement
+                                        className='chkManageLiveTv'
+                                        title='OptionAllowManageLiveTv'
+                                    />
+                                </div>
+                            </div>
+                            <div className='verticalSection'>
+                                <h3 className='checkboxListLabel'>
+                                    {globalize.translate('HeaderRemoteControl')}
+                                </h3>
+                                <div className='checkboxList paperList' style={{ padding: '.5em 1em' }}>
+                                    <CheckBoxElement
+                                        className='chkEnableRemoteControlOtherUsers'
+                                        title='OptionAllowRemoteControlOthers'
+                                    />
+                                    <CheckBoxElement
+                                        className='chkRemoteControlSharedDevices'
+                                        title='OptionAllowRemoteSharedDevices'
+                                    />
+                                </div>
+                                <div className='fieldDescription' style={{ marginBottom: '1em' }}>
+                                    {globalize.translate('OptionAllowRemoteSharedDevicesHelp')}
+                                </div>
+                            </div>
+                            <h3 className='checkboxListLabel'>
+                                {globalize.translate('Other')}
+                            </h3>
+                            <div className='checkboxContainer checkboxContainer-withDescription'>
+                                <CheckBoxElement
+                                    className='chkEnableDownloading'
+                                    title='OptionAllowContentDownload'
+                                />
+                                <div className='fieldDescription checkboxFieldDescription'>
+                                    {globalize.translate('OptionAllowContentDownloadHelp')}
+                                </div>
+                            </div>
+                        </UserEditCard>
+
+                        <UserEditCard title={globalize.translate('HeaderAllowMediaDeletionFrom')} icon={<DeleteSweepIcon />} accent='#ef5350'>
+                            <div className='verticalSection'>
+                                <div className='checkboxList paperList checkboxList-paperList'>
+                                    <CheckBoxElement
+                                        labelClassName='checkboxContainer'
+                                        className='chkEnableDeleteAllFolders'
+                                        title='AllLibraries'
+                                    />
+                                    <div className='deleteAccess'>
+                                        {deleteFoldersAccess.map(Item => (
+                                            <CheckBoxElement
+                                                key={Item.Id}
+                                                className='chkFolder'
+                                                itemId={Item.Id}
+                                                itemName={Item.Name}
+                                                itemCheckedAttribute={Item.checkedAttribute}
+                                            />
+                                        ))}
+                                    </div>
+                                </div>
+                            </div>
+                        </UserEditCard>
+
+                        <UserEditCard title={globalize.translate('UserEditSecurity')} icon={<ShieldIcon />} accent='#ff9800'>
+                            <div className='checkboxContainer checkboxContainer-withDescription' id='fldIsEnabled'>
+                                <CheckBoxElement
+                                    className='chkDisabled'
+                                    title='OptionDisableUser'
+                                />
+                                <div className='fieldDescription checkboxFieldDescription'>
+                                    {globalize.translate('OptionDisableUserHelp')}
+                                </div>
+                            </div>
+                            <div className='checkboxContainer checkboxContainer-withDescription' id='fldIsHidden' style={isProfileUser ? { display: 'none' } : undefined}>
+                                <CheckBoxElement
+                                    className='chkIsHidden'
+                                    title='OptionHideUser'
+                                />
+                                <div className='fieldDescription checkboxFieldDescription'>
+                                    {globalize.translate('OptionHideUserFromLoginHelp')}
+                                </div>
+                            </div>
+                            <div className='verticalSection' style={{ marginTop: '1.2em' }}>
+                                <div className='inputContainer' id='fldLoginAttemptsBeforeLockout'>
+                                    <Input
+                                        type='number'
+                                        id='txtLoginAttemptsBeforeLockout'
+                                        label={globalize.translate('LabelUserLoginAttemptsBeforeLockout')}
+                                        min={-1} step={1}
+                                    />
+                                    <div className='fieldDescription'>
+                                        {globalize.translate('OptionLoginAttemptsBeforeLockout')}
+                                    </div>
+                                    <div className='fieldDescription'>
+                                        {globalize.translate('OptionLoginAttemptsBeforeLockoutHelp')}
+                                    </div>
+                                </div>
+                            </div>
+                            <div className='verticalSection'>
+                                <div className='inputContainer' id='fldMaxActiveSessions'>
+                                    <Input
+                                        type='number'
+                                        id='txtMaxActiveSessions'
+                                        label={globalize.translate('LabelUserMaxActiveSessions')}
+                                        min={0} step={1}
+                                    />
+                                    <div className='fieldDescription'>
+                                        {globalize.translate('OptionMaxActiveSessions')}
+                                    </div>
+                                    <div className='fieldDescription'>
+                                        {globalize.translate('OptionMaxActiveSessionsHelp')}
+                                    </div>
+                                </div>
+                            </div>
+                        </UserEditCard>
                     </div>
                 </div>
-                <div className='verticalSection'>
-                    <h2 className='checkboxListLabel'>
-                        {globalize.translate('HeaderRemoteControl')}
-                    </h2>
-                    <div className='checkboxList paperList' style={{ padding: '.5em 1em' }}>
-                        <CheckBoxElement
-                            className='chkEnableRemoteControlOtherUsers'
-                            title='OptionAllowRemoteControlOthers'
-                        />
-                        <CheckBoxElement
-                            className='chkRemoteControlSharedDevices'
-                            title='OptionAllowRemoteSharedDevices'
-                        />
-                    </div>
-                    <div className='fieldDescription'>
-                        {globalize.translate('OptionAllowRemoteSharedDevicesHelp')}
-                    </div>
-                </div>
-                <h2 className='checkboxListLabel'>
-                    {globalize.translate('Other')}
-                </h2>
-                <div className='checkboxContainer checkboxContainer-withDescription'>
-                    <CheckBoxElement
-                        className='chkEnableDownloading'
-                        title='OptionAllowContentDownload'
-                    />
-                    <div className='fieldDescription checkboxFieldDescription'>
-                        {globalize.translate('OptionAllowContentDownloadHelp')}
-                    </div>
-                </div>
-                <div className='checkboxContainer checkboxContainer-withDescription' id='fldIsEnabled'>
-                    <CheckBoxElement
-                        className='chkDisabled'
-                        title='OptionDisableUser'
-                    />
-                    <div className='fieldDescription checkboxFieldDescription'>
-                        {globalize.translate('OptionDisableUserHelp')}
-                    </div>
-                </div>
-                <div className='checkboxContainer checkboxContainer-withDescription' id='fldIsHidden'>
-                    <CheckBoxElement
-                        className='chkIsHidden'
-                        title='OptionHideUser'
-                    />
-                    <div className='fieldDescription checkboxFieldDescription'>
-                        {globalize.translate('OptionHideUserFromLoginHelp')}
-                    </div>
-                </div>
-                <br />
-                <div className='verticalSection'>
-                    <div className='inputContainer' id='fldLoginAttemptsBeforeLockout'>
-                        <Input
-                            type='number'
-                            id='txtLoginAttemptsBeforeLockout'
-                            label={globalize.translate('LabelUserLoginAttemptsBeforeLockout')}
-                            min={-1} step={1}
-                        />
-                        <div className='fieldDescription'>
-                            {globalize.translate('OptionLoginAttemptsBeforeLockout')}
-                        </div>
-                        <div className='fieldDescription'>
-                            {globalize.translate('OptionLoginAttemptsBeforeLockoutHelp')}
-                        </div>
-                    </div>
-                </div>
-                <br />
-                <div className='verticalSection'>
-                    <div className='inputContainer' id='fldMaxActiveSessions'>
-                        <Input
-                            type='number'
-                            id='txtMaxActiveSessions'
-                            label={globalize.translate('LabelUserMaxActiveSessions')}
-                            min={0} step={1}
-                        />
-                        <div className='fieldDescription'>
-                            {globalize.translate('OptionMaxActiveSessions')}
-                        </div>
-                        <div className='fieldDescription'>
-                            {globalize.translate('OptionMaxActiveSessionsHelp')}
-                        </div>
-                    </div>
-                </div>
-                <br />
-                <div>
+
+                <div className='uecActions'>
                     <Button
                         type='submit'
                         className='raised button-submit block'

@@ -3,6 +3,7 @@ import { OutboundWebSocketMessageType } from '@jellyfin/sdk/lib/websocket';
 import Box from '@mui/material/Box';
 import Grid from '@mui/material/Grid';
 import Stack from '@mui/material/Stack';
+import Typography from '@mui/material/Typography';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 
@@ -12,14 +13,13 @@ import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 
 import ServerPathWidget from '../components/widgets/ServerPathWidget';
+import ResourceMonitorWidget from '../components/widgets/ResourceMonitorWidget';
 import ServerInfoWidget from '../components/widgets/ServerInfoWidget';
-import ActivityLogWidget from '../components/widgets/ActivityLogWidget';
 import AlertsLogWidget from '../components/widgets/AlertsLogWidget';
 import useShutdownServer from '../features/system/api/useShutdownServer';
 import useRestartServer from '../features/system/api/useRestartServer';
 import useLiveTasks from '../features/tasks/hooks/useLiveTasks';
 import RunningTasksWidget from '../components/widgets/RunningTasksWidget';
-import DevicesWidget from '../components/widgets/DevicesWidget';
 import { useStartTask } from '../features/tasks/api/useStartTask';
 import ItemCountsWidget from '../components/widgets/ItemCountsWidget';
 
@@ -106,8 +106,18 @@ export const Component = () => {
                 confirmButtonColor='error'
             />
             <Box className='content-primary'>
+                <Box sx={{ mb: 3, mt: 1 }}>
+                    <Typography component='h1' sx={{
+                        fontSize: { xs: '1.6rem', md: '2rem' }, fontWeight: 800, letterSpacing: '-0.5px',
+                        background: 'linear-gradient(135deg, #fff 20%, #00a4dc 60%, #aa5cc3 100%)',
+                        WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'
+                    }}>
+                        {globalize.translate('TabDashboard')}
+                    </Typography>
+                    <Box sx={{ mt: 1, width: 72, height: 3, borderRadius: 3, background: 'linear-gradient(90deg, #00a4dc, #aa5cc3)' }} />
+                </Box>
                 <Grid container spacing={3}>
-                    <Grid item xs={12} md={7} lg={7} xl={6}>
+                    <Grid item xs={12} lg={7} xl={8}>
                         <Stack spacing={3}>
                             <ServerInfoWidget
                                 onScanLibrariesClick={onScanLibraries}
@@ -115,15 +125,12 @@ export const Component = () => {
                                 onShutdownClick={promptShutdown}
                                 isScanning={librariesTask?.State !== TaskState.Idle}
                             />
+                            <ResourceMonitorWidget />
                             <ItemCountsWidget />
                             <RunningTasksWidget tasks={tasks} />
-                            <DevicesWidget />
                         </Stack>
                     </Grid>
-                    <Grid item xs={12} md={5} lg={5} xl={3}>
-                        <ActivityLogWidget />
-                    </Grid>
-                    <Grid item xs={12} md={6} lg={12} xl={3}>
+                    <Grid item xs={12} lg={5} xl={4}>
                         <Stack spacing={3}>
                             <AlertsLogWidget />
                             <ServerPathWidget />

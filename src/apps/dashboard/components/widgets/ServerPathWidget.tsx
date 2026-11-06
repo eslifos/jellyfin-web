@@ -1,4 +1,5 @@
 import List from '@mui/material/List';
+import FolderSpecialIcon from '@mui/icons-material/FolderSpecial';
 import React from 'react';
 import StorageListItem from 'apps/dashboard/features/storage/components/StorageListItem';
 import globalize from 'lib/globalize';
@@ -12,8 +13,12 @@ const ServerPathWidget = () => {
         <Widget
             title={globalize.translate('HeaderPaths')}
             href='/dashboard/settings'
+            icon={<FolderSpecialIcon />}
+            accentColor='#26c6da'
+            collapsible
+            defaultOpen={false}
         >
-            <List sx={{ bgcolor: 'background.paper' }}>
+            <List disablePadding>
                 <StorageListItem
                     label={globalize.translate('LabelCache')}
                     folder={systemStorage?.CacheFolder}

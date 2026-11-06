@@ -5,7 +5,7 @@
  * Hidden on public paths (login, wizard) and on the video player route.
  * Uses `createPortal` to escape any CSS `transform` stacking context from the parent.
  */
-import React, { useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import globalize from 'lib/globalize';
 import Box from '@mui/material/Box';
@@ -13,13 +13,15 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
-import { useLocation, useNavigate } from 'react-router-dom';
+import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
+import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useApi } from 'hooks/useApi';
 import { PUBLIC_PATHS } from 'components/router/appRouter';
 import RemotePlayButton from '../AppToolbar/RemotePlayButton';
 import UserMenuButton from 'components/toolbar/UserMenuButton';
 import SearchDialog from '../SearchDialog';
+import { isSettingsSubPath } from './settingsPaths';
 
 interface NavItem {
     icon: React.ReactNode;
@@ -37,7 +39,15 @@ const FloatingNav = () => {
     const isLoggedIn = Boolean(user);
     const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
     const [ searchOpen, setSearchOpen ] = useState(false);
-    if (isPublicPath || location.pathname === '/video') {
+    const [ searchParams ] = useSearchParams();
+    const showSettingsBack = isSettingsSubPath(location.pathname);
+
+    const goToSettings = useCallback(() => {
+        const userId = searchParams.get('userId');
+        navigate(userId ? `/mypreferencesmenu?userId=${encodeURIComponent(userId)}` : '/mypreferencesmenu');
+    }, [ navigate, searchParams ]);
+
+    if (isPublicPath || location.pathname === '/video' || location.pathname === '/profiles') {
         return null;
     }
 
@@ -84,6 +94,22 @@ const FloatingNav = () => {
                 animation: 'jf-glow-pulse 4s ease-in-out infinite'
             }}
         >
+            {/* Back to settings menu — only on settings sub-pages */}
+            {showSettingsBack && (
+                <>
+                    <Tooltip title={globalize.translate('Settings')} placement='top'>
+                        <IconButton
+                            onClick={goToSettings}
+                            aria-label={globalize.translate('ButtonBack')}
+                            sx={navBtnSx(false)}
+                        >
+                            <ArrowBackRoundedIcon />
+                        </IconButton>
+                    </Tooltip>
+                    <Box sx={{ width: '1px', height: '28px', background: 'rgba(255,255,255,0.1)', mx: 0.5 }} />
+                </>
+            )}
+
             {/* Home */}
             <Tooltip title={globalize.translate('Home')} placement='top'>
                 <IconButton

@@ -1,16 +1,18 @@
 import type { BrandingOptionsDto } from '@jellyfin/sdk/lib/generated-client/models/branding-options-dto';
 import { getSystemApi } from '@jellyfin/sdk/lib/utils/api/system-api';
 import { getImageApi } from '@jellyfin/sdk/lib/utils/api/image-api';
+import CodeIcon from '@mui/icons-material/Code';
 import Delete from '@mui/icons-material/Delete';
+import LoginIcon from '@mui/icons-material/Login';
+import SaveIcon from '@mui/icons-material/Save';
 import Upload from '@mui/icons-material/Upload';
+import WallpaperIcon from '@mui/icons-material/Wallpaper';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import FormControlLabel from '@mui/material/FormControlLabel';
+import CircularProgress from '@mui/material/CircularProgress';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
 import React, { useCallback, useEffect, useState } from 'react';
 import { type ActionFunctionArgs, Form, useActionData, useNavigation } from 'react-router-dom';
 
@@ -24,6 +26,24 @@ import globalize from 'lib/globalize';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import { queryClient } from 'utils/query/queryClient';
 import { ActionData } from 'types/actionData';
+import { SavedSnackbar } from 'apps/legacy/routes/user/components/PreferencesUi';
+
+import { PageHeader, SectionCard, ToggleRow } from '../../components/cosmic';
+import LogoCard from '../../features/branding/components/LogoCard';
+
+const COLORS = {
+    splash: '#aa5cc3',
+    disclaimer: '#00a4dc',
+    css: '#4caf50'
+};
+
+const outlinedSx = (color: string) => ({
+    fontWeight: 600,
+    color,
+    borderColor: `${color}55`,
+    background: `${color}10`,
+    '&:hover': { borderColor: color, background: `${color}22` }
+});
 
 const BRANDING_CONFIG_KEY = 'branding';
 const BrandingOption = {
@@ -177,6 +197,16 @@ export const Component = () => {
         setError(undefined);
     }, []);
 
+    const onSplashscreenToggle = useCallback((isEnabled: boolean) => {
+        void setSplashscreenEnabled({} as React.ChangeEvent<HTMLInputElement>, isEnabled);
+    }, [ setSplashscreenEnabled ]);
+
+    const [ saved, setSaved ] = useState(false);
+    const closeSaved = useCallback(() => setSaved(false), []);
+    useEffect(() => {
+        if (actionData?.isSaved) setSaved(true);
+    }, [ actionData ]);
+
     if (isPending) return <Loading />;
 
     return (
@@ -185,140 +215,155 @@ export const Component = () => {
             title={globalize.translate('HeaderBranding')}
             className='mainAnimatedPage type-interior'
         >
-            <Box className='content-primary'>
+            <Box className='content-primary' sx={{ pb: 6 }}>
+                <PageHeader title={globalize.translate('HeaderBranding')} />
+
                 <Form
                     method='POST'
                     onSubmit={onSubmit}
+                    style={{ maxWidth: 'none' }}
                 >
                     {isError ? (
                         <Alert severity='error'>{globalize.translate('BrandingLoadError')}</Alert>
                     ) : (
-                        <Stack spacing={3}>
-                            <Typography variant='h1'>
-                                {globalize.translate('HeaderBranding')}
-                            </Typography>
-
-                            {!isSubmitting && actionData?.isSaved && (
-                                <Alert severity='success'>
-                                    {globalize.translate('SettingsSaved')}
-                                </Alert>
-                            )}
-
+                        <>
                             {error && (
-                                <Alert severity='error'>
+                                <Alert severity='error' sx={{ mb: 2.5 }}>
                                     {globalize.translate(error)}
                                 </Alert>
                             )}
 
-                            <Stack
-                                direction={{
-                                    xs: 'column',
-                                    sm: 'row'
-                                }}
-                                spacing={3}
-                            >
-                                <Box sx={{ flex: '1 1 0' }}>
-                                    <Image
-                                        isLoading={false}
-                                        url={
-                                            isSplashscreenEnabled ?
-                                                splashscreenUrl :
-                                                undefined
-                                        }
-                                    />
+                            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2.5, alignItems: 'start' }}>
+                                {/* ── Fila completa: logo ── */}
+                                <Box sx={{ gridColumn: '1 / -1' }}>
+                                    <LogoCard onError={setError} />
                                 </Box>
 
-                                <Stack
-                                    spacing={{ xs: 3, sm: 2 }}
-                                    sx={{ flex: '1 1 0' }}
+                                {/* ── Columna izquierda: pantalla de bienvenida ── */}
+                                <SectionCard
+                                    title={globalize.translate('EnableSplashScreen')}
+                                    icon={<WallpaperIcon />}
+                                    accentColor={COLORS.splash}
+                                    description={globalize.translate('CustomSplashScreenSize')}
                                 >
-                                    <FormControlLabel
-                                        control={
-                                            <Switch
-                                                name={BrandingOption.SplashscreenEnabled}
-                                                checked={isSplashscreenEnabled}
-                                                onChange={setSplashscreenEnabled}
-                                            />
-                                        }
-                                        label={globalize.translate('EnableSplashScreen')}
-                                    />
-
-                                    <Typography variant='body2'>
-                                        {globalize.translate('CustomSplashScreenSize')}
-                                    </Typography>
-
-                                    <Button
-                                        component='label'
-                                        variant='outlined'
-                                        startIcon={<Upload />}
-                                        disabled={!isSplashscreenEnabled}
-                                    >
-                                        <input
-                                            type='file'
-                                            accept='image/*'
-                                            hidden
-                                            onChange={onSplashscreenUpload}
+                                    <Stack spacing={2}>
+                                        <ToggleRow
+                                            name={BrandingOption.SplashscreenEnabled}
+                                            label={globalize.translate('EnableSplashScreen')}
+                                            checked={isSplashscreenEnabled}
+                                            onChange={onSplashscreenToggle}
+                                            color={COLORS.splash}
                                         />
-                                        {globalize.translate('UploadCustomImage')}
-                                    </Button>
 
-                                    <Button
-                                        variant='outlined'
-                                        color='error'
-                                        startIcon={<Delete />}
-                                        disabled={!isSplashscreenEnabled}
-                                        onClick={onSplashscreenDelete}
+                                        <Box sx={{
+                                            position: 'relative', borderRadius: '16px', overflow: 'hidden',
+                                            border: `1px solid ${COLORS.splash}40`, boxShadow: `0 0 24px ${COLORS.splash}14`,
+                                            opacity: isSplashscreenEnabled ? 1 : 0.45, transition: 'opacity 0.25s',
+                                            '& .MuiPaper-root': { border: 'none !important', borderRadius: '0 !important', background: 'rgba(0,0,0,0.35) !important' },
+                                            '& img': { display: 'block', objectFit: 'cover', height: '100%' }
+                                        }}>
+                                            <Image
+                                                isLoading={false}
+                                                url={isSplashscreenEnabled ? splashscreenUrl : undefined}
+                                            />
+                                        </Box>
+
+                                        <Stack direction={{ xs: 'column', sm: 'row' }} spacing={1.25}>
+                                            <Button
+                                                component='label'
+                                                variant='outlined'
+                                                startIcon={<Upload />}
+                                                disabled={!isSplashscreenEnabled}
+                                                sx={{ ...outlinedSx(COLORS.splash), flex: 1 }}
+                                            >
+                                                <input
+                                                    type='file'
+                                                    accept='image/*'
+                                                    hidden
+                                                    onChange={onSplashscreenUpload}
+                                                />
+                                                {globalize.translate('UploadCustomImage')}
+                                            </Button>
+
+                                            <Button
+                                                variant='outlined'
+                                                startIcon={<Delete />}
+                                                disabled={!isSplashscreenEnabled}
+                                                onClick={onSplashscreenDelete}
+                                                sx={{ ...outlinedSx('#ef5350'), flex: 1 }}
+                                            >
+                                                {globalize.translate('DeleteCustomImage')}
+                                            </Button>
+                                        </Stack>
+                                    </Stack>
+                                </SectionCard>
+
+                                {/* ── Columna derecha: textos y CSS ── */}
+                                <Stack spacing={2.5}>
+                                    <SectionCard
+                                        title={globalize.translate('LabelLoginDisclaimer')}
+                                        icon={<LoginIcon />}
+                                        accentColor={COLORS.disclaimer}
+                                        description={globalize.translate('LabelLoginDisclaimerHelp')}
                                     >
-                                        {globalize.translate('DeleteCustomImage')}
-                                    </Button>
+                                        <TextField
+                                            fullWidth
+                                            multiline
+                                            minRows={5}
+                                            maxRows={10}
+                                            name={BrandingOption.LoginDisclaimer}
+                                            label={globalize.translate('LabelLoginDisclaimer')}
+                                            value={brandingOptions?.LoginDisclaimer ?? ''}
+                                            onChange={setBrandingOption}
+                                        />
+                                    </SectionCard>
+
+                                    <SectionCard
+                                        title={globalize.translate('LabelCustomCss')}
+                                        icon={<CodeIcon />}
+                                        accentColor={COLORS.css}
+                                        description={globalize.translate('LabelCustomCssHelp')}
+                                    >
+                                        <TextField
+                                            fullWidth
+                                            multiline
+                                            minRows={8}
+                                            maxRows={24}
+                                            name={BrandingOption.CustomCss}
+                                            placeholder='/* CSS */'
+                                            spellCheck={false}
+                                            value={brandingOptions?.CustomCss ?? ''}
+                                            onChange={setBrandingOption}
+                                            sx={{
+                                                '& .MuiOutlinedInput-root': { background: 'rgba(0,0,0,0.35)', alignItems: 'flex-start' },
+                                                '& textarea': {
+                                                    fontFamily: 'Consolas, "Fira Code", Menlo, Monaco, monospace',
+                                                    fontSize: '0.82rem', lineHeight: 1.6, color: '#b9f6ca'
+                                                }
+                                            }}
+                                        />
+                                    </SectionCard>
                                 </Stack>
-                            </Stack>
+                            </Box>
 
-                            <TextField
-                                fullWidth
-                                multiline
-                                minRows={5}
-                                maxRows={5}
-                                name={BrandingOption.LoginDisclaimer}
-                                label={globalize.translate('LabelLoginDisclaimer')}
-                                helperText={globalize.translate('LabelLoginDisclaimerHelp')}
-                                value={brandingOptions?.LoginDisclaimer}
-                                onChange={setBrandingOption}
-                                slotProps={{
-                                    input: {
-                                        className: 'textarea-mono'
-                                    }
-                                }}
-                            />
-
-                            <TextField
-                                fullWidth
-                                multiline
-                                minRows={5}
-                                maxRows={20}
-                                name={BrandingOption.CustomCss}
-                                label={globalize.translate('LabelCustomCss')}
-                                helperText={globalize.translate('LabelCustomCssHelp')}
-                                spellCheck={false}
-                                value={brandingOptions?.CustomCss}
-                                onChange={setBrandingOption}
-                                slotProps={{
-                                    input: {
-                                        className: 'textarea-mono'
-                                    }
-                                }}
-                            />
-
-                            <Button
-                                type='submit'
-                                size='large'
-                            >
-                                {globalize.translate('Save')}
-                            </Button>
-                        </Stack>
+                            <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+                                <Button
+                                    type='submit'
+                                    variant='contained'
+                                    size='large'
+                                    disabled={isSubmitting}
+                                    startIcon={isSubmitting ? <CircularProgress size={16} color='inherit' /> : <SaveIcon />}
+                                    sx={{ px: 8, py: 1.4, fontWeight: 600 }}
+                                >
+                                    {globalize.translate('Save')}
+                                </Button>
+                            </Box>
+                        </>
                     )}
                 </Form>
             </Box>
+
+            <SavedSnackbar open={saved} onClose={closeSaved} />
         </Page>
     );
 };

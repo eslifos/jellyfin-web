@@ -12,6 +12,7 @@ import { useUser } from 'hooks/api/useUser';
 import loading from 'components/loading/loading';
 import { queryClient } from 'utils/query/queryClient';
 import UserPasswordForm from 'components/dashboard/users/UserPasswordForm';
+import { useIsProfileUser } from 'components/profiles/useProfiles';
 import Page from 'components/Page';
 import Loading from 'components/loading/LoadingComponent';
 import Button from 'elements/emby-button/Button';
@@ -20,6 +21,7 @@ const UserProfile: FunctionComponent = () => {
     const [ searchParams ] = useSearchParams();
     const userId = searchParams.get('userId') || undefined;
     const { data: user, isPending: isUserPending } = useUser({ userId });
+    const isProfileUser = useIsProfileUser(userId);
     const libraryMenu = useMemo(async () => ((await import('../../../../scripts/libraryMenu')).default), []);
 
     const element = useRef<HTMLDivElement>(null);
@@ -220,9 +222,17 @@ const UserProfile: FunctionComponent = () => {
                         />
                     </div>
                 </div>
-                <UserPasswordForm
-                    user={user}
-                />
+                {/* Secondary viewing profiles have no password of their own */}
+                {isProfileUser === false && (
+                    <UserPasswordForm
+                        user={user}
+                    />
+                )}
+                {isProfileUser && (
+                    <div className='readOnlyContent' style={{ margin: '0 auto', padding: '0 1em', opacity: 0.6, textAlign: 'center' }}>
+                        {globalize.translate('ProfilesPasswordManagedByMaster')}
+                    </div>
+                )}
             </div>
         </Page>
 

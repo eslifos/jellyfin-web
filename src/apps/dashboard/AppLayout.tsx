@@ -10,7 +10,6 @@ import AppBody from 'components/AppBody';
 import OffsetAppBar from 'components/OffsetAppBar';
 import AppToolbar from 'components/toolbar/AppToolbar';
 import ServerButton from 'components/toolbar/ServerButton';
-import { DRAWER_WIDTH } from 'components/ResponsiveDrawer';
 import { appRouter } from 'components/router/appRouter';
 import ThemeCss from 'components/ThemeCss';
 import { useApi } from 'hooks/useApi';
@@ -18,10 +17,12 @@ import { useLocale } from 'hooks/useLocale';
 
 import AppTabs from './components/AppTabs';
 import AppDrawer from './components/drawer/AppDrawer';
+import FloatingDashboardNav, { getNavOffset, usePinnedNav } from './components/drawer/FloatingDashboardNav';
 import HelpButton from './components/toolbar/HelpButton';
 import { DASHBOARD_APP_PATHS } from './routes/routes';
 
 import './AppOverrides.scss';
+import './CosmicDashboard.scss';
 
 export const Component: FC = () => {
     const [ isDrawerActive, setIsDrawerActive ] = useState(false);
@@ -33,6 +34,17 @@ export const Component: FC = () => {
     const isMetadataManager = location.pathname.startsWith(`/${DASHBOARD_APP_PATHS.MetadataManager}`);
     const isDrawerAvailable = Boolean(user) && !isMetadataManager;
     const isDrawerOpen = isDrawerActive && isDrawerAvailable;
+    const { pinned, togglePinned } = usePinnedNav();
+    const isFloatingNav = isMediumScreen && isDrawerAvailable;
+    const navOffset = isFloatingNav ? getNavOffset(pinned) : 0;
+
+    // Expose the nav offset to the legacy page layout (AppOverrides.scss)
+    useEffect(() => {
+        document.body.style.setProperty('--dash-nav-offset', `${navOffset}px`);
+        return () => {
+            document.body.style.removeProperty('--dash-nav-offset');
+        };
+    }, [ navOffset ]);
 
     const onToggleDrawer = useCallback(() => {
         setIsDrawerActive(!isDrawerActive);
@@ -60,14 +72,9 @@ export const Component: FC = () => {
                     <OffsetAppBar
                         dense
                         sx={{
-                            width: {
-                                xs: '100%',
-                                md: isDrawerAvailable ? `calc(100% - ${DRAWER_WIDTH}px)` : '100%'
-                            },
-                            ml: {
-                                xs: 0,
-                                md: isDrawerAvailable ? DRAWER_WIDTH : 0
-                            }
+                            width: `calc(100% - ${navOffset}px)`,
+                            ml: `${navOffset}px`,
+                            transition: 'width 0.25s, margin 0.25s'
                         }}
                     >
                         <AppToolbar
@@ -88,15 +95,16 @@ export const Component: FC = () => {
                         </AppToolbar>
                     </OffsetAppBar>
 
-                    {
-                        isDrawerAvailable && (
-                            <AppDrawer
-                                open={isDrawerOpen}
-                                onClose={onToggleDrawer}
-                                onOpen={onToggleDrawer}
-                            />
-                        )
-                    }
+                    {isFloatingNav && (
+                        <FloatingDashboardNav pinned={pinned} onTogglePinned={togglePinned} />
+                    )}
+                    {isDrawerAvailable && !isMediumScreen && (
+                        <AppDrawer
+                            open={isDrawerOpen}
+                            onClose={onToggleDrawer}
+                            onOpen={onToggleDrawer}
+                        />
+                    )}
                 </StrictMode>
 
                 <Box

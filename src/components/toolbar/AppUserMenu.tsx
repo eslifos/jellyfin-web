@@ -8,6 +8,7 @@ import Logout from '@mui/icons-material/Logout';
 import PhonelinkLock from '@mui/icons-material/PhonelinkLock';
 import Settings from '@mui/icons-material/Settings';
 import Storage from '@mui/icons-material/Storage';
+import SwitchAccount from '@mui/icons-material/SwitchAccount';
 import Divider from '@mui/material/Divider';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
@@ -28,12 +29,15 @@ export const ID = 'app-user-menu';
 
 interface AppUserMenuProps extends MenuProps {
     onMenuClose: () => void
+    /** Opens the "switch profile" dialog. */
+    onSwitchProfile?: () => void
 }
 
 const AppUserMenu: FC<AppUserMenuProps> = ({
     anchorEl,
     open,
-    onMenuClose
+    onMenuClose,
+    onSwitchProfile
 }) => {
     const { user } = useApi();
     const { data: isQuickConnectEnabled } = useQuickConnectEnabled();
@@ -62,6 +66,11 @@ const AppUserMenu: FC<AppUserMenuProps> = ({
         Dashboard.selectServer();
         onMenuClose();
     }, [ onMenuClose ]);
+
+    const onSwitchProfileClick = useCallback(() => {
+        onMenuClose();
+        onSwitchProfile?.();
+    }, [ onMenuClose, onSwitchProfile ]);
 
     return (
         <Menu
@@ -129,6 +138,15 @@ const AppUserMenu: FC<AppUserMenuProps> = ({
                 }
             }}
         >
+            <MenuItem onClick={onSwitchProfileClick}>
+                <ListItemIcon>
+                    <SwitchAccount />
+                </ListItemIcon>
+                <ListItemText>
+                    {globalize.translate('ProfilesSwitch')}
+                </ListItemText>
+            </MenuItem>
+            <Divider />
             <MenuItem
                 component={Link}
                 to={`/userprofile?userId=${user?.Id}`}

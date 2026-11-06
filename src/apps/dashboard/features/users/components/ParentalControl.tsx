@@ -15,6 +15,10 @@ import SelectElement from 'elements/SelectElement';
 import prompt from 'components/prompt/prompt';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import Toast from 'apps/dashboard/components/Toast';
+import BlockIcon from '@mui/icons-material/Block';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import FamilyRestroomIcon from '@mui/icons-material/FamilyRestroom';
+import UserEditCard from './UserEditCard';
 
 interface ParentalControlProps {
     userId: string;
@@ -385,115 +389,136 @@ const ParentalControl = ({ userId }: ParentalControlProps) => {
     }, [accessSchedules, setAccessSchedules]);
 
     return (
-        <div ref={element}>
+        <div ref={element} className='userEditCards'>
             <Toast
                 open={isSettingsSavedToastOpen}
                 onClose={handleToastClose}
                 message={globalize.translate('SettingsSaved')}
             />
             <form className='userParentalControlForm'>
-                <div className='selectContainer'>
-                    <SelectElement
-                        id='selectMaxParentalRating'
-                        label='LabelMaxParentalRating'
-                    >
-                        {optionMaxParentalRating()}
-                    </SelectElement>
-                    <div className='fieldDescription'>
-                        {globalize.translate('MaxParentalRatingHelp')}
-                    </div>
-                </div>
-                <div>
-                    <div className='blockUnratedItems'>
-                        <h3 className='checkboxListLabel'>
-                            {globalize.translate('HeaderBlockItemsWithNoRating')}
-                        </h3>
-                        <div className='checkboxList paperList' style={{ padding: '.5em 1em' }}>
-                            {unratedItems.map(Item => {
-                                return <CheckBoxElement
-                                    key={Item.value}
-                                    className='chkUnratedItem'
-                                    itemType={Item.value}
-                                    itemName={Item.name}
-                                    itemCheckedAttribute={Item.checkedAttribute}
-                                />;
-                            })}
+                <div className='uecGrid'>
+                    {/* ── Columna izquierda: clasificación ── */}
+                    <div className='uecColumn'>
+                        <UserEditCard title={globalize.translate('LabelMaxParentalRating')} icon={<FamilyRestroomIcon />} accent='#00a4dc'>
+                            <div className='selectContainer'>
+                                <SelectElement
+                                    id='selectMaxParentalRating'
+                                    label='LabelMaxParentalRating'
+                                >
+                                    {optionMaxParentalRating()}
+                                </SelectElement>
+                                <div className='fieldDescription'>
+                                    {globalize.translate('MaxParentalRatingHelp')}
+                                </div>
+                            </div>
+                            <div>
+                                <div className='blockUnratedItems'>
+                                    <h3 className='checkboxListLabel'>
+                                        {globalize.translate('HeaderBlockItemsWithNoRating')}
+                                    </h3>
+                                    <div className='checkboxList paperList' style={{ padding: '.5em 1em' }}>
+                                        {unratedItems.map(Item => {
+                                            return <CheckBoxElement
+                                                key={Item.value}
+                                                className='chkUnratedItem'
+                                                itemType={Item.value}
+                                                itemName={Item.name}
+                                                itemCheckedAttribute={Item.checkedAttribute}
+                                            />;
+                                        })}
+                                    </div>
+                                </div>
+                            </div>
+                        </UserEditCard>
+
+                        {/* The section itself is the card: it is hidden for administrators */}
+                        <div
+                            className='accessScheduleSection verticalSection uecCard'
+                            style={{ '--uec-accent': '#ff9800', '--uec-accent2': '#00a4dc' } as React.CSSProperties}
+                        >
+                            <SectionTitleContainer
+                                title={globalize.translate('HeaderAccessSchedule')}
+                                isBtnVisible={true}
+                                btnId='btnAddSchedule'
+                                btnClassName='fab submit sectionTitleButton'
+                                btnTitle='Add'
+                                btnIcon='add'
+                            />
+                            <div className='fieldDescription' style={{ marginBottom: '.8em' }}>{globalize.translate('HeaderAccessScheduleHelp')}</div>
+                            <div className='accessScheduleList paperList'>
+                                {accessSchedules.map((accessSchedule, index) => {
+                                    return <AccessScheduleList
+                                        key={`${accessSchedule.DayOfWeek}${accessSchedule.StartHour}${accessSchedule.EndHour}`}
+                                        index={index}
+                                        DayOfWeek={accessSchedule.DayOfWeek}
+                                        StartHour={accessSchedule.StartHour}
+                                        EndHour={accessSchedule.EndHour}
+                                        removeScheduleCallback={removeScheduleCallback}
+                                    />;
+                                })}
+                            </div>
                         </div>
                     </div>
-                </div>
-                <br />
-                <div className='verticalSection' style={{ marginBottom: '2em' }}>
-                    <SectionTitleContainer
-                        SectionClassName='detailSectionHeader'
-                        title={globalize.translate('LabelAllowContentWithTags')}
-                        isBtnVisible={true}
-                        btnId='btnAddAllowedTag'
-                        btnClassName='fab submit sectionTitleButton'
-                        btnTitle='Add'
-                        btnIcon='add'
-                    />
-                    <div className='fieldDescription'>
-                        {globalize.translate('AllowContentWithTagsHelp')}
-                    </div>
-                    <div className='allowedTags' style={{ marginTop: '.5em' }}>
-                        {allowedTags?.map(tag => {
-                            return <TagList
-                                key={tag}
-                                tag={tag}
-                                tagType='allowedTag'
-                                removeTagCallback={removeAllowedTagsCallback}
-                            />;
-                        })}
-                    </div>
-                </div>
-                <div className='verticalSection' style={{ marginBottom: '2em' }}>
-                    <SectionTitleContainer
-                        SectionClassName='detailSectionHeader'
-                        title={globalize.translate('LabelBlockContentWithTags')}
-                        isBtnVisible={true}
-                        btnId='btnAddBlockedTag'
-                        btnClassName='fab submit sectionTitleButton'
-                        btnTitle='Add'
-                        btnIcon='add'
-                    />
-                    <div className='fieldDescription'>
-                        {globalize.translate('BlockContentWithTagsHelp')}
-                    </div>
-                    <div className='blockedTags' style={{ marginTop: '.5em' }}>
-                        {blockedTags.map(tag => {
-                            return <TagList
-                                key={tag}
-                                tag={tag}
-                                tagType='blockedTag'
-                                removeTagCallback={removeBlockedTagsTagsCallback}
-                            />;
-                        })}
-                    </div>
-                </div>
-                <div className='accessScheduleSection verticalSection' style={{ marginBottom: '2em' }}>
-                    <SectionTitleContainer
-                        title={globalize.translate('HeaderAccessSchedule')}
-                        isBtnVisible={true}
-                        btnId='btnAddSchedule'
-                        btnClassName='fab submit sectionTitleButton'
-                        btnTitle='Add'
-                        btnIcon='add'
-                    />
-                    <p>{globalize.translate('HeaderAccessScheduleHelp')}</p>
-                    <div className='accessScheduleList paperList'>
-                        {accessSchedules.map((accessSchedule, index) => {
-                            return <AccessScheduleList
-                                key={`${accessSchedule.DayOfWeek}${accessSchedule.StartHour}${accessSchedule.EndHour}`}
-                                index={index}
-                                DayOfWeek={accessSchedule.DayOfWeek}
-                                StartHour={accessSchedule.StartHour}
-                                EndHour={accessSchedule.EndHour}
-                                removeScheduleCallback={removeScheduleCallback}
-                            />;
-                        })}
+
+                    {/* ── Columna derecha: etiquetas ── */}
+                    <div className='uecColumn'>
+                        <UserEditCard title={globalize.translate('LabelAllowContentWithTags')} icon={<CheckCircleIcon />} accent='#4caf50'>
+                            <div className='verticalSection'>
+                                <SectionTitleContainer
+                                    SectionClassName='detailSectionHeader'
+                                    title={globalize.translate('Tags')}
+                                    isBtnVisible={true}
+                                    btnId='btnAddAllowedTag'
+                                    btnClassName='fab submit sectionTitleButton'
+                                    btnTitle='Add'
+                                    btnIcon='add'
+                                />
+                                <div className='fieldDescription'>
+                                    {globalize.translate('AllowContentWithTagsHelp')}
+                                </div>
+                                <div className='allowedTags' style={{ marginTop: '.5em' }}>
+                                    {allowedTags?.map(tag => {
+                                        return <TagList
+                                            key={tag}
+                                            tag={tag}
+                                            tagType='allowedTag'
+                                            removeTagCallback={removeAllowedTagsCallback}
+                                        />;
+                                    })}
+                                </div>
+                            </div>
+                        </UserEditCard>
+
+                        <UserEditCard title={globalize.translate('LabelBlockContentWithTags')} icon={<BlockIcon />} accent='#ef5350'>
+                            <div className='verticalSection'>
+                                <SectionTitleContainer
+                                    SectionClassName='detailSectionHeader'
+                                    title={globalize.translate('Tags')}
+                                    isBtnVisible={true}
+                                    btnId='btnAddBlockedTag'
+                                    btnClassName='fab submit sectionTitleButton'
+                                    btnTitle='Add'
+                                    btnIcon='add'
+                                />
+                                <div className='fieldDescription'>
+                                    {globalize.translate('BlockContentWithTagsHelp')}
+                                </div>
+                                <div className='blockedTags' style={{ marginTop: '.5em' }}>
+                                    {blockedTags.map(tag => {
+                                        return <TagList
+                                            key={tag}
+                                            tag={tag}
+                                            tagType='blockedTag'
+                                            removeTagCallback={removeBlockedTagsTagsCallback}
+                                        />;
+                                    })}
+                                </div>
+                            </div>
+                        </UserEditCard>
                     </div>
                 </div>
-                <div>
+
+                <div className='uecActions'>
                     <Button
                         type='submit'
                         className='raised button-submit block'

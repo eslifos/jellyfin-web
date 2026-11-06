@@ -2,7 +2,7 @@ import React, { useMemo } from 'react';
 import globalize from 'lib/globalize';
 import Widget from './Widget';
 import type { TaskInfo } from '@jellyfin/sdk/lib/generated-client/models/task-info';
-import Paper from '@mui/material/Paper';
+import PendingActionsIcon from '@mui/icons-material/PendingActions';
 import { TaskState } from '@jellyfin/sdk/lib/generated-client/models/task-state';
 import Typography from '@mui/material/Typography';
 import TaskProgress from 'apps/dashboard/features/tasks/components/TaskProgress';
@@ -24,9 +24,11 @@ const RunningTasksWidget = ({ tasks }: RunningTasksWidgetProps) => {
         <Widget
             title={globalize.translate('HeaderRunningTasks')}
             href='/dashboard/tasks'
+            icon={<PendingActionsIcon />}
+            accentColor='#ff9800'
         >
-            <Paper sx={{ padding: 2 }}>
-                <Stack spacing={2} maxWidth={'330px'}>
+            <Box sx={{ px: 1, pb: 0.5 }}>
+                <Stack spacing={2} >
                     {runningTasks.map((task => (
                         <Box key={task.Id}>
                             <Typography>{task.Name}</Typography>
@@ -34,7 +36,7 @@ const RunningTasksWidget = ({ tasks }: RunningTasksWidgetProps) => {
                         </Box>
                     )))}
                 </Stack>
-            </Paper>
+            </Box>
         </Widget>
     );
 };

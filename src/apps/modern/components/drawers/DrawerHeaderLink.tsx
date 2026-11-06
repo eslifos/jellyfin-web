@@ -7,10 +7,11 @@ import React from 'react';
 import { useSystemInfo } from 'hooks/useSystemInfo';
 import ListItemLink from 'components/ListItemLink';
 
-import appIcon from '@jellyfin/ux-web/icon-transparent.png';
+import { useCustomLogo } from 'utils/customLogo';
 
 const DrawerHeaderLink = () => {
     const { data: systemInfo } = useSystemInfo();
+    const { iconUrl: appIcon } = useCustomLogo();
 
     return (
         <ListItemLink to='/'>

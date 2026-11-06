@@ -7,6 +7,7 @@ import { useLogEntries } from 'apps/dashboard/features/activity/api/useLogEntrie
 import subSeconds from 'date-fns/subSeconds';
 import Skeleton from '@mui/material/Skeleton';
 import Stack from '@mui/material/Stack';
+import HistoryIcon from '@mui/icons-material/History';
 
 const ActivityLogWidget = () => {
     const dayBefore = useMemo(() => (
@@ -24,6 +25,8 @@ const ActivityLogWidget = () => {
         <Widget
             title={globalize.translate('HeaderActivity')}
             href='/dashboard/activity?useractivity=true'
+            icon={<HistoryIcon />}
+            accentColor='#aa5cc3'
         >
             {isPending ? (
                 <Stack spacing={2}>
@@ -33,7 +36,7 @@ const ActivityLogWidget = () => {
                     <Skeleton variant='rounded' height={60} />
                 </Stack>
             ) : (
-                <List sx={{ bgcolor: 'background.paper' }}>
+                <List disablePadding>
                     {logs?.Items?.map(entry => (
                         <ActivityListItem
                             key={entry.Id}

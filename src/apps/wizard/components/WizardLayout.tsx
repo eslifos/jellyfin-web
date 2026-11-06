@@ -2,9 +2,7 @@ import React from 'react';
 import Box from '@mui/material/Box';
 import Paper from '@mui/material/Paper';
 
-// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-// @ts-ignore
-import bannerLight from '@jellyfin/ux-web/banner-light.png';
+import { useCustomLogo } from 'utils/customLogo';
 
 import WizardBackground from './WizardBackground';
 
@@ -19,8 +17,9 @@ interface WizardLayoutProps {
  * Renders the animated background, the Jellyfin logo, and a glassmorphism card
  * containing the step-specific content.
  */
-const WizardLayout = ({ children, maxWidth = 640 }: WizardLayoutProps) => (
-    <Box
+const WizardLayout = ({ children, maxWidth = 640 }: WizardLayoutProps) => {
+    const { bannerUrl: bannerLight } = useCustomLogo();
+    return (<Box
         sx={{
             minHeight: '100vh',
             display: 'flex',
@@ -80,7 +79,7 @@ const WizardLayout = ({ children, maxWidth = 640 }: WizardLayoutProps) => (
         >
             {children}
         </Paper>
-    </Box>
-);
+    </Box>);
+};
 
 export default WizardLayout;

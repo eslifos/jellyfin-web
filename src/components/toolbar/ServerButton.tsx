@@ -1,11 +1,12 @@
-import icon from '@jellyfin/ux-web/icon-transparent.png';
 import Button from '@mui/material/Button/Button';
 import React, { FC } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useSystemInfo } from 'hooks/useSystemInfo';
+import { useCustomLogo } from 'utils/customLogo';
 
 const ServerButton: FC = () => {
+    const { iconUrl: icon } = useCustomLogo();
     const {
         data: systemInfo,
         isPending

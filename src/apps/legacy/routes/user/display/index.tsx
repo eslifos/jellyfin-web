@@ -1,24 +1,17 @@
 /**
  * DisplayPreferencesPage — React migration of the legacy display/visualization settings page.
  *
- * Two-column grid with custom collapsible glassmorphism cards.
+ * Two-column grid with custom collapsible glassmorphism cards (see ../components/PreferencesUi).
  * Uses manual expand/collapse via useState instead of MUI Accordion to avoid event conflicts.
  */
 import React, { type FC, useCallback, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
 import CircularProgress from '@mui/material/CircularProgress';
 import Divider from '@mui/material/Divider';
-import FormControlLabel from '@mui/material/FormControlLabel';
 import MenuItem from '@mui/material/MenuItem';
-import Paper from '@mui/material/Paper';
-import Snackbar from '@mui/material/Snackbar';
 import TextField from '@mui/material/TextField';
-import Typography from '@mui/material/Typography';
-import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CodeIcon from '@mui/icons-material/Code';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import InfoIcon from '@mui/icons-material/Info';
 import LanguageIcon from '@mui/icons-material/Language';
 import PaletteIcon from '@mui/icons-material/Palette';
@@ -35,99 +28,10 @@ import { SETTING_KEY as LAYOUT_SETTING_KEY } from 'components/layoutManager';
 import { pluginManager } from 'components/pluginManager';
 import { PluginType } from 'constants/pluginType';
 import { useLocalizationOptions, useLocalizationCountries } from 'apps/wizard/api/useLocalizationOptions';
+import { Card, Check, Num, SavedSnackbar, Sel, fieldSx } from '../components/PreferencesUi';
 
 interface Theme { id: string; name: string; }
 interface Screensaver { id: string; name: string; }
-
-const menuPaper = {
-    background: 'rgba(8,10,22,0.96)',
-    backdropFilter: 'blur(24px) saturate(1.5)',
-    border: '1px solid rgba(0,164,220,0.2)',
-    borderRadius: '14px',
-    boxShadow: '0 16px 48px rgba(0,0,0,0.6)',
-    '& .MuiMenuItem-root': {
-        color: 'rgba(255,255,255,0.75)', borderRadius: '8px', mx: 0.5, my: 0.15, fontSize: '0.88rem',
-        '&:hover': { background: 'rgba(0,164,220,0.12)', color: '#00a4dc' },
-        '&.Mui-selected': { background: 'rgba(0,164,220,0.2)', color: '#00a4dc' }
-    }
-};
-
-const fieldSx = {
-    mb: 1.5,
-    '& .MuiFilledInput-root': {
-        background: 'rgba(255,255,255,0.04)', borderRadius: '12px',
-        border: '1px solid rgba(0,164,220,0.18)', transition: 'all 0.2s',
-        '&:before, &:after': { display: 'none' },
-        '&:hover': { background: 'rgba(0,164,220,0.07)', borderColor: 'rgba(0,164,220,0.35)' },
-        '&.Mui-focused': { background: 'rgba(0,164,220,0.08)', borderColor: '#00a4dc', boxShadow: '0 0 0 3px rgba(0,164,220,0.12)' }
-    },
-    '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem', letterSpacing: '0.6px', textTransform: 'uppercase' },
-    '& .MuiInputLabel-root.Mui-focused': { color: '#00a4dc' },
-    '& .MuiSelect-select, & .MuiInputBase-input': { color: 'rgba(255,255,255,0.9)' },
-    '& .MuiSvgIcon-root': { color: 'rgba(255,255,255,0.4)' },
-    '& .MuiFormHelperText-root': { color: 'rgba(255,255,255,0.35)', fontSize: '0.72rem', lineHeight: 1.4 }
-};
-
-const selectProps = { MenuProps: { PaperProps: { sx: menuPaper } } };
-
-interface CardProps {
-    id: string;
-    title: string;
-    icon: React.ReactNode;
-    accentColor?: string;
-    open: boolean;
-    onToggle: (id: string) => void;
-    children: React.ReactNode;
-}
-
-/** Custom collapsible card — uses onClick directly on the header, no MUI Accordion. */
-const Card: FC<CardProps> = ({ id, title, icon, accentColor = '#00a4dc', open, onToggle, children }) => (
-    <Paper elevation={0} sx={{
-        background: 'rgba(10,12,22,0.78)', backdropFilter: 'blur(20px) saturate(1.4)',
-        WebkitBackdropFilter: 'blur(20px) saturate(1.4)', border: `1px solid ${open ? `${accentColor}40` : 'rgba(0,164,220,0.18)'}`,
-        borderRadius: '18px', mb: 2, overflow: 'hidden', position: 'relative',
-        transition: 'border-color 0.2s, box-shadow 0.2s',
-        boxShadow: open ? `0 8px 32px rgba(0,0,0,0.4), 0 0 20px ${accentColor}15` : 'none'
-    }}>
-        {/* Accent line */}
-        <Box sx={{ position: 'absolute', top: 0, left: '1.5rem', right: '1.5rem', height: '2px', pointerEvents: 'none', background: `linear-gradient(90deg, transparent, ${accentColor} 40%, ${accentColor === '#00a4dc' ? '#aa5cc3' : '#00a4dc'} 60%, transparent)`, borderRadius: '0 0 4px 4px' }} />
-
-        {/* Header — clickable */}
-        <Box
-            onClick={() => onToggle(id)}
-            sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2.5, py: 1.5, cursor: 'pointer', userSelect: 'none', '&:hover': { background: 'rgba(255,255,255,0.03)' } }}
-        >
-            <Box sx={{ color: accentColor, display: 'flex', '& svg': { fontSize: '1rem' } }}>{icon}</Box>
-            <Typography variant='overline' sx={{ flex: 1, fontSize: '0.7rem', letterSpacing: '1.5px', color: accentColor, fontWeight: 700 }}>{title}</Typography>
-            <ExpandMoreIcon sx={{ color: accentColor, fontSize: '1.2rem', transition: 'transform 0.25s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }} />
-        </Box>
-
-        {/* Content */}
-        <Box sx={{ overflow: 'hidden', maxHeight: open ? '2000px' : 0, transition: 'max-height 0.35s ease', px: 2.5, pb: open ? 2.5 : 0 }}>
-            {children}
-        </Box>
-    </Paper>
-);
-
-const Sel: FC<{ label: string; value: string; onChange: (v: string) => void; helper?: string; children: React.ReactNode }> =
-    ({ label, value, onChange, helper, children }) => (
-        <TextField select label={label} value={value} onChange={e => onChange(e.target.value)} fullWidth variant='filled' helperText={helper} SelectProps={selectProps} sx={fieldSx}>{children}</TextField>
-    );
-
-const Num: FC<{ label: string; value: string; onChange: (v: string) => void; helper?: string; min?: number; max?: number }> =
-    ({ label, value, onChange, helper, min = 0, max = 9999 }) => (
-        <TextField label={label} type='number' value={value} onChange={e => onChange(e.target.value)} fullWidth variant='filled' helperText={helper} inputProps={{ min, max, step: 1 }} sx={fieldSx} />
-    );
-
-const Check: FC<{ label: string; desc?: string; checked: boolean; onChange: (v: boolean) => void; color?: string }> =
-    ({ label, desc, checked, onChange, color = '#00a4dc' }) => (
-        <Box sx={{ py: 0.4 }}>
-            <FormControlLabel
-                control={<Checkbox checked={checked} onChange={e => onChange(e.target.checked)} sx={{ color: 'rgba(255,255,255,0.3)', '&.Mui-checked': { color } }} />}
-                label={<Box><Typography sx={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.82)' }}>{label}</Typography>{desc && <Typography sx={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>{desc}</Typography>}</Box>}
-            />
-        </Box>
-    );
 
 const DisplayPreferencesPage: FC = () => {
     const [ searchParams ] = useSearchParams();
@@ -305,9 +209,7 @@ const DisplayPreferencesPage: FC = () => {
                 </Button>
             </Box>
 
-            <Snackbar open={saved} autoHideDuration={3000} onClose={() => setSaved(false)} anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
-                message={<Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}><CheckCircleIcon sx={{ color: '#4caf50', fontSize: '1.1rem' }} /><Typography sx={{ fontSize: '0.88rem' }}>{globalize.translate('SettingsSaved')}</Typography></Box>}
-                ContentProps={{ sx: { background: 'rgba(8,10,22,0.95)', backdropFilter: 'blur(20px)', border: '1px solid rgba(0,164,220,0.2)', borderRadius: 2 } }} />
+            <SavedSnackbar open={saved} onClose={() => setSaved(false)} />
         </Page>
     );
 };

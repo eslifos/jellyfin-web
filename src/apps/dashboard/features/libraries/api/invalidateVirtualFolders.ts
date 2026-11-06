@@ -4,11 +4,13 @@ import type { VirtualFolderInfo } from '@jellyfin/sdk/lib/generated-client/model
 import { queryClient } from 'utils/query/queryClient';
 
 import { QUERY_KEY } from './useVirtualFolders';
+import { QUERY_KEY as STATS_QUERY_KEY } from './useLibraryStats';
 
 /** Invalidates queries related to libraries/virtual folders. */
 export const invalidateVirtualFolders = (user?: UserDto, virtualFolder?: VirtualFolderInfo) => {
     // Admin API - Virtual Folders
     void queryClient.invalidateQueries({ queryKey: [QUERY_KEY] });
+    void queryClient.invalidateQueries({ queryKey: [STATS_QUERY_KEY] });
 
     if (user) {
         // User API - Views

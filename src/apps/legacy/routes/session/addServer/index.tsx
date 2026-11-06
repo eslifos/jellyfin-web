@@ -11,13 +11,14 @@ import { useNavigate } from 'react-router-dom';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import bannerLight from '@jellyfin/ux-web/banner-light.png';
+import { useCustomLogo } from 'utils/customLogo';
 
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import Dashboard from 'utils/dashboard';
 import WizardBackground from 'apps/wizard/components/WizardBackground';
 
 const AddServerPage = () => {
+    const { bannerUrl: bannerLight } = useCustomLogo();
     const navigate = useNavigate();
     const [ serverUrl, setServerUrl ] = useState('');
     const [ connecting, setConnecting ] = useState(false);

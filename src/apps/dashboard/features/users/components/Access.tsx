@@ -240,13 +240,14 @@ const Access = ({ userId }: AccessProps) => {
     }, [loadData]);
 
     return (
-        <div ref={element}>
+        <div ref={element} className='userEditCards'>
             <Toast
                 open={isSettingsSavedToastOpen}
                 onClose={handleToastClose}
                 message={globalize.translate('SettingsSaved')}
             />
             <form className='userLibraryAccessForm'>
+                <div className='uecGrid'>
                 <AccessContainer
                     containerClassName='folderAccessContainer'
                     headerTitle='HeaderLibraryAccess'
@@ -316,8 +317,8 @@ const Access = ({ userId }: AccessProps) => {
                         />
                     ))}
                 </AccessContainer>
-                <br />
-                <div>
+                </div>
+                <div className='uecActions'>
                     <Button
                         type='submit'
                         className='raised button-submit block'

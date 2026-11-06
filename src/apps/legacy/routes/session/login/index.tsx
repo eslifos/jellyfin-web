@@ -19,11 +19,12 @@ import PhonelinkLockIcon from '@mui/icons-material/PhonelinkLock';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import bannerLight from '@jellyfin/ux-web/banner-light.png';
+import { useCustomLogo } from 'utils/customLogo';
 
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import appSettings from 'scripts/settings/appSettings';
 import Dashboard from 'utils/dashboard';
+import { getPostLoginUrl } from 'utils/profiles';
 import WizardBackground from 'apps/wizard/components/WizardBackground';
 
 interface PublicUser {
@@ -34,6 +35,7 @@ interface PublicUser {
 }
 
 const LoginPage = () => {
+    const { bannerUrl: bannerLight } = useCustomLogo();
     const [ searchParams ] = useSearchParams();
     const navigate = useNavigate();
     const [ qcCode, setQcCode ] = useState<string | null>(null);
@@ -89,7 +91,7 @@ const LoginPage = () => {
             const result = await apiClient.authenticateUserByName(name, pass);
             appSettings.enableAutoLogin(rememberMe);
             Dashboard.onServerChanged(result.User?.Id, result.AccessToken, apiClient);
-            Dashboard.navigate(getTargetUrl());
+            Dashboard.navigate(await getPostLoginUrl(getTargetUrl(), apiClient));
         } catch (e: unknown) {
             const status = (e as { status?: number })?.status;
             if (status === 401) setError('Usuario o contraseña incorrectos.');
@@ -133,7 +135,7 @@ const LoginPage = () => {
                         setQcCode(null);
                         const result = await apiClient.quickConnect(data.Secret);
                         Dashboard.onServerChanged(result.User?.Id, result.AccessToken, apiClient);
-                        Dashboard.navigate(getTargetUrl());
+                        Dashboard.navigate(await getPostLoginUrl(getTargetUrl(), apiClient));
                     }
                 }, 5000);
             })

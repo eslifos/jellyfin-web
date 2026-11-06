@@ -11,12 +11,13 @@ import { useNavigate } from 'react-router-dom';
 
 // eslint-disable-next-line @typescript-eslint/ban-ts-comment
 // @ts-ignore
-import bannerLight from '@jellyfin/ux-web/banner-light.png';
+import { useCustomLogo } from 'utils/customLogo';
 
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import WizardBackground from 'apps/wizard/components/WizardBackground';
 
 const ForgotPasswordPinPage = () => {
+    const { bannerUrl: bannerLight } = useCustomLogo();
     const navigate = useNavigate();
     const [ pin, setPin ] = useState('');
     const [ submitting, setSubmitting ] = useState(false);

@@ -21,33 +21,40 @@ interface MetricDefinition {
 
 interface CardDefinition {
     Icon: typeof SvgIcon
+    color: string
     metrics: MetricDefinition[]
 }
 
 const CARD_DEFINITIONS: CardDefinition[] = [
     {
         Icon: Movie,
+        color: '#00a4dc',
         metrics: [{ key: 'MovieCount', i18n: 'Movies' }]
     }, {
         Icon: Tv,
+        color: '#aa5cc3',
         metrics: [
             { key: 'SeriesCount', i18n: 'Series' },
             { key: 'EpisodeCount', i18n: 'Episodes' }
         ]
     }, {
         Icon: MusicNote,
+        color: '#e91e63',
         metrics: [
             { key: 'AlbumCount', i18n: 'Albums' },
             { key: 'SongCount', i18n: 'Songs' }
         ]
     }, {
         Icon: MusicVideo,
+        color: '#ff9800',
         metrics: [{ key: 'MusicVideoCount', i18n: 'MusicVideos' }]
     }, {
         Icon: Book,
+        color: '#ffca28',
         metrics: [{ key: 'BookCount', i18n: 'Books' }]
     }, {
         Icon: VideoLibrary,
+        color: '#4caf50',
         metrics: [{ key: 'BoxSetCount', i18n: 'Collections' }]
     }
 ];
@@ -66,8 +73,9 @@ const ItemCountsWidget = () => {
                 // Check if the metrics are present in counts
                 || def.metrics.some(({ key }) => counts?.[key])
             ))
-            .map(({ Icon, metrics }) => ({
+            .map(({ Icon, color, metrics }) => ({
                 Icon,
+                color,
                 metrics: metrics.map(({ i18n, key }) => ({
                     label: globalize.translate(i18n),
                     value: counts?.[key]

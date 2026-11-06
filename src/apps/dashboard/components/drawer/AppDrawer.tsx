@@ -5,11 +5,7 @@ import React, { FC } from 'react';
 import DrawerHeaderLink from 'apps/modern/components/drawers/DrawerHeaderLink';
 import ResponsiveDrawer, { ResponsiveDrawerProps } from 'components/ResponsiveDrawer';
 
-import ServerDrawerSection from './sections/ServerDrawerSection';
-import DevicesDrawerSection from './sections/DevicesDrawerSection';
-import LiveTvDrawerSection from './sections/LiveTvDrawerSection';
-import AdvancedDrawerSection from './sections/AdvancedDrawerSection';
-import PluginDrawerSection from './sections/PluginDrawerSection';
+import DrawerSections from './DrawerSections';
 
 const AppDrawer: FC<ResponsiveDrawerProps> = ({
     open = false,
@@ -26,11 +22,7 @@ const AppDrawer: FC<ResponsiveDrawerProps> = ({
                 <DrawerHeaderLink />
             </ListItem>
         </List>
-        <ServerDrawerSection />
-        <DevicesDrawerSection />
-        <LiveTvDrawerSection />
-        <PluginDrawerSection />
-        <AdvancedDrawerSection />
+        <DrawerSections />
     </ResponsiveDrawer>
 );
 

@@ -218,6 +218,7 @@ const UserNew = () => {
             <Toast
                 open={isErrorToastOpen}
                 onClose={handleToastClose}
+                severity='error'
                 message={globalize.translate('ErrorDefault')}
             />
             <div ref={element} className='content-primary'>

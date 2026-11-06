@@ -25,6 +25,7 @@ import taskButton from './scripts/taskbutton';
 import { pageClassOn, serverAddress } from './utils/dashboard';
 import Events from './utils/events';
 import { updateApiClientSdk } from 'utils/jellyfin-apiclient/compat';
+import { initCustomLogo } from 'utils/customLogo';
 import { initializeServerConnections } from './scripts/serverNotifications';
 
 import RootApp from './RootApp';
@@ -81,6 +82,9 @@ build: ${__JF_BUILD_VERSION__}`);
     }
     // Initialize the api client
     if (serverUrl) ServerConnections.initApiClient(serverUrl);
+
+    // Load the custom branding logo (if any) as early as possible
+    initCustomLogo(serverUrl);
 
     // Initialize automatic (default) cast target
     initializeAutoCast();

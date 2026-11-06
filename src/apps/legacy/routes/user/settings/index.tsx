@@ -28,6 +28,7 @@ import DevicesOtherIcon from '@mui/icons-material/DevicesOther';
 import CloseIcon from '@mui/icons-material/Close';
 
 import { appHost } from 'components/apphost';
+import { getAvatarGradient, getInitial } from 'components/profiles/avatarColors';
 import layoutManager from 'components/layoutManager';
 import Loading from 'components/loading/LoadingComponent';
 import Page from 'components/Page';
@@ -159,7 +160,7 @@ const SectionCard: FC<SectionCardProps> = ({ title, accentColor = '#00a4dc', chi
 );
 
 const UserSettingsPage: FC = () => {
-    const { user: currentUser } = useApi();
+    const { api, user: currentUser } = useApi();
     const [ searchParams ] = useSearchParams();
     const { data: isQuickConnectEnabled, isPending: isQuickConnectEnabledPending } = useQuickConnectEnabled();
     const { data: users } = useUsers();
@@ -182,6 +183,9 @@ const UserSettingsPage: FC = () => {
     if (!userId || !user || isQuickConnectEnabledPending) return <Loading />;
 
     const isControlsPageEmpty = !keyboardNavigation.canEnableGamepad() && !layoutManager.tv;
+    const avatarUrl = api && user.Id && user.PrimaryImageTag ?
+        `${api.basePath}/Users/${user.Id}/Images/Primary?tag=${user.PrimaryImageTag}` :
+        undefined;
 
     return (
         <Page
@@ -195,14 +199,17 @@ const UserSettingsPage: FC = () => {
                 {/* Avatar + nombre del usuario */}
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 3.5 }}>
                     <Avatar
+                        src={avatarUrl}
+                        alt={user.Name ?? undefined}
                         sx={{
                             width: 56, height: 56,
                             border: '2px solid rgba(0,164,220,0.4)',
                             boxShadow: '0 0 16px rgba(0,164,220,0.25)',
-                            bgcolor: 'rgba(0,164,220,0.2)'
+                            background: avatarUrl ? 'rgba(0,164,220,0.2)' : getAvatarGradient(user.Name),
+                            color: '#fff', fontWeight: 700, fontSize: '1.5rem'
                         }}
                     >
-                        <AccountCircleIcon sx={{ fontSize: '2rem', color: '#00a4dc' }} />
+                        {getInitial(user.Name)}
                     </Avatar>
                     <Box>
                         <Typography sx={{ fontWeight: 700, fontSize: '1.3rem', background: 'linear-gradient(135deg, #fff 30%, #00a4dc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
