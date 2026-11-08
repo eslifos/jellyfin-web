@@ -1,5 +1,8 @@
 import Analytics from '@mui/icons-material/Analytics';
+import BarChart from '@mui/icons-material/BarChart';
 import Devices from '@mui/icons-material/Devices';
+import History from '@mui/icons-material/History';
+import PeopleAlt from '@mui/icons-material/PeopleAlt';
 import List from '@mui/material/List';
 import ListItem from '@mui/material/ListItem';
 import ListItemIcon from '@mui/material/ListItemIcon';
@@ -34,6 +37,30 @@ const DevicesDrawerSection = () => {
                         <Analytics />
                     </ListItemIcon>
                     <ListItemText primary={globalize.translate('HeaderActivity')} />
+                </ListItemLink>
+            </ListItem>
+            <ListItem disablePadding>
+                <ListItemLink to='/dashboard/stats'>
+                    <ListItemIcon>
+                        <BarChart />
+                    </ListItemIcon>
+                    <ListItemText primary={globalize.translate('StsTitle')} />
+                </ListItemLink>
+            </ListItem>
+            <ListItem disablePadding>
+                <ListItemLink to='/dashboard/stats/users'>
+                    <ListItemIcon>
+                        <PeopleAlt />
+                    </ListItemIcon>
+                    <ListItemText primary={globalize.translate('PvuTitle')} />
+                </ListItemLink>
+            </ListItem>
+            <ListItem disablePadding>
+                <ListItemLink to='/dashboard/history'>
+                    <ListItemIcon>
+                        <History />
+                    </ListItemIcon>
+                    <ListItemText primary={globalize.translate('HisTitle')} />
                 </ListItemLink>
             </ListItem>
         </List>

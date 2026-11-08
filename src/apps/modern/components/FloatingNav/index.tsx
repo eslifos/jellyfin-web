@@ -13,6 +13,7 @@ import IconButton from '@mui/material/IconButton';
 import Tooltip from '@mui/material/Tooltip';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
+import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
@@ -117,6 +118,17 @@ const FloatingNav = () => {
                     sx={navBtnSx(isActive('/home'))}
                 >
                     <HomeRoundedIcon />
+                </IconButton>
+            </Tooltip>
+
+            {/* Coming up */}
+            <Tooltip title={globalize.translate('UpcTitle')} placement='top'>
+                <IconButton
+                    onClick={() => navigate('/upcoming')}
+                    aria-label={globalize.translate('UpcTitle')}
+                    sx={navBtnSx(isActive('/upcoming'))}
+                >
+                    <CalendarMonthRoundedIcon />
                 </IconButton>
             </Tooltip>
 

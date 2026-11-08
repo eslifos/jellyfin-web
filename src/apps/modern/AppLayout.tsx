@@ -1,10 +1,11 @@
-import React, { StrictMode, useCallback, useState } from 'react';
+import React, { StrictMode, useCallback, useEffect, useState } from 'react';
 import Box from '@mui/material/Box';
 import { type Theme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { Outlet, useLocation } from 'react-router-dom';
 
 import AppBody from 'components/AppBody';
+import { initCardBadges } from 'components/cardbuilder/cardBadges';
 import CustomCss from 'components/CustomCss';
 import OffsetAppBar from 'components/OffsetAppBar';
 import ThemeCss from 'components/ThemeCss';
@@ -23,6 +24,11 @@ export const Component = () => {
     const [ isDrawerActive, setIsDrawerActive ] = useState(false);
     const { user } = useApi();
     const location = useLocation();
+
+    // Poster overlays (resolution, audio, ratings...) on every card
+    useEffect(() => {
+        if (user) initCardBadges();
+    }, [ user ]);
 
     const isMediumScreen = useMediaQuery((t: Theme) => t.breakpoints.up('md'));
     const isDrawerAvailable = isDrawerPath(location.pathname) && Boolean(user) && !isMediumScreen;

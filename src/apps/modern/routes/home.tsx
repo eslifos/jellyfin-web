@@ -8,10 +8,13 @@ import layoutManager from '../../../components/layoutManager';
 import Page from '../../../components/Page';
 import { EventType } from 'constants/eventType';
 import Events from 'utils/events';
+import HomeLibraryNav from '../components/HomeLibraryNav';
+import HomeHero from '../components/HomeHero';
 
 import '../../../elements/emby-tabs/emby-tabs';
 import '../../../elements/emby-button/emby-button';
 import '../../../elements/emby-scroller/emby-scroller';
+import './homeRows.scss';
 
 type OnResumeOptions = {
     autoFocus?: boolean;
@@ -175,6 +178,8 @@ const Home = () => {
                 ]}
             >
                 <div className='tabContent pageTabContent' id='homeTab' data-index='0'>
+                    <HomeLibraryNav />
+                    <HomeHero />
                     <div className='sections'></div>
                 </div>
                 <div className='tabContent pageTabContent' id='favoritesTab' data-index='1'>

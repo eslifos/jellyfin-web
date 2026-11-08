@@ -1,84 +1,94 @@
 <div id="itemDetailPage" data-role="page" class="page libraryPage itemDetailPage noSecondaryNavPage selfBackdropPage" data-backbutton="true">
-    <div id="itemBackdrop" class="itemBackdrop"></div>
-
-    <div class="detailLogo"></div>
-
-    <div class="detailPageWrapperContainer">
-        <div class="detailPagePrimaryContainer">
-            <div class="detailImageContainer hide-mobile"></div>
-
-            <div class="detailRibbon padded-left padded-right">
-                <div class="infoWrapper">
-                    <div class="detailImageContainer hide-desktop hide-tv"></div>
-                    <div class="nameContainer"></div>
-                    <div class="itemMiscInfo itemMiscInfo-primary" style="margin-bottom: 0.6em;"></div>
-                    <div class="itemMiscInfo itemMiscInfo-secondary" style="margin-bottom: 0.6em;"></div>
+    <div class="cosmicHero">
+        <div id="itemBackdrop" class="itemBackdrop cosmicHeroBackdrop"></div>
+        <div class="cosmicHeroShade"></div>
+        <div class="cosmicHeroBody padded-left padded-right">
+            <div class="detailImageContainer cosmicHeroPoster"></div>
+            <div class="cosmicHeroInfo">
+                <div class="detailLogo"></div>
+                <div class="nameContainer"></div>
+                <div class="itemMiscInfo itemMiscInfo-primary"></div>
+                <div class="itemMiscInfo itemMiscInfo-secondary"></div>
+                <div class="cosmicHeroBadges"></div>
+                <p class="itemGenres"></p>
+                <h3 class="tagline"></h3>
+                <div class="cosmicHeroOverview">
+                    <p class="overview"></p>
+                    <div class="overview-controls">
+                        <a class="overview-expand hide" is="emby-linkbutton" href="#">${ShowMore}</a>
+                    </div>
                 </div>
-
+                <div class="cosmicVersions hide"></div>
                 <div class="mainDetailButtons focuscontainer-x">
                     <button is="emby-button" type="button" class="button-flat btnPlay hide detailButton" title="${ButtonResume}" data-action="resume">
                         <div class="detailButton-content">
                             <span class="material-icons detailButton-icon play_arrow" aria-hidden="true"></span>
                         </div>
                     </button>
-
+        
                     <button is="emby-button" type="button" class="button-flat btnReplay hide detailButton" title="${Play}" data-action="play">
                         <div class="detailButton-content">
                             <span class="material-icons detailButton-icon replay" aria-hidden="true"></span>
                         </div>
                     </button>
-
+        
                     <button is="emby-button" type="button" class="button-flat btnDownload hide detailButton" title="${Download}">
                         <div class="detailButton-content">
                             <span class="material-icons detailButton-icon get_app" aria-hidden="true"></span>
                         </div>
                     </button>
-
+        
                     <button is="emby-button" type="button" class="button-flat btnPlayTrailer hide detailButton" title="${ButtonTrailer}">
                         <div class="detailButton-content">
                             <span class="material-icons detailButton-icon theaters" aria-hidden="true"></span>
                         </div>
                     </button>
-
+        
                     <button is="emby-button" type="button" class="button-flat btnInstantMix hide detailButton" title="${HeaderInstantMix}">
                         <div class="detailButton-content">
                             <span class="material-icons detailButton-icon explore" aria-hidden="true"></span>
                         </div>
                     </button>
-
+        
                     <button is="emby-button" type="button" class="button-flat btnShuffle hide detailButton" title="${Shuffle}">
                         <div class="detailButton-content">
                             <span class="material-icons detailButton-icon shuffle" aria-hidden="true"></span>
                         </div>
                     </button>
-
+        
                     <button is="emby-button" type="button" class="button-flat btnCancelSeriesTimer hide detailButton" title="${CancelSeries}">
                         <div class="detailButton-content">
                             <span class="material-icons detailButton-icon delete" aria-hidden="true"></span>
                         </div>
                     </button>
-
+        
                     <button is="emby-button" type="button" class="button-flat btnCancelTimer hide detailButton" title="${StopRecording}">
                         <div class="detailButton-content">
                             <span class="material-icons detailButton-icon stop" aria-hidden="true"></span>
                         </div>
                     </button>
-
+        
                     <button is="emby-playstatebutton" type="button" class="button-flat btnPlaystate hide detailButton" title="">
                         <div class="detailButton-content">
                             <span class="material-icons detailButton-icon check" aria-hidden="true"></span>
                         </div>
                     </button>
-
+        
                     <button is="emby-ratingbutton" type="button" class="button-flat btnUserRating hide detailButton" title="${Rate}">
                         <div class="detailButton-content">
                             <span class="material-icons detailButton-icon favorite" aria-hidden="true"></span>
                         </div>
                     </button>
-
+        
                     <button is="emby-button" type="button" class="button-flat btnSplitVersions hide detailButton" title="${ButtonSplit}">
                         <div class="detailButton-content">
                             <span class="material-icons detailButton-icon call_split" aria-hidden="true"></span>
+                        </div>
+                    </button>
+        
+                    <button is="emby-button" type="button" class="button-flat btnCosmicInfo hide detailButton" title="${DetInfo}">
+                        <div class="detailButton-content">
+                            <span class="material-icons detailButton-icon info" aria-hidden="true"></span>
                         </div>
                     </button>
 
@@ -89,6 +99,11 @@
                     </button>
                 </div>
             </div>
+        </div>
+    </div>
+
+    <div class="detailPageWrapperContainer">
+        <div class="detailPagePrimaryContainer">
 
             <div class="detailPagePrimaryContent padded-right">
                 <div class="detailSection">
@@ -110,12 +125,6 @@
                     <div class="recordingFields hide" style="margin: 0.5em 0 1.5em;"></div>
 
                     <div class="detailSectionContent">
-                        <p class="itemGenres"></p>
-                        <h3 class="tagline"></h3>
-                        <p class="overview"></p>
-                        <div class="overview-controls">
-                            <a class="overview-expand hide" is="emby-linkbutton" href="#">${ShowMore}</a>
-                        </div>
                         <p id="itemBirthday"></p>
                         <p id="itemBirthLocation"></p>
                         <p id="itemDeathDate"></p>

@@ -1,18 +1,19 @@
 /**
  * FloatingDashboardNav — floating glass side navigation for the admin dashboard (desktop).
  *
- * Collapsed: a slim rail of icons. Hovering the rail expands it as an overlay
- * (content does not move). The pin button keeps it expanded and the page
- * content shifts next to it. The pinned state is remembered per browser.
+ * Collapsed: a slim rail of icons; hovering an icon shows its name in a label.
+ * The button at the bottom expands or collapses it and the page content shifts
+ * next to it. The state is remembered per browser.
  */
 import Box from '@mui/material/Box';
 import IconButton from '@mui/material/IconButton';
+import Portal from '@mui/material/Portal';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import KeyboardDoubleArrowLeftIcon from '@mui/icons-material/KeyboardDoubleArrowLeft';
 import KeyboardDoubleArrowRightIcon from '@mui/icons-material/KeyboardDoubleArrowRight';
 import { getDisplayVersion } from '@jellyfin/sdk/lib/utils/versioning';
-import React, { type FC, useCallback, useEffect, useRef, useState } from 'react';
+import React, { type FC, useCallback, useState } from 'react';
 import { Link } from 'react-router-dom';
 
 import { useSystemInfo } from 'hooks/useSystemInfo';
@@ -21,6 +22,7 @@ import globalize from 'lib/globalize';
 import { useCustomLogo } from 'utils/customLogo';
 
 import DrawerSections from './DrawerSections';
+import { NavCollapsedContext } from './navContext';
 
 export const NAV_GAP = 12;
 export const NAV_COLLAPSED_WIDTH = 72;
@@ -64,33 +66,35 @@ interface FloatingDashboardNavProps {
 const FloatingDashboardNav: FC<FloatingDashboardNavProps> = ({ pinned, onTogglePinned }) => {
     const { iconUrl: appIcon } = useCustomLogo();
     const { data: systemInfo } = useSystemInfo();
-    const [ hovered, setHovered ] = useState(false);
-    const hoverTimer = useRef<number>();
-    const expanded = pinned || hovered;
+    // The menu only expands or collapses with the button at the bottom.
+    const expanded = pinned;
 
-    const onMouseEnter = useCallback(() => {
-        window.clearTimeout(hoverTimer.current);
-        hoverTimer.current = window.setTimeout(() => setHovered(true), 120);
-    }, []);
-
-    const onMouseLeave = useCallback(() => {
-        window.clearTimeout(hoverTimer.current);
-        hoverTimer.current = window.setTimeout(() => setHovered(false), 200);
-    }, []);
-
-    useEffect(() => () => window.clearTimeout(hoverTimer.current), []);
+    const [ hoverLabel, setHoverLabel ] = useState<{ text: string; top: number } | null>(null);
 
     const onPinClick = useCallback(() => {
-        setHovered(false);
+        setHoverLabel(null);
         onTogglePinned();
     }, [ onTogglePinned ]);
+
+    /** While collapsed, show the name of the hovered icon next to the rail. */
+    const onItemHover = useCallback((e: React.MouseEvent<HTMLElement>) => {
+        if (expanded) return;
+        const item = (e.target as HTMLElement).closest('.MuiListItemButton-root');
+        const text = item?.querySelector('.MuiListItemText-primary')?.textContent?.trim();
+        if (!item || !text) {
+            setHoverLabel(null);
+            return;
+        }
+        const rect = item.getBoundingClientRect();
+        setHoverLabel(cur => (cur?.text === text ? cur : { text, top: rect.top + rect.height / 2 }));
+    }, [ expanded ]);
+
+    const clearHover = useCallback(() => setHoverLabel(null), []);
 
     return (
         <Box
             component='nav'
             className={`dashFloatingNav ${expanded ? 'dashFloatingNav-expanded' : 'dashFloatingNav-collapsed'}`}
-            onMouseEnter={onMouseEnter}
-            onMouseLeave={onMouseLeave}
             sx={{
                 position: 'fixed',
                 top: NAV_GAP,
@@ -106,9 +110,7 @@ const FloatingDashboardNav: FC<FloatingDashboardNavProps> = ({ pinned, onToggleP
                 WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
                 border: '1px solid rgba(0, 164, 220, 0.2)',
                 borderRadius: '24px',
-                boxShadow: (hovered && !pinned) ?
-                    '0 16px 48px rgba(0,0,0,0.65), 0 0 0 1px rgba(255,255,255,0.04) inset, 0 0 28px rgba(0,164,220,0.18)' :
-                    '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset, 0 0 24px rgba(0,164,220,0.1)',
+                boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset, 0 0 24px rgba(0,164,220,0.1)',
                 transition: 'width 0.25s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.25s',
 
                 // ── List styling ──
@@ -181,13 +183,47 @@ const FloatingDashboardNav: FC<FloatingDashboardNavProps> = ({ pinned, onToggleP
             </Box>
 
             {/* Sections */}
-            <Box sx={{
-                flex: 1, overflowY: 'auto', overflowX: 'hidden', py: 0.5,
-                '&::-webkit-scrollbar': { width: 6 },
-                '&::-webkit-scrollbar-thumb': { background: 'rgba(0,164,220,0.25)', borderRadius: 6 }
-            }}>
-                <DrawerSections />
+            <Box
+                onMouseOver={onItemHover}
+                onMouseLeave={clearHover}
+                onScroll={clearHover}
+                onClickCapture={clearHover}
+                sx={{
+                    flex: 1, overflowY: 'auto', overflowX: 'hidden', py: 0.5,
+                    '&::-webkit-scrollbar': { width: 6 },
+                    '&::-webkit-scrollbar-thumb': { background: 'rgba(0,164,220,0.25)', borderRadius: 6 }
+                }}
+            >
+                <NavCollapsedContext.Provider value={!expanded}>
+                    <DrawerSections />
+                </NavCollapsedContext.Provider>
             </Box>
+
+            {/* Name label for the hovered icon (collapsed rail only) */}
+            {!expanded && hoverLabel && (
+                <Portal>
+                    <Box
+                        role='tooltip'
+                        sx={{
+                            position: 'fixed', zIndex: 1500, pointerEvents: 'none',
+                            left: NAV_GAP + NAV_COLLAPSED_WIDTH + 10, top: hoverLabel.top, transform: 'translateY(-50%)',
+                            px: 1.5, py: 0.75, borderRadius: '10px', whiteSpace: 'nowrap',
+                            fontSize: '0.84rem', fontWeight: 600, color: '#fff',
+                            background: 'rgba(8, 10, 22, 0.95)', border: '1px solid rgba(0,164,220,0.35)',
+                            boxShadow: '0 8px 24px rgba(0,0,0,0.5), 0 0 16px rgba(0,164,220,0.2)',
+                            animation: 'dashNavLabelIn 0.12s ease-out',
+                            '@keyframes dashNavLabelIn': { from: { opacity: 0, transform: 'translate(-4px, -50%)' }, to: { opacity: 1, transform: 'translate(0, -50%)' } },
+                            '&::before': {
+                                content: '""', position: 'absolute', left: -5, top: '50%', width: 8, height: 8,
+                                background: 'rgba(8, 10, 22, 0.95)', borderLeft: '1px solid rgba(0,164,220,0.35)', borderBottom: '1px solid rgba(0,164,220,0.35)',
+                                transform: 'translateY(-50%) rotate(45deg)'
+                            }
+                        }}
+                    >
+                        {hoverLabel.text}
+                    </Box>
+                </Portal>
+            )}
 
             {/* Footer: pin / unpin */}
             <Box sx={{

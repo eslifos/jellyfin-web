@@ -505,7 +505,40 @@ async function getPlaybackInfo(player, apiClient, item, deviceProfile, mediaSour
     return res.data;
 }
 
-function getOptimalMediaSource(apiClient, item, versions) {
+/** Edition of a media source, from "{edition-X}" in its file name ('' = standard edition). */
+export function getEditionKey(source) {
+    const match = /\{edition-([^}]+)\}/i.exec(source?.Path || '');
+    return match ? match[1].trim().toLowerCase() : '';
+}
+
+/** Vertical resolution of a media source (normalised for wide aspect ratios). */
+export function getSourceHeight(source) {
+    const video = (source?.MediaStreams || []).find(s => s.Type === 'Video');
+    if (!video) return 0;
+    return Math.max(video.Height || 0, Math.round((video.Width || 0) * 9 / 16));
+}
+
+/**
+ * Versions of the same edition (4K, 1080p...) are not a user choice: play the highest one the
+ * connection and the device can take without converting the video; when none can, transcode
+ * from the lightest one. Returns null when the edition has a single version.
+ */
+function pickVersionForConnection(versions, requestedId) {
+    const requested = versions.find(v => v.Id === requestedId) || versions[0];
+    const edition = getEditionKey(requested);
+    const candidates = versions
+        .filter(v => getEditionKey(v) === edition)
+        .sort((a, b) => getSourceHeight(b) - getSourceHeight(a));
+    if (candidates.length < 2) return null;
+
+    const direct = candidates.find(v => v.enableDirectPlay || v.SupportsDirectPlay || v.SupportsDirectStream);
+    if (direct) return direct;
+
+    const transcodable = candidates.filter(v => v.SupportsTranscoding);
+    return transcodable[transcodable.length - 1] || candidates[candidates.length - 1];
+}
+
+function getOptimalMediaSource(apiClient, item, versions, requestedId) {
     const promises = versions.map(function (v) {
         return supportsDirectPlay(apiClient, item, v);
     });
@@ -517,6 +550,18 @@ function getOptimalMediaSource(apiClient, item, versions) {
     return Promise.all(promises).then(function (results) {
         for (let i = 0, length = versions.length; i < length; i++) {
             versions[i].enableDirectPlay = results[i] || false;
+        }
+
+        // Same edition in several qualities: choose by connection / device
+        const byConnection = pickVersionForConnection(versions, requestedId || item.Id);
+        if (byConnection) {
+            return byConnection;
+        }
+
+        // A specific edition was asked for
+        const requested = requestedId ? versions.find(v => v.Id === requestedId) : null;
+        if (requested && (requested.enableDirectPlay || requested.SupportsDirectStream || requested.SupportsTranscoding)) {
+            return requested;
         }
 
         // Prefer the played item's own source, transcoding it if needed, over another version
@@ -3011,9 +3056,20 @@ export class PlaybackManager {
         function getPlaybackMediaSource(player, apiClient, deviceProfile, item, mediaSourceId, options) {
             options.isPlayback = true;
 
-            return getPlaybackInfo(player, apiClient, item, deviceProfile, mediaSourceId, null, options).then(function (playbackInfoResult) {
+            // Ask for every version so the server rates each one against the connection and the device;
+            // the version is then chosen inside the requested edition. Falls back to the exact source.
+            const canPickVersion = !!mediaSourceId && [ 'Movie', 'Episode', 'Video', 'MusicVideo' ].includes(item.Type);
+            const infoPromise = canPickVersion ?
+                getPlaybackInfo(player, apiClient, item, deviceProfile, null, null, options).then(result => (
+                    (result?.MediaSources || []).some(s => s.Id === mediaSourceId) ?
+                        result :
+                        getPlaybackInfo(player, apiClient, item, deviceProfile, mediaSourceId, null, options)
+                )) :
+                getPlaybackInfo(player, apiClient, item, deviceProfile, mediaSourceId, null, options);
+
+            return infoPromise.then(function (playbackInfoResult) {
                 if (validatePlaybackInfoResult(self, playbackInfoResult)) {
-                    return getOptimalMediaSource(apiClient, item, playbackInfoResult.MediaSources).then(function (mediaSource) {
+                    return getOptimalMediaSource(apiClient, item, playbackInfoResult.MediaSources, mediaSourceId).then(function (mediaSource) {
                         if (mediaSource) {
                             // Remember whether alternate versions exists
                             mediaSource.hasAlternateVersions = playbackInfoResult.MediaSources.length > 1

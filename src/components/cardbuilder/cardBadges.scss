@@ -1,0 +1,189 @@
+// Poster overlays drawn by cardBadges.ts. Sizes follow the card width (container query units).
+
+.jfBadges {
+    position: absolute;
+    inset: 0;
+    z-index: 1;
+    pointer-events: none;
+    container-type: inline-size;
+    font-family: inherit;
+    font-size: clamp(7px, 4.4cqw, 12px);
+    line-height: 1;
+    color: #fff;
+}
+
+.jfB {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    padding: 0.38em 0.55em;
+    border-radius: 0.5em;
+    background: rgba(8, 10, 22, 0.72);
+    backdrop-filter: blur(6px);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.45);
+    font-weight: 700;
+    letter-spacing: 0.03em;
+    white-space: nowrap;
+
+    b {
+        font-weight: 900;
+    }
+
+    i {
+        font-style: normal;
+    }
+}
+
+.jfB-top {
+    position: absolute;
+    top: 4%;
+    left: 4%;
+    right: 4%;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 0.3em;
+}
+
+.jfB-topleft {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.3em;
+    min-width: 0;
+}
+
+.jfB-res {
+    .jfB-hdr {
+        color: #ff9f1c;
+    }
+
+    .jfB-hdrplus {
+        color: #ffcf33;
+    }
+
+    .jfB-dv {
+        background: linear-gradient(90deg, #7f5af0, #2cb1ff);
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+    }
+}
+
+.jfB-audio .jfB-atmos {
+    color: #4fc3ff;
+}
+
+.jfB-edition {
+    position: absolute;
+    top: calc(4% + 2.2em);
+    left: 4%;
+    max-width: 60%;
+    font-size: 0.85em;
+    font-weight: 800;
+    line-height: 1.15;
+    text-shadow: 0 1px 4px rgba(0, 0, 0, 0.9);
+}
+
+.jfB-net {
+    flex-shrink: 0;
+    font-weight: 900;
+    letter-spacing: 0;
+}
+
+.jfB-net-netflix { color: #e50914; }
+.jfB-net-amazon { color: #00a8e1; }
+.jfB-net-disney { color: #5ec8ff; }
+.jfB-net-hbo { color: #b388ff; }
+.jfB-net-apple { color: #fff; }
+.jfB-net-hulu { color: #1ce783; }
+.jfB-net-paramount { color: #3d8bff; }
+.jfB-net-peacock { color: #ffd34d; }
+
+.jfB-right {
+    position: absolute;
+    right: 4%;
+    top: 50%;
+    transform: translateY(-50%);
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+    gap: 0.35em;
+}
+
+.jfB-rate {
+    flex-direction: column;
+    gap: 0.15em;
+    min-width: 3.2em;
+    font-size: 1.05em;
+    font-weight: 900;
+
+    i {
+        font-size: 1.1em;
+    }
+}
+
+.jfB-rt.fresh i { filter: saturate(1.2); }
+.jfB-star i { color: #ffca28; }
+
+.jfB-bottom {
+    position: absolute;
+    left: 4%;
+    right: 4%;
+    bottom: 4%;
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: flex-end;
+    gap: 0.3em;
+
+    > div:nth-child(2) {
+        text-align: center;
+    }
+
+    > div:last-child {
+        text-align: right;
+    }
+}
+
+.jfB-multi {
+    flex-direction: column;
+    text-align: center;
+    line-height: 1.05;
+    color: #9ef01a;
+    font-size: 0.85em;
+}
+
+.jfB-ribbon {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    width: 34%;
+    aspect-ratio: 1;
+    overflow: hidden;
+
+    span {
+        position: absolute;
+        right: -32%;
+        bottom: 22%;
+        width: 140%;
+        padding: 0.3em 0;
+        transform: rotate(-45deg);
+        text-align: center;
+        font-size: 0.8em;
+        font-weight: 900;
+        color: #1a1300;
+        background: #ffca28;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5);
+    }
+}
+
+// Fresh ribbon takes the bottom-right corner: keep multi audio centered and nothing on the right
+.jfBadges:has(.jfB-ribbon) .jfB-bottom > div:last-child {
+    visibility: hidden;
+}
+
+// Let the card hover menu stay readable
+.card:hover .jfBadges,
+.card:focus-within .jfBadges {
+    opacity: 0.25;
+    transition: opacity 0.2s;
+}

@@ -7,18 +7,13 @@ import React, { FC, StrictMode, useCallback, useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
 import AppBody from 'components/AppBody';
-import OffsetAppBar from 'components/OffsetAppBar';
-import AppToolbar from 'components/toolbar/AppToolbar';
-import ServerButton from 'components/toolbar/ServerButton';
-import { appRouter } from 'components/router/appRouter';
 import ThemeCss from 'components/ThemeCss';
 import { useApi } from 'hooks/useApi';
 import { useLocale } from 'hooks/useLocale';
 
-import AppTabs from './components/AppTabs';
 import AppDrawer from './components/drawer/AppDrawer';
 import FloatingDashboardNav, { getNavOffset, usePinnedNav } from './components/drawer/FloatingDashboardNav';
-import HelpButton from './components/toolbar/HelpButton';
+import DashboardFloatingBar from './components/toolbar/DashboardFloatingBar';
 import { DASHBOARD_APP_PATHS } from './routes/routes';
 
 import './AppOverrides.scss';
@@ -69,31 +64,12 @@ export const Component: FC = () => {
                 }}
             >
                 <StrictMode>
-                    <OffsetAppBar
-                        dense
-                        sx={{
-                            width: `calc(100% - ${navOffset}px)`,
-                            ml: `${navOffset}px`,
-                            transition: 'width 0.25s, margin 0.25s'
-                        }}
-                    >
-                        <AppToolbar
-                            isBackButtonAvailable={appRouter.canGoBack()}
-                            isDrawerAvailable={!isMediumScreen && isDrawerAvailable}
-                            isDrawerOpen={isDrawerOpen}
-                            onDrawerButtonClick={onToggleDrawer}
-                            buttons={
-                                <HelpButton />
-                            }
-                            className='dashboard-appBar'
-                        >
-                            {isMetadataManager && (
-                                <ServerButton />
-                            )}
-
-                            <AppTabs isDrawerOpen={isDrawerOpen} />
-                        </AppToolbar>
-                    </OffsetAppBar>
+                    <DashboardFloatingBar
+                        navOffset={navOffset}
+                        showMenuButton={!isMediumScreen && isDrawerAvailable}
+                        isMenuOpen={isDrawerOpen}
+                        onMenuClick={onToggleDrawer}
+                    />
 
                     {isFloatingNav && (
                         <FloatingDashboardNav pinned={pinned} onTogglePinned={togglePinned} />

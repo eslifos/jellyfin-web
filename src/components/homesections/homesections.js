@@ -7,8 +7,6 @@ import Dashboard from 'utils/dashboard';
 import { queryClient } from 'utils/query/queryClient';
 
 import { loadRecordings } from './sections/activeRecordings';
-import { loadLibraryButtons } from './sections/libraryButtons';
-import { loadLibraryTiles } from './sections/libraryTiles';
 import { loadLiveTV } from './sections/liveTv';
 import { loadNextUp } from './sections/nextUp';
 import { loadRecentlyAdded } from './sections/recentlyAdded';
@@ -141,6 +139,7 @@ export function resume(elem, options) {
 function loadSection(page, apiClient, user, userSettings, userViews, section, index) {
     const elem = page.querySelector('.section' + index);
     const options = { enableOverflow: enableScrollX() };
+    elem.classList.remove('hide');
 
     switch (section) {
         case HomeSectionType.ActiveRecordings:
@@ -150,7 +149,10 @@ function loadSection(page, apiClient, user, userSettings, userViews, section, in
             loadRecentlyAdded(elem, apiClient, user, userViews, options);
             break;
         case HomeSectionType.LibraryButtons:
-            loadLibraryButtons(elem, userViews);
+        case HomeSectionType.SmallLibraryTiles:
+            // "My media" is shown by the floating library bar (HomeLibraryNav) instead
+            elem.innerHTML = '';
+            elem.classList.add('hide');
             break;
         case HomeSectionType.LiveTv:
             return loadLiveTV(elem, apiClient, user, options);
@@ -166,9 +168,7 @@ function loadSection(page, apiClient, user, userSettings, userViews, section, in
         case HomeSectionType.ResumeBook:
             loadResume(elem, apiClient, 'HeaderContinueReading', 'Book', userSettings, options);
             break;
-        case HomeSectionType.SmallLibraryTiles:
-            loadLibraryTiles(elem, userViews, options);
-            break;
+
         default:
             elem.innerHTML = '';
     }

@@ -1,0 +1,196 @@
+// Netflix-style rows for the home screen (Continue watching, Next up, Latest…).
+// Only applies on the home page; the cards keep the cosmic glass look.
+
+$accent: #00a4dc;
+
+// First row slightly over the bottom fade of the hero banner
+.homePage #homeTab > .sections {
+    position: relative;
+    z-index: 2;
+
+    @media (min-width: 900px) {
+        margin-top: -3.5em;
+    }
+}
+
+.homePage .sections {
+    .verticalSection {
+        position: relative;
+        margin-bottom: 1.4em;
+    }
+
+    // ---------- Row titles ----------
+    .sectionTitleContainer-cards {
+        margin-bottom: 0.2em;
+    }
+
+    .sectionTitle-cards {
+        margin: 0;
+        font-size: 1.3em;
+        font-weight: 800;
+        letter-spacing: 0.2px;
+        color: #fff;
+        text-shadow: 0 2px 10px rgba(0, 0, 0, 0.6);
+    }
+
+    .sectionTitleTextButton {
+        .material-icons {
+            color: $accent;
+            opacity: 0;
+            transform: translateX(-8px);
+            transition: opacity 0.25s, transform 0.25s;
+        }
+
+        &:hover,
+        &:focus-visible {
+            .sectionTitle-cards {
+                color: #fff;
+            }
+
+            .material-icons {
+                opacity: 1;
+                transform: none;
+            }
+        }
+    }
+
+    .verticalSection:hover .sectionTitleTextButton .material-icons {
+        opacity: 0.7;
+        transform: none;
+    }
+
+    // ---------- Cards ----------
+    .card {
+        position: relative;
+
+        &:hover,
+        &:focus-within {
+            z-index: 3;
+        }
+    }
+
+    .cardScalable {
+        border-radius: 12px;
+        overflow: hidden;
+        background: rgba(13, 14, 30, 0.8);
+        box-shadow: 0 4px 14px rgba(0, 0, 0, 0.35);
+        transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.28s;
+    }
+
+    .cardImageContainer,
+    .cardContent {
+        border-radius: 12px;
+    }
+
+    .card:hover .cardScalable,
+    .card:focus-within .cardScalable {
+        transform: scale(1.06);
+        box-shadow:
+            0 16px 36px rgba(0, 0, 0, 0.6),
+            0 0 0 1px rgba(0, 164, 220, 0.55),
+            0 0 24px rgba(0, 164, 220, 0.35);
+    }
+
+    // Cards in rows are not "visual" boxes, keep text clean under the image
+    .cardText {
+        color: rgba(255, 255, 255, 0.88);
+        font-weight: 600;
+    }
+
+    .cardText-secondary {
+        color: rgba(255, 255, 255, 0.5);
+        font-weight: 400;
+    }
+
+    // Thin glowing progress bar (Continue watching)
+    .itemProgressBar {
+        height: 4px;
+        background: rgba(255, 255, 255, 0.22);
+    }
+
+    .itemProgressBarForeground {
+        box-shadow: 0 0 8px rgba(0, 164, 220, 0.8);
+    }
+
+    // ---------- Side arrows (glass), shown on row hover ----------
+    .emby-scroller-container {
+        position: relative;
+    }
+
+    .emby-scrollbuttons {
+        position: absolute;
+        inset: 2.4em 0 0;
+        min-width: 0;
+        min-height: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        pointer-events: none;
+        z-index: 5;
+    }
+
+    .emby-scrollbuttons-button {
+        pointer-events: auto;
+        width: 46px;
+        height: 46px;
+        margin: 0 0.5em;
+        border-radius: 50%;
+        color: #fff;
+        background: rgba(8, 10, 22, 0.72);
+        backdrop-filter: blur(16px) saturate(1.4);
+        -webkit-backdrop-filter: blur(16px) saturate(1.4);
+        border: 1px solid rgba(0, 164, 220, 0.3);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.5), 0 0 16px rgba(0, 164, 220, 0.15);
+        opacity: 0;
+        transition: opacity 0.25s, background 0.2s, border-color 0.2s, color 0.2s;
+
+        .material-icons {
+            font-size: 1.8em;
+        }
+
+        &:hover {
+            color: $accent;
+            background: rgba(0, 164, 220, 0.18);
+            border-color: rgba(0, 164, 220, 0.65);
+        }
+
+        &[disabled] {
+            opacity: 0 !important;
+            pointer-events: none;
+        }
+    }
+
+    .verticalSection:hover .emby-scrollbuttons-button {
+        opacity: 1;
+    }
+}
+
+// Touch screens: no hover, keep the native swipe
+@media (hover: none) {
+    .homePage .sections .emby-scrollbuttons {
+        display: none;
+    }
+}
+
+// ---------- Each row inside a glass card ----------
+.homePage .sections .verticalSection {
+    margin: 0 2% 1.4em;
+    padding: 1.1em 0 0.5em;
+    border-radius: 22px;
+    background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+    border: 1px solid rgba(0, 164, 220, 0.14);
+    box-shadow: 0 10px 34px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+    backdrop-filter: blur(14px);
+    -webkit-backdrop-filter: blur(14px);
+    overflow: hidden;
+
+    &:empty {
+        display: none;
+    }
+
+    // The scroller clips inside the rounded card; keep room for the hover zoom
+    .emby-scroller {
+        overflow-y: visible;
+    }
+}

@@ -21,6 +21,13 @@ $drawer-width: 240px;
         position: unset !important;
     }
 
+    // There is no top bar anymore: small gap on top, and room at the bottom
+    // so the floating pill never covers the end of the page.
+    .mainAnimatedPage .content-primary {
+        padding-top: 1rem;
+        padding-bottom: 9rem !important;
+    }
+
     // Fix the padding of the metadata editor
     .metadataEditorPage {
         padding-top: 0 !important;

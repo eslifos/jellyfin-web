@@ -1,0 +1,416 @@
+// Cosmic details page: Netflix-like banner with artwork, logo, info, ratings, versions and
+// actions on top; every section below inside a glass card.
+
+$accent: #00a4dc;
+$glass: rgba(8, 10, 22, 0.62);
+
+@keyframes cosmicHeroZoom {
+    from { transform: scale(1.06); }
+    to { transform: scale(1); }
+}
+
+#itemDetailPage {
+    padding-top: 0 !important;
+
+    // ---------- Banner ----------
+    .cosmicHero {
+        position: relative;
+        display: flex;
+        align-items: flex-end;
+        min-height: 78vh;
+        overflow: hidden;
+
+        @media (max-width: 50em) {
+            min-height: 64vh;
+        }
+    }
+
+    .cosmicHeroBackdrop.itemBackdrop {
+        position: absolute;
+        inset: 0;
+        height: auto !important;
+        margin: 0 !important;
+        background-size: cover;
+        background-position: center 20%;
+        background-attachment: initial !important;
+        mask-image: linear-gradient(to bottom, #000 60%, transparent 100%);
+        animation: cosmicHeroZoom 16s ease-out both;
+
+        .layout-tv & {
+            display: block;
+        }
+    }
+
+    .cosmicHeroShade {
+        position: absolute;
+        inset: 0;
+        pointer-events: none;
+        background:
+            linear-gradient(90deg, rgba(8, 8, 16, 0.94) 0%, rgba(8, 8, 16, 0.68) 38%, rgba(8, 8, 16, 0) 72%),
+            linear-gradient(0deg, #080810 0%, rgba(8, 8, 16, 0) 42%),
+            linear-gradient(180deg, rgba(8, 8, 16, 0.6) 0%, rgba(8, 8, 16, 0) 22%);
+    }
+
+    .cosmicHeroBody {
+        position: relative;
+        z-index: 2;
+        display: flex;
+        align-items: flex-end;
+        gap: 2em;
+        width: 100%;
+        padding-top: 6em;
+        padding-bottom: 2.2em;
+    }
+
+    // Poster only when there is no backdrop (people, books, items without artwork)
+    .cosmicHeroPoster {
+        display: none;
+    }
+
+    .cosmicHero-noBackdrop {
+        min-height: 0;
+
+        .cosmicHeroPoster {
+            display: block;
+            flex-shrink: 0;
+            width: min(240px, 34vw);
+        }
+
+        .cosmicHeroShade {
+            background: radial-gradient(120% 140% at 0% 0%, rgba(0, 164, 220, 0.18), transparent 55%);
+        }
+    }
+
+    .cosmicHeroPoster .card {
+        position: static !important;
+        float: none !important;
+        top: auto !important;
+        left: auto !important;
+        width: 100% !important;
+        max-width: none !important;
+        margin: 0 !important;
+        border-radius: 14px;
+        overflow: hidden;
+        box-shadow: 0 16px 40px rgba(0, 0, 0, 0.6);
+    }
+
+    .cosmicHeroInfo {
+        min-width: 0;
+        max-width: 760px;
+    }
+
+    .detailLogo {
+        position: static !important;
+        width: min(520px, 72vw) !important;
+        height: clamp(80px, 16vh, 160px) !important;
+        margin-bottom: 0.6em;
+        background-position: left bottom !important;
+        filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.6));
+    }
+
+    &.cosmicHasLogo .nameContainer {
+        display: none;
+    }
+
+    .nameContainer {
+        .itemName {
+            margin: 0.15em 0;
+            font-size: clamp(1.8rem, 4.2vw, 3.4rem);
+            font-weight: 900;
+            line-height: 1.05;
+            color: #fff;
+            text-shadow: 0 4px 24px rgba(0, 0, 0, 0.7);
+        }
+
+        .parentName {
+            font-size: clamp(1rem, 1.6vw, 1.3rem);
+            font-weight: 700;
+            color: $accent;
+        }
+    }
+
+    .itemMiscInfo {
+        margin-bottom: 0.45em;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.88);
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+    }
+
+    .itemGenres {
+        margin: 0.35em 0;
+        color: rgba(255, 255, 255, 0.72);
+    }
+
+    .tagline {
+        margin: 0.4em 0;
+        font-style: italic;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.85);
+    }
+
+    .cosmicHeroOverview .overview {
+        margin: 0.5em 0 0.2em;
+        line-height: 1.55;
+        color: rgba(255, 255, 255, 0.86);
+        text-shadow: 0 2px 8px rgba(0, 0, 0, 0.85);
+    }
+
+    .overview-expand {
+        color: $accent;
+        font-weight: 700;
+    }
+
+    // ---------- Chips (resolution, audio, source…) ----------
+    .cosmicHeroBadges {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.4em;
+        margin: 0.5em 0;
+
+        &:empty {
+            display: none;
+        }
+    }
+
+    .cosmicChip {
+        padding: 0.32em 0.7em;
+        border-radius: 8px;
+        font-size: 0.78em;
+        font-weight: 800;
+        letter-spacing: 0.04em;
+        color: rgba(255, 255, 255, 0.92);
+        background: $glass;
+        border: 1px solid rgba(0, 164, 220, 0.28);
+        backdrop-filter: blur(12px);
+
+        b { color: #ff9f1c; }
+    }
+
+    .cosmicChip-edition { color: #ffca28; }
+    .cosmicChip-multi { color: #9ef01a; }
+
+    // ---------- Version / edition buttons ----------
+    .cosmicVersions {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.5em;
+        margin: 1em 0 0.3em;
+    }
+
+    .cosmicVersions-label {
+        margin-right: 0.3em;
+        font-size: 0.72em;
+        font-weight: 800;
+        letter-spacing: 0.15em;
+        text-transform: uppercase;
+        color: rgba(255, 255, 255, 0.55);
+    }
+
+    .cosmicVersion {
+        display: flex;
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.2em;
+        padding: 0.55em 0.95em;
+        border-radius: 14px;
+        font: inherit;
+        color: rgba(255, 255, 255, 0.8);
+        background: $glass;
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        backdrop-filter: blur(16px);
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+            color: #fff;
+            border-color: rgba(0, 164, 220, 0.55);
+            background: rgba(0, 164, 220, 0.12);
+        }
+
+        &.active {
+            color: #fff;
+            border-color: $accent;
+            background: rgba(0, 164, 220, 0.2);
+            box-shadow: 0 0 18px rgba(0, 164, 220, 0.35);
+        }
+    }
+
+    .cosmicVersion-name {
+        font-size: 0.9em;
+        font-weight: 800;
+    }
+
+    .cosmicVersion-tech {
+        font-size: 0.7em;
+        font-weight: 600;
+        color: rgba(255, 255, 255, 0.6);
+    }
+
+    // The old version combo is replaced by the buttons
+    .selectSourceContainer {
+        display: none !important;
+    }
+
+    // ---------- Action buttons ----------
+    .mainDetailButtons {
+        flex-wrap: wrap;
+        gap: 0.6em;
+        margin: 1.3em 0 0;
+    }
+
+    .mainDetailButtons .detailButton {
+        margin: 0 !important;
+        width: 3em;
+        height: 3em;
+        padding: 0;
+        border-radius: 50%;
+        color: rgba(255, 255, 255, 0.9);
+        background: $glass;
+        border: 1px solid rgba(0, 164, 220, 0.3);
+        backdrop-filter: blur(16px);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+        transition: all 0.2s;
+
+        .detailButton-content {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        &:hover {
+            color: $accent;
+            border-color: rgba(0, 164, 220, 0.65);
+            background: rgba(0, 164, 220, 0.16);
+            transform: translateY(-1px);
+        }
+    }
+
+    // Play / resume: big glowing cyan button
+    .mainDetailButtons .btnPlay,
+    .mainDetailButtons .btnReplay {
+        width: 3.8em;
+        height: 3.8em;
+        color: #fff;
+        background: linear-gradient(135deg, #00a4dc 0%, #0077b6 100%);
+        border-color: rgba(120, 220, 255, 0.5);
+        box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45), 0 0 22px rgba(0, 164, 220, 0.5);
+
+        .detailButton-icon {
+            font-size: 2em;
+        }
+
+        &:hover {
+            color: #fff;
+            background: linear-gradient(135deg, #14b4ec 0%, #0088cc 100%);
+            box-shadow: 0 10px 28px rgba(0, 0, 0, 0.5), 0 0 32px rgba(0, 164, 220, 0.75);
+        }
+    }
+
+    // ---------- Content below the banner ----------
+    .detailPageWrapperContainer {
+        min-height: 0;
+    }
+
+    .detailPagePrimaryContent {
+        padding-left: 3.3% !important;
+        padding-right: 3.3% !important;
+        padding-top: 0;
+    }
+
+    .detailPageSecondaryContainer {
+        padding-right: 3.3%;
+    }
+
+    // Each section in a glass card
+    .detailVerticalSection:not(.hide) {
+        overflow: hidden;
+        margin-bottom: 1.4em !important;
+        padding: 1.1em 1.3em 0.6em;
+        border-radius: 22px;
+        background: linear-gradient(160deg, rgba(255, 255, 255, 0.05), rgba(255, 255, 255, 0.015));
+        border: 1px solid rgba(0, 164, 220, 0.14);
+        box-shadow: 0 10px 34px rgba(0, 0, 0, 0.35), 0 0 0 1px rgba(255, 255, 255, 0.03) inset;
+        backdrop-filter: blur(14px);
+    }
+
+    // The info block under the banner is not shown (main genre and details live in the banner)
+    .detailPagePrimaryContent > .detailSection {
+        display: none !important;
+    }
+
+    .detailVerticalSection .detailVerticalSection {
+        margin: 0 !important;
+        padding: 0;
+        border: 0;
+        background: none;
+        box-shadow: none;
+    }
+
+    .sectionTitle-cards,
+    .detailVerticalSection > .sectionTitle {
+        font-size: 1.25em;
+        font-weight: 800;
+        color: #fff;
+    }
+
+    // Cards hover like the home screen
+    .detailVerticalSection .card .cardScalable {
+        border-radius: 12px;
+        overflow: hidden;
+        transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), box-shadow 0.28s;
+    }
+
+    .detailVerticalSection .card:hover .cardScalable {
+        transform: scale(1.05);
+        box-shadow: 0 14px 32px rgba(0, 0, 0, 0.55), 0 0 0 1px rgba(0, 164, 220, 0.55), 0 0 20px rgba(0, 164, 220, 0.3);
+    }
+}
+
+// "Automatic quality: 4K · 1080P" hint (versions are picked by connection speed)
+#itemDetailPage .cosmicAutoQuality {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.35em;
+    padding: 0.45em 0.85em;
+    border-radius: 999px;
+    font-size: 0.78em;
+    font-weight: 700;
+    color: rgba(255, 255, 255, 0.78);
+    background: rgba(0, 164, 220, 0.1);
+    border: 1px dashed rgba(0, 164, 220, 0.45);
+    cursor: help;
+
+    .material-icons {
+        font-size: 1.25em;
+        color: #00a4dc;
+    }
+}
+
+#itemDetailPage {
+    // Main genre chip in the banner
+    .cosmicChip-genre {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.35em;
+        color: #fff;
+        background: linear-gradient(135deg, rgba(170, 92, 195, 0.55), rgba(0, 164, 220, 0.45));
+        border-color: rgba(200, 160, 255, 0.5);
+
+        .material-icons {
+            font-size: 1.2em;
+        }
+    }
+
+    // Rows (cast, more like this...) stay inside their card
+    .detailVerticalSection:not(.hide) .emby-scroller {
+        margin-left: 0 !important;
+        margin-right: 0 !important;
+        padding-left: 0 !important;
+        padding-right: 0 !important;
+    }
+
+    .detailVerticalSection:not(.hide) > .sectionTitle {
+        padding-right: 0;
+    }
+}

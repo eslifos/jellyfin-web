@@ -22,7 +22,7 @@ import layoutManager from 'components/layoutManager';
 import listView from 'components/listview/listview';
 import loading from 'components/loading/loading';
 import ItemDetailsMetadataList from 'components/itemDetails/ItemDetailsMetadataList';
-import { playbackManager } from 'components/playback/playbackmanager';
+import { getEditionKey, getSourceHeight, playbackManager } from 'components/playback/playbackmanager';
 import { appRouter } from 'components/router/appRouter';
 import itemShortcuts from 'components/shortcuts';
 import { AppFeature } from 'constants/appFeature';
@@ -51,6 +51,8 @@ import 'elements/emby-scroller/emby-scroller';
 import 'elements/emby-select/emby-select';
 
 import 'styles/scrollstyles.scss';
+import './cosmicDetails.scss';
+import { showCosmicInfo } from './cosmicInfoDialog';
 
 /** Item types that use a list view for their children. */
 const LIST_VIEW_TYPES = [
@@ -194,6 +196,144 @@ function renderSeriesTimerEditor(page, item, apiClient, user) {
     hideAll(page, 'btnCancelSeriesTimer');
 }
 
+/** Short tech description of a media source: "1080P · HDR · HEVC · DD+ Atmos". */
+function describeSource(source) {
+    const streams = source.MediaStreams || [];
+    const video = streams.find(s => s.Type === 'Video');
+    const audio = streams.find(s => s.Type === 'Audio' && s.IsDefault) || streams.find(s => s.Type === 'Audio');
+    const parts = [];
+    if (video) {
+        const w = video.Width || 0;
+        const h = video.Height || 0;
+        if (w >= 3200 || h >= 2000) parts.push('4K');
+        else if (w >= 1800 || h >= 1000) parts.push('1080P');
+        else if (w >= 1200 || h >= 700) parts.push('720P');
+        else if (w || h) parts.push('SD');
+        const range = video.VideoRangeType || '';
+        if (range.startsWith('DOVI')) parts.push('DV');
+        else if (range === 'HDR10Plus') parts.push('HDR10+');
+        else if (range === 'HDR10' || range === 'HLG') parts.push('HDR');
+        if (video.Codec) parts.push(video.Codec.toUpperCase());
+    }
+    if (audio?.Codec) {
+        const atmos = /atmos/i.test((audio.Profile || '') + ' ' + (audio.Title || ''));
+        const names = { truehd: 'TrueHD', eac3: 'DD+', ac3: 'DD', dts: 'DTS', aac: 'AAC', flac: 'FLAC', opus: 'Opus' };
+        parts.push((names[audio.Codec.toLowerCase()] || audio.Codec.toUpperCase()) + (atmos ? ' Atmos' : ''));
+    }
+    return parts.join(' · ');
+}
+
+/** Quality label of a version: 4K / 1080P / 720P / SD. */
+function qualityLabel(source) {
+    const h = getSourceHeight(source);
+    if (h >= 2000) return '4K';
+    if (h >= 1000) return '1080P';
+    if (h >= 700) return '720P';
+    return h ? 'SD' : '';
+}
+
+/**
+ * Banner: one button per EDITION (Open Matte, Extended...). Versions of an edition (4K / 1080p)
+ * are not shown as choices: playback picks one by connection speed, so only a hint is shown.
+ */
+function renderVersionButtons(page, mediaSources, selectedId) {
+    const container = page.querySelector('.cosmicVersions');
+    if (!container) return;
+    if (!mediaSources || mediaSources.length < 2) {
+        container.classList.add('hide');
+        container.innerHTML = '';
+        return;
+    }
+
+    // Group versions by edition, best quality first
+    const editions = [];
+    mediaSources.forEach(function (v) {
+        const key = getEditionKey(v);
+        let edition = editions.find(e => e.key === key);
+        if (!edition) {
+            const match = /\{edition-([^}]+)\}/i.exec(v.Path || '');
+            edition = { key, name: match ? match[1].trim() : globalize.translate('DetEditionStandard'), versions: [] };
+            editions.push(edition);
+        }
+        edition.versions.push(v);
+    });
+    editions.forEach(e => {
+        e.versions.sort((a, b) => getSourceHeight(b) - getSourceHeight(a));
+    });
+    editions.sort((a, b) => (a.key === '' ? -1 : 0) - (b.key === '' ? -1 : 0));
+
+    const selected = mediaSources.find(v => v.Id === selectedId) || mediaSources[0];
+    const current = editions.find(e => e.key === getEditionKey(selected)) || editions[0];
+    const qualities = current.versions.map(qualityLabel).filter(Boolean);
+
+    let html = '';
+    if (editions.length > 1) {
+        html += '<span class="cosmicVersions-label">' + escapeHtml(globalize.translate('DetEditions')) + '</span>';
+        html += editions.map(function (e) {
+            const active = e === current ? ' active' : '';
+            const tech = [ ...new Set(e.versions.map(qualityLabel).filter(Boolean)) ].join(' / ') || describeSource(e.versions[0]);
+            return '<button type="button" class="cosmicVersion' + active + '" data-id="' + e.versions[0].Id + '">'
+                + '<span class="cosmicVersion-name">' + escapeHtml(e.name) + '</span>'
+                + (tech ? '<span class="cosmicVersion-tech">' + escapeHtml(tech) + '</span>' : '')
+                + '</button>';
+        }).join('');
+    }
+    if (current.versions.length > 1) {
+        html += '<span class="cosmicAutoQuality" title="' + escapeHtml(globalize.translate('DetAutoQualityHelp')) + '">'
+            + '<span class="material-icons" aria-hidden="true">speed</span>'
+            + escapeHtml(globalize.translate('DetAutoQuality', [ ...new Set(qualities) ].join(' · ')))
+            + '</span>';
+    }
+
+    if (!html) {
+        container.classList.add('hide');
+        container.innerHTML = '';
+        return;
+    }
+    container.classList.remove('hide');
+    container.innerHTML = html;
+
+    container.querySelectorAll('.cosmicVersion').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const select = page.querySelector('.selectSource');
+            if (select.value === btn.dataset.id) return;
+            select.value = btn.dataset.id;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    });
+}
+
+/** Resolution / HDR / audio / source chips in the banner (custom /ItemBadges endpoint). */
+function renderHeroBadges(page, item, apiClient) {
+    const container = page.querySelector('.cosmicHeroBadges');
+    if (!container) return;
+    // Main genre first, as its own highlighted chip
+    const mainGenre = (item.Genres || [])[0];
+    const genreHtml = mainGenre ? '<span class="cosmicChip cosmicChip-genre"><span class="material-icons" aria-hidden="true">theater_comedy</span>' + escapeHtml(mainGenre) + '</span>' : '';
+    container.innerHTML = genreHtml;
+    if (!['Movie', 'Series', 'Season', 'Episode'].includes(item.Type)) return;
+
+    apiClient.ajax({
+        type: 'POST',
+        url: apiClient.getUrl('ItemBadges'),
+        data: JSON.stringify([item.Id]),
+        contentType: 'application/json',
+        dataType: 'json'
+    }).then(function (result) {
+        const b = (result || [])[0];
+        if (!b) return;
+        const chips = [];
+        if (b.Resolution) chips.push('<span class="cosmicChip cosmicChip-res">' + escapeHtml(b.Resolution) + (b.Hdr ? ' <b>' + escapeHtml(b.Hdr) + '</b>' : '') + '</span>');
+        if (b.Audio) chips.push('<span class="cosmicChip">' + escapeHtml(b.Audio) + '</span>');
+        if (b.Source) chips.push('<span class="cosmicChip">' + escapeHtml(b.Source) + '</span>');
+        if (b.Edition) chips.push('<span class="cosmicChip cosmicChip-edition">' + escapeHtml(b.Edition) + '</span>');
+        if (b.AudioLanguages >= 2) chips.push('<span class="cosmicChip cosmicChip-multi">' + (b.AudioLanguages === 2 ? 'DUAL AUDIO' : 'MULTI AUDIO') + '</span>');
+        container.innerHTML = genreHtml + chips.join('');
+    }).catch(function () {
+        // server without the endpoint
+    });
+}
+
 function renderTrackSelections(page, instance, item, forceReload) {
     const select = page.querySelector('.selectSource');
 
@@ -225,6 +365,7 @@ function renderTrackSelections(page, instance, item, forceReload) {
     } else {
         page.querySelector('.selectSourceContainer').classList.add('hide');
     }
+    renderVersionButtons(page, mediaSources, select.value);
 
     if (select.value !== currentValue || forceReload) {
         renderVideoSelections(page, mediaSources);
@@ -514,6 +655,12 @@ function setTrailerButtonVisibility(page, item) {
 }
 
 function renderBackdrop(page, item) {
+    // Cosmic: the artwork lives in the banner on top of the page
+    if (page.querySelector('.cosmicHero')) {
+        clearBackdrop();
+        return;
+    }
+
     if (!layoutManager.mobile && dom.getWindowSize().innerWidth >= 1000) {
         const isBannerEnabled = !layoutManager.tv && userSettings.detailsBanner();
         // If backdrops are disabled, but the header banner is enabled, add a class to the page to disable the transparency
@@ -526,8 +673,8 @@ function renderBackdrop(page, item) {
 }
 
 function renderHeaderBackdrop(page, item, apiClient) {
-    // Details banner is disabled in user settings
-    if (!userSettings.detailsBanner()) {
+    // Details banner is disabled in user settings (the cosmic banner is always on)
+    if (!page.querySelector('.cosmicHero') && !userSettings.detailsBanner()) {
         return false;
     }
 
@@ -562,10 +709,10 @@ function reloadFromItem(instance, page, params, item, user) {
 
     renderLogo(page, item, apiClient);
 
-    // Render the mobile header backdrop
-    if (layoutManager.mobile) {
-        renderHeaderBackdrop(page, item, apiClient);
-    }
+    // Render the header backdrop (banner)
+    const hasHeroBackdrop = renderHeaderBackdrop(page, item, apiClient);
+    page.querySelector('.cosmicHero')?.classList.toggle('cosmicHero-noBackdrop', !hasHeroBackdrop);
+    renderHeroBadges(page, item, apiClient);
 
     renderBackdrop(page, item);
 
@@ -580,6 +727,7 @@ function reloadFromItem(instance, page, params, item, user) {
     const canPlay = reloadPlayButtons(page, item);
 
     setTrailerButtonVisibility(page, item);
+    page.querySelector('.btnCosmicInfo')?.classList.toggle('hide', ![ 'Movie', 'Series', 'Season', 'Episode', 'Video', 'MusicVideo', 'BoxSet', 'Trailer' ].includes(item.Type));
 
     if (item.Type !== 'Program' || canPlay) {
         hideAll(page, 'mainDetailButtons', true);
@@ -701,6 +849,7 @@ function renderLogo(page, item, apiClient) {
     } else {
         detailLogo.classList.add('hide');
     }
+    page.classList.toggle('cosmicHasLogo', !!url && (item.Type === 'Movie' || item.Type === 'Series'));
 }
 
 function showRecordingFields(instance, page, item, user) {
@@ -2125,7 +2274,11 @@ export default function (view, params) {
             splitVersions(self, view, apiClient, params);
         });
         bindAll(view, '.btnMoreCommands', 'click', onMoreCommandsClick);
+        bindAll(view, '.btnCosmicInfo', 'click', function () {
+            if (currentItem) showCosmicInfo(currentItem, view.querySelector('.selectSource').value);
+        });
         view.querySelector('.selectSource').addEventListener('change', function () {
+            renderVersionButtons(view, self._currentPlaybackMediaSources || [], this.value);
             renderVideoSelections(view, self._currentPlaybackMediaSources);
             renderAudioSelections(view, self._currentPlaybackMediaSources);
             renderSubtitleSelections(view, self._currentPlaybackMediaSources);
