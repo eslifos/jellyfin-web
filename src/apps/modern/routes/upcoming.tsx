@@ -38,19 +38,61 @@ const EP_COLOR = '#3987e5';
 const MOVIE_COLOR = '#d95926';
 const locale = () => globalize.getCurrentDateTimeLocale();
 
+/** Upcoming release found on TMDb (server: /Discovery/Upcoming). */
+interface UpcomingRelease {
+    Kind: 'Episode' | 'Movie';
+    TmdbId: number;
+    Title: string;
+    ReleaseDate: string;
+    Overview?: string | null;
+    ImageUrl?: string | null;
+    SeriesId?: string | null;
+    SeriesName?: string | null;
+    SeasonNumber?: number | null;
+    EpisodeNumber?: number | null;
+    CollectionName?: string | null;
+    RelatedItemId?: string | null;
+}
+
+/** Library item, or a TMDb release shown like one. */
+type CalItem = BaseItemDto & { ExternalImage?: string | null; Saga?: string | null; LinkId?: string | null };
+
+const normId = (id?: string | null) => (id || '').replace(/-/g, '').toLowerCase();
+
+const fromRelease = (r: UpcomingRelease): CalItem => (r.Kind === 'Episode' ? {
+    Id: `tmdb-${r.TmdbId}-${r.SeasonNumber}-${r.EpisodeNumber}`,
+    Type: BaseItemKind.Episode,
+    Name: r.Title,
+    SeriesId: r.SeriesId,
+    SeriesName: r.SeriesName,
+    ParentIndexNumber: r.SeasonNumber,
+    IndexNumber: r.EpisodeNumber,
+    PremiereDate: r.ReleaseDate,
+    LocationType: 'Virtual'
+} : {
+    Id: `tmdb-movie-${r.TmdbId}`,
+    Type: BaseItemKind.Movie,
+    Name: r.Title,
+    PremiereDate: r.ReleaseDate,
+    LocationType: 'Virtual',
+    ExternalImage: r.ImageUrl,
+    Saga: r.CollectionName,
+    LinkId: r.RelatedItemId
+});
+
 const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const isAvailable = (i: BaseItemDto) => i.LocationType !== 'Virtual';
 
 /** Several episodes of one series on the same day are shown as one entry. */
 interface Entry {
     key: string;
-    item: BaseItemDto;
+    item: CalItem;
     count: number;
     lastIndex?: number | null;
     available: boolean;
 }
 
-const groupDay = (items: BaseItemDto[]): Entry[] => {
+const groupDay = (items: CalItem[]): Entry[] => {
     const map = new Map<string, Entry>();
     items.forEach(i => {
         const key = i.Type === BaseItemKind.Episode ? `s${i.SeriesId}` : `m${i.Id}`;
@@ -68,7 +110,7 @@ const groupDay = (items: BaseItemDto[]): Entry[] => {
 
 const entryLine = (e: Entry) => {
     const i = e.item;
-    if (i.Type !== BaseItemKind.Episode) return globalize.translate('UpcMovieRelease');
+    if (i.Type !== BaseItemKind.Episode) return i.Saga ? globalize.translate('UpcSagaRelease', i.Saga) : globalize.translate('UpcMovieRelease');
     const ep = e.count > 1 ? `E${i.IndexNumber}–${e.lastIndex}` : `E${i.IndexNumber}`;
     const time = i.PremiereDate && !i.PremiereDate.endsWith('T00:00:00.0000000Z')
         ? ` · ${new Date(i.PremiereDate).toLocaleTimeString(locale(), { hour: 'numeric', minute: '2-digit' })}` : '';
@@ -80,11 +122,12 @@ const EntryChip: FC<{ e: Entry; compact?: boolean }> = ({ e, compact }) => {
     const i = e.item;
     const color = i.Type === BaseItemKind.Episode ? EP_COLOR : MOVIE_COLOR;
     const imgId = i.Type === BaseItemKind.Episode ? i.SeriesId : i.Id;
-    const img = imgId && api ? getImageApi(api).getItemImageUrlById(imgId, ImageType.Primary, { maxHeight: compact ? 60 : 120 }) : undefined;
+    const img = i.ExternalImage || (imgId && api && !imgId.startsWith('tmdb-') ? getImageApi(api).getItemImageUrlById(imgId, ImageType.Primary, { maxHeight: compact ? 60 : 120 }) : undefined);
+    const linkId = i.Type === BaseItemKind.Episode ? (i.SeriesId || i.Id) : (i.LinkId || i.Id);
     const isNew = i.Type === BaseItemKind.Episode && i.IndexNumber === 1;
 
     return (
-        <Box component={Link} to={`/details?id=${i.Type === BaseItemKind.Episode ? (i.SeriesId || i.Id) : i.Id}`} title={`${i.SeriesName || i.Name} — ${entryLine(e)}`} sx={{
+        <Box component={Link} to={`/details?id=${linkId}`} title={`${i.SeriesName || i.Name} — ${entryLine(e)}`} sx={{
             display: 'flex', alignItems: 'center', gap: 0.75, p: compact ? 0.5 : 1, borderRadius: '8px', textDecoration: 'none', color: 'inherit', minWidth: 0,
             background: e.available ? 'rgba(76,175,80,0.1)' : 'rgba(255,255,255,0.04)', borderLeft: `3px solid ${color}`,
             '&:hover': { background: 'rgba(255,255,255,0.08)' }
@@ -162,11 +205,41 @@ const UpcomingPage: FC = () => {
         staleTime: 5 * 60 * 1000
     });
 
-    const filtered = useMemo(() => (items || []).filter(i =>
+    // Announced on TMDb but not in the library yet: next episodes of running series and future saga movies
+    const { data: releases, isFetching: isFetchingTmdb } = useQuery({
+        queryKey: [ 'UpcomingTmdb', user?.Id, range.from.toISOString(), range.to.toISOString() ],
+        queryFn: async ({ signal }) => {
+            try {
+                const res = await api!.axiosInstance.get<UpcomingRelease[]>(`${api!.basePath}/Discovery/Upcoming`, {
+                    headers: { Authorization: api!.authorizationHeader },
+                    params: { from: range.from.toISOString(), to: range.to.toISOString() },
+                    signal
+                });
+                return res.data || [];
+            } catch {
+                return [] as UpcomingRelease[]; // server without the endpoint
+            }
+        },
+        enabled: !!api && !!user,
+        staleTime: 30 * 60 * 1000
+    });
+
+    const merged = useMemo<CalItem[]>(() => {
+        const library = (items || []) as CalItem[];
+        const known = new Set(library
+            .filter(i => i.Type === BaseItemKind.Episode)
+            .map(i => `${normId(i.SeriesId)}-${i.ParentIndexNumber}-${i.IndexNumber}`));
+        const extra = (releases || [])
+            .filter(r => r.Kind !== 'Episode' || !known.has(`${normId(r.SeriesId)}-${r.SeasonNumber}-${r.EpisodeNumber}`))
+            .map(fromRelease);
+        return [ ...library, ...extra ];
+    }, [ items, releases ]);
+
+    const filtered = useMemo(() => merged.filter(i =>
         filter === 'all' || (filter === 'shows' ? i.Type === BaseItemKind.Episode : i.Type === BaseItemKind.Movie)), [ filter, items ]);
 
     const byDay = useMemo(() => {
-        const map = new Map<string, BaseItemDto[]>();
+        const map = new Map<string, CalItem[]>();
         filtered.forEach(i => {
             if (!i.PremiereDate) return;
             const k = dayKey(new Date(i.PremiereDate));
@@ -180,6 +253,7 @@ const UpcomingPage: FC = () => {
         movies: filtered.filter(i => i.Type === BaseItemKind.Movie).length,
         available: filtered.filter(isAvailable).length
     }), [ filtered ]);
+    const isAdmin = !!user?.Policy?.IsAdministrator;
 
     const setViewSaved = (v: View) => {
         setView(v);
@@ -217,7 +291,7 @@ const UpcomingPage: FC = () => {
                         <ToggleButton value='shows' sx={{ textTransform: 'none' }}>{globalize.translate('Shows')}</ToggleButton>
                         <ToggleButton value='movies' sx={{ textTransform: 'none' }}>{globalize.translate('Movies')}</ToggleButton>
                     </ToggleButtonGroup>
-                    {isFetching && <CircularProgress size={18} />}
+                    {(isFetching || isFetchingTmdb) && <CircularProgress size={18} />}
                     <Box sx={{ flex: 1 }} />
                     {chip(globalize.translate('UpcEpisodesN', counts.episodes), EP_COLOR)}
                     {chip(globalize.translate('UpcMoviesN', counts.movies), MOVIE_COLOR)}
@@ -292,6 +366,11 @@ const UpcomingPage: FC = () => {
                     })
                 )}
 
+                {isAdmin && !isFetching && !(items || []).some(i => i.Type === BaseItemKind.Episode && !isAvailable(i)) && (
+                    <Paper elevation={0} sx={{ p: 2, mt: 2, borderRadius: '16px', border: '1px dashed rgba(0,164,220,0.45)', background: 'rgba(0,164,220,0.06)' }}>
+                        <Typography sx={{ fontSize: '0.84rem', color: 'rgba(255,255,255,0.8)' }}>{globalize.translate('UpcEnableHint')}</Typography>
+                    </Paper>
+                )}
                 <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', mt: 2 }}>{globalize.translate('UpcNote')}</Typography>
             </Box>
         </Page>

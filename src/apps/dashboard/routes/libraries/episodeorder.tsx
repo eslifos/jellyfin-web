@@ -12,6 +12,7 @@ import { useMutation, useQuery } from '@tanstack/react-query';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Collapse from '@mui/material/Collapse';
 import InputAdornment from '@mui/material/InputAdornment';
@@ -19,21 +20,21 @@ import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
 import Stack from '@mui/material/Stack';
-import Switch from '@mui/material/Switch';
 import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import FormatListNumberedIcon from '@mui/icons-material/FormatListNumbered';
+import HelpOutlineIcon from '@mui/icons-material/HelpOutline';
 import LinkOffIcon from '@mui/icons-material/LinkOff';
 import OpenInNewIcon from '@mui/icons-material/OpenInNew';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import SearchIcon from '@mui/icons-material/Search';
 import SortIcon from '@mui/icons-material/Sort';
+import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import TvIcon from '@mui/icons-material/Tv';
 import { Link as RouterLink } from 'react-router-dom';
 
-import { type TvdbMiss, useLogIssues } from 'apps/dashboard/features/libraries/api/useLogIssues';
 import { Badge, StatTile } from 'apps/dashboard/features/plugins/components/PluginCosmic';
 import Loading from 'components/loading/LoadingComponent';
 import Page from 'components/Page';
@@ -43,39 +44,69 @@ import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard } from '../../components/cosmic';
 
-/** TVDB episode orders supported by the TVDB plugin ('' = aired / default). */
-const ORDERS: { value: string; labelKey: string; helpKey: string }[] = [
-    { value: '', labelKey: 'EpoAired', helpKey: 'EpoAiredHelp' },
-    { value: 'dvd', labelKey: 'EpoDvd', helpKey: 'EpoDvdHelp' },
-    { value: 'absolute', labelKey: 'EpoAbsolute', helpKey: 'EpoAbsoluteHelp' },
-    { value: 'alternate', labelKey: 'EpoAlternate', helpKey: 'EpoAlternateHelp' },
-    { value: 'altdvd', labelKey: 'EpoAltDvd', helpKey: 'EpoAltDvdHelp' },
-    { value: 'regional', labelKey: 'EpoRegional', helpKey: 'EpoRegionalHelp' },
-    { value: 'digital', labelKey: 'EpoDigital', helpKey: 'EpoDigitalHelp' },
-    { value: 'production', labelKey: 'EpoProduction', helpKey: 'EpoProductionHelp' },
-    { value: 'storyArc', labelKey: 'EpoStoryArc', helpKey: 'EpoStoryArcHelp' },
-    { value: 'tv', labelKey: 'EpoTv', helpKey: 'EpoTvHelp' },
-    { value: 'originalAirDate', labelKey: 'EpoOriginalAirDate', helpKey: 'EpoOriginalAirDateHelp' }
-];
+/** Friendly names for display order values (both TVDB season types and TMDb episode groups). */
+const ORDER_KEYS: Record<string, string> = {
+    '': 'EpoAired', dvd: 'EpoDvd', absolute: 'EpoAbsolute', alternate: 'EpoAlternate', altdvd: 'EpoAltDvd',
+    regional: 'EpoRegional', digital: 'EpoDigital', production: 'EpoProduction', storyArc: 'EpoStoryArc',
+    tv: 'EpoTv', originalAirDate: 'EpoOriginalAirDate'
+};
+const orderLabel = (v?: string | null) => (ORDER_KEYS[v || ''] ? globalize.translate(ORDER_KEYS[v || '']) : (v || ''));
 
-const orderLabel = (v?: string | null) => globalize.translate(ORDERS.find(o => o.value === (v || ''))?.labelKey || 'EpoAired');
+const pad = (n?: number | null) => (n == null ? '??' : String(n).padStart(2, '0'));
+const code = (season?: number | null, number?: number | null, end?: number | null) =>
+    `S${pad(season)}E${pad(number)}${end && end !== number ? `-E${pad(end)}` : ''}`;
 
-const epCode = (e: BaseItemDto) => `S${String(e.ParentIndexNumber ?? 0).padStart(2, '0')}E${String(e.IndexNumber ?? 0).padStart(2, '0')}`;
+const isIdentified = (s: BaseItemDto) => Object.values(s.ProviderIds || {}).some(v => !!v);
 
-interface SeriesRow {
-    series: BaseItemDto;
-    unmatched: BaseItemDto[];
-    misses: TvdbMiss[];
+type Filter = 'problems' | 'unidentified' | 'custom' | 'all';
+
+interface OrderOption {
+    Provider: 'Tvdb' | 'Tmdb';
+    Value: string;
+    Name: string;
+    AlternateName?: string | null;
+    SeasonCount: number;
+    EpisodeCount: number;
+    Matched: number;
+    IsCurrent: boolean;
 }
 
+interface OrderEpisode {
+    Id: string;
+    Name: string;
+    FileName?: string | null;
+    Season?: number | null;
+    Number?: number | null;
+    NumberEnd?: number | null;
+    HasProviderData: boolean;
+    InOrder?: boolean | null;
+    ExpectedName?: string | null;
+}
+
+interface Analysis {
+    CurrentOrder: string;
+    PrimarySource?: string | null;
+    EffectiveSource?: string | null;
+    Sources: string[];
+    Orders: OrderOption[];
+    Episodes: OrderEpisode[];
+    Notes: string[];
+}
+
+const PROVIDER_COLORS: Record<string, string> = { Tvdb: '#6cd491', Tmdb: '#01b4e4' };
+const optionKey = (o: Pick<OrderOption, 'Provider' | 'Value'>) => `${o.Provider}:${o.Value}`;
+const sourceFor = (provider: string, sources: string[]) =>
+    sources.find(s => s.toLowerCase().includes(provider === 'Tvdb' ? 'tvdb' : 'moviedb'));
+
 const useOrderData = () => {
-    const { api } = useApi();
+    const { api, user } = useApi();
     return useQuery({
         queryKey: [ 'EpisodeOrderData' ],
         queryFn: async ({ signal }) => {
             const lib = getLibraryApi(api!);
-            const [ series, unmatched ] = await Promise.all([
+            const [ series, unmatched, sources ] = await Promise.all([
                 lib.getItems({
+                    userId: user?.Id,
                     recursive: true,
                     includeItemTypes: [ BaseItemKind.Series ],
                     fields: [ ItemFields.ProviderIds, ItemFields.RecursiveItemCount, ItemFields.Path ],
@@ -84,57 +115,266 @@ const useOrderData = () => {
                 }, { signal }),
                 // Episodes on disk that no metadata provider could match.
                 lib.getItems({
+                    userId: user?.Id,
                     recursive: true,
                     includeItemTypes: [ BaseItemKind.Episode ],
                     locationTypes: [ LocationType.FileSystem ],
                     hasTvdbId: false,
                     hasTmdbId: false,
                     hasImdbId: false,
-                    fields: [ ItemFields.Path ],
                     enableImages: false,
                     enableUserData: false
-                }, { signal })
+                }, { signal }),
+                api!.axiosInstance.get<Record<string, string>>(api!.getUri('/EpisodeOrder/Sources'), {
+                    headers: { Authorization: api!.authorizationHeader }, signal
+                }).then(r => r.data).catch(() => ({} as Record<string, string>))
             ]);
-            return { series: series.data.Items || [], unmatched: unmatched.data.Items || [] };
+            return { series: series.data.Items || [], unmatched: unmatched.data.Items || [], sources };
         },
         enabled: !!api,
         staleTime: 60 * 1000
     });
 };
 
-const SeriesCard: FC<{ row: SeriesRow }> = ({ row }) => {
+const useAnalysis = (seriesId: string, enabled: boolean) => {
     const { api } = useApi();
-    const { series, unmatched, misses } = row;
-    const [ order, setOrder ] = useState(series.DisplayOrder || '');
-    const [ open, setOpen ] = useState(false);
-    const tvdbId = series.ProviderIds?.Tvdb;
-    const problems = unmatched.length + misses.length;
-    const accent = problems ? '#ff9800' : '#4caf50';
-    const changed = order !== (series.DisplayOrder || '');
-    const imageUrl = series.ImageTags?.Primary && api ? getImageApi(api).getItemImageUrlById(series.Id || '', ImageType.Primary, { maxHeight: 160, tag: series.ImageTags.Primary }) : undefined;
+    return useQuery({
+        queryKey: [ 'EpisodeOrderAnalysis', seriesId ],
+        queryFn: async ({ signal }) => {
+            const { data } = await api!.axiosInstance.get<Analysis>(api!.getUri(`/EpisodeOrder/${seriesId}`), {
+                headers: { Authorization: api!.authorizationHeader }, signal
+            });
+            return data;
+        },
+        enabled: !!api && enabled,
+        staleTime: 5 * 60 * 1000
+    });
+};
+
+const EpisodeLine: FC<{ e: OrderEpisode; color: string; detail?: string }> = ({ e, color, detail }) => (
+    <Box sx={{ display: 'flex', gap: 1, alignItems: 'baseline', minWidth: 0 }}>
+        <Typography sx={{ fontFamily: 'monospace', fontSize: '0.76rem', color, flexShrink: 0 }}>{code(e.Season, e.Number, e.NumberEnd)}</Typography>
+        <Typography sx={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.75)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={e.FileName || e.Name}>
+            {e.Name}{detail ? <Box component='span' sx={{ color: 'rgba(255,255,255,0.45)' }}> · {detail}</Box> : null}
+        </Typography>
+    </Box>
+);
+
+const IssueGroup: FC<{ title: string; color: string; help?: string; action?: React.ReactNode; children: React.ReactNode }> = ({ title, color, help, action, children }) => (
+    <Box sx={{ p: 1.25, borderRadius: '12px', border: `1px solid ${color}33`, background: `${color}0d` }}>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.75, flexWrap: 'wrap' }}>
+            <Typography sx={{ fontSize: '0.8rem', fontWeight: 800, color, flex: 1 }}>{title}</Typography>
+            {action}
+        </Box>
+        {help && <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)', mb: 0.75 }}>{help}</Typography>}
+        <Stack spacing={0.4} sx={{ maxHeight: 260, overflowY: 'auto', pr: 0.5 }}>{children}</Stack>
+    </Box>
+);
+
+/** Orders found in TVDB / TMDb, main source, and the episodes that do not fit. */
+const AnalysisPanel: FC<{ series: BaseItemDto }> = ({ series }) => {
+    const { api } = useApi();
+    const seriesId = series.Id || '';
+    const { data, isFetching, isError, refetch } = useAnalysis(seriesId, true);
+    const [ picked, setPicked ] = useState<string | null>(null);
+    const [ source, setSource ] = useState<string | null>(null);
+
+    const best = useMemo(() => {
+        if (!data?.Orders.length) return null;
+        return data.Orders.reduce((a, b) => (b.Matched > a.Matched || (b.Matched === a.Matched && b.IsCurrent) ? b : a));
+    }, [ data ]);
+
+    const current = data?.Orders.find(o => o.IsCurrent);
+    const selected = data?.Orders.find(o => optionKey(o) === picked) || current;
+    // Choosing an order of a provider makes that provider the main source (it is the one that understands the order)
+    const sourceValue = source ?? (picked && selected ? (sourceFor(selected.Provider, data?.Sources || []) ?? data?.PrimarySource ?? '') : (data?.PrimarySource ?? ''));
+    const changed = !!data && ((selected?.Value ?? data.CurrentOrder) !== data.CurrentOrder || sourceValue !== (data.PrimarySource ?? ''));
 
     const apply = useMutation({
         mutationFn: async () => {
             const lib = getLibraryApi(api!);
-            const { data: full } = await lib.getItem({ itemId: series.Id || '' });
-            await getItemUpdateApi(api!).updateItem({ itemId: series.Id || '', baseItemDto: { ...full, DisplayOrder: order } });
+            const headers = { Authorization: api!.authorizationHeader };
+            await api!.axiosInstance.post(api!.getUri(`/EpisodeOrder/${seriesId}/Source`, { source: sourceValue || undefined }), null, { headers });
+            const { data: full } = await lib.getItem({ itemId: seriesId });
+            await getItemUpdateApi(api!).updateItem({ itemId: seriesId, baseItemDto: { ...full, DisplayOrder: selected?.Value ?? data?.CurrentOrder ?? '' } });
             await lib.refreshItem({
-                itemId: series.Id || '',
+                itemId: seriesId,
                 metadataRefreshMode: MetadataRefreshMode.FullRefresh,
                 imageRefreshMode: MetadataRefreshMode.Default,
                 replaceAllMetadata: true,
                 replaceAllImages: false
             });
         },
-        onSuccess: () => void queryClient.invalidateQueries({ queryKey: [ 'EpisodeOrderData' ] })
+        onSuccess: () => {
+            setPicked(null);
+            setSource(null);
+            void queryClient.invalidateQueries({ queryKey: [ 'EpisodeOrderData' ] });
+            void queryClient.invalidateQueries({ queryKey: [ 'EpisodeOrderAnalysis', seriesId ] });
+        }
     });
 
-    const toggle = useCallback(() => setOpen(v => !v), []);
-    const doApply = useCallback(() => apply.mutate(), [ apply ]);
-    const help = ORDERS.find(o => o.value === order)?.helpKey;
+    const fixNumbers = useMutation({
+        mutationFn: async () => {
+            const { data: r } = await api!.axiosInstance.post<{ Fixed: number; Remaining: number }>(
+                api!.getUri(`/EpisodeOrder/${seriesId}/FixNumbers`), null, { headers: { Authorization: api!.authorizationHeader } });
+            return r;
+        },
+        onSuccess: () => void queryClient.invalidateQueries({ queryKey: [ 'EpisodeOrderAnalysis', seriesId ] })
+    });
+
+    const recheck = useCallback(async () => {
+        await api!.axiosInstance.get(api!.getUri(`/EpisodeOrder/${seriesId}`, { refresh: true }), { headers: { Authorization: api!.authorizationHeader } });
+        void refetch();
+    }, [ api, seriesId, refetch ]);
+
+    if (!data) {
+        return (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, px: 2, py: 2 }}>
+                {isError ? <Alert severity='error' sx={{ flex: 1 }}>{globalize.translate('HlthLoadError')}</Alert> : <>
+                    <CircularProgress size={18} />
+                    <Typography sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.65)' }}>{globalize.translate('EpoAnalyzing')}</Typography>
+                </>}
+            </Box>
+        );
+    }
+
+    const noNumber = data.Episodes.filter(e => e.Season == null || e.Number == null);
+    const notInOrder = data.Episodes.filter(e => e.Season != null && e.Number != null && e.InOrder === false);
+    const noData = data.Episodes.filter(e => !e.HasProviderData && e.Season != null && e.Number != null && e.InOrder !== false);
+    const libraryCount = data.Episodes.length;
+    const groups = [ 'Tvdb', 'Tmdb' ].map(p => ({ provider: p, options: data.Orders.filter(o => o.Provider === p) })).filter(g => g.options.length);
 
     return (
-        <Paper elevation={0} sx={{ position: 'relative', overflow: 'hidden', borderRadius: '16px', border: `1px solid ${accent}44` }}>
+        <Stack spacing={1.5} sx={{ px: 2, pb: 2, pt: 0.5 }}>
+            {data.Notes.map(n => <Alert key={n} severity={n === 'TvdbNoPlugin' ? 'warning' : 'info'} sx={{ py: 0, fontSize: '0.78rem' }}>{globalize.translate(`EpoNote${n}`)}</Alert>)}
+
+            {/* Orders */}
+            <Box>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 0.5 }}>
+                    <Typography sx={{ fontSize: '0.82rem', fontWeight: 800, flex: 1 }}>{globalize.translate('EpoOrdersAvailable')}</Typography>
+                    <Button size='small' onClick={recheck} disabled={isFetching} startIcon={isFetching ? <CircularProgress size={12} /> : <RefreshIcon />}>
+                        {globalize.translate('EpoRecheck')}
+                    </Button>
+                </Box>
+                <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)', mb: 1 }}>{globalize.translate('EpoOrdersHelp')}</Typography>
+                {groups.length === 0 && <Typography sx={{ fontSize: '0.78rem', color: '#ffca28' }}>{globalize.translate('EpoNoOrders')}</Typography>}
+                <Stack spacing={1}>
+                    {groups.map(g => (
+                        <Box key={g.provider}>
+                            <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.08em', color: PROVIDER_COLORS[g.provider], mb: 0.5 }}>
+                                {g.provider === 'Tvdb' ? 'TVDB' : 'TMDb'}
+                            </Typography>
+                            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 0.75 }}>
+                                {g.options.map(o => {
+                                    const isSel = selected && optionKey(selected) === optionKey(o);
+                                    const pct = libraryCount ? Math.round((o.Matched / libraryCount) * 100) : 0;
+                                    const color = pct >= 95 ? '#4caf50' : pct >= 60 ? '#ffca28' : '#ef5350';
+                                    return (
+                                        <Box key={optionKey(o)} component='button' type='button' onClick={() => setPicked(optionKey(o))}
+                                            sx={{
+                                                textAlign: 'left', cursor: 'pointer', p: 1, borderRadius: '10px', color: '#fff', font: 'inherit',
+                                                background: isSel ? 'rgba(0,164,220,0.16)' : 'rgba(255,255,255,0.03)',
+                                                border: `1px solid ${isSel ? '#00a4dc' : 'rgba(255,255,255,0.1)'}`
+                                            }}>
+                                            <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center', flexWrap: 'wrap' }}>
+                                                <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, flex: 1, minWidth: 0 }}>
+                                                    {o.Name}{o.AlternateName ? ` · ${o.AlternateName}` : ''}
+                                                </Typography>
+                                                {o.IsCurrent && <Badge label={globalize.translate('EpoInUse')} color='#00a4dc' />}
+                                                {best && optionKey(best) === optionKey(o) && o.Matched > 0 && <Badge label={globalize.translate('EpoRecommended')} color='#4caf50' />}
+                                            </Box>
+                                            <Typography sx={{ fontSize: '0.72rem', color, fontWeight: 700, mt: 0.3 }}>
+                                                {globalize.translate('EpoMatched', o.Matched, libraryCount)}
+                                            </Typography>
+                                            <Typography sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)' }}>
+                                                {orderLabel(o.Value)} · {globalize.translate('EpoProviderEpisodes', o.SeasonCount, o.EpisodeCount)}
+                                            </Typography>
+                                        </Box>
+                                    );
+                                })}
+                            </Box>
+                        </Box>
+                    ))}
+                </Stack>
+            </Box>
+
+            {/* Main source */}
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center', flexWrap: 'wrap' }}>
+                <TextField select size='small' label={globalize.translate('EpoSource')} value={sourceValue} onChange={e => setSource(e.target.value)} sx={{ minWidth: 240 }}
+                    slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
+                    <MenuItem value=''>{data.PrimarySource || !data.EffectiveSource ? globalize.translate('EpoSourceAutoPlain') : globalize.translate('EpoSourceAuto', data.EffectiveSource)}</MenuItem>
+                    {data.Sources.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
+                </TextField>
+                <Button variant='contained' size='small' onClick={() => apply.mutate()} disabled={!changed || apply.isPending}
+                    startIcon={apply.isPending ? <CircularProgress size={14} color='inherit' /> : <SortIcon />}>
+                    {globalize.translate('EpoApply')}
+                </Button>
+            </Box>
+            <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)', mt: '4px !important' }}>{globalize.translate('EpoSourceHelp')}</Typography>
+            {apply.isSuccess && <Alert severity='success' sx={{ py: 0 }}>{globalize.translate('EpoApplied')}</Alert>}
+            {apply.isError && <Alert severity='error' sx={{ py: 0 }}>{globalize.translate('EpoApplyError')}</Alert>}
+
+            {/* Episodes that do not fit */}
+            {noNumber.length + notInOrder.length + noData.length === 0 ? (
+                <Alert severity='success' sx={{ py: 0 }}>{globalize.translate('EpoNoIssues')}</Alert>
+            ) : (
+                <Stack spacing={1}>
+                    {noNumber.length > 0 && (
+                        <IssueGroup
+                            title={`${globalize.translate('EpoNoNumberTitle')} (${noNumber.length})`}
+                            color='#ef5350'
+                            help={globalize.translate('EpoNoNumberHelp')}
+                            action={(
+                                <Button size='small' variant='outlined' color='error' onClick={() => fixNumbers.mutate()} disabled={fixNumbers.isPending}
+                                    startIcon={fixNumbers.isPending ? <CircularProgress size={12} color='inherit' /> : <FormatListNumberedIcon />}>
+                                    {globalize.translate('EpoFixNumbers')}
+                                </Button>
+                            )}
+                        >
+                            {fixNumbers.data && <Alert severity='info' sx={{ py: 0, mb: 0.5 }}>{globalize.translate('EpoFixed', fixNumbers.data.Fixed, fixNumbers.data.Remaining)}</Alert>}
+                            {noNumber.map(e => <EpisodeLine key={e.Id} e={e} color='#ef5350' detail={e.FileName || undefined} />)}
+                        </IssueGroup>
+                    )}
+                    {notInOrder.length > 0 && (
+                        <IssueGroup title={`${globalize.translate('EpoNotInOrderTitle', current ? `${current.Name}` : orderLabel(data.CurrentOrder))} (${notInOrder.length})`} color='#ff9800'>
+                            {notInOrder.map(e => <EpisodeLine key={e.Id} e={e} color='#ff9800' />)}
+                        </IssueGroup>
+                    )}
+                    {noData.length > 0 && (
+                        <IssueGroup title={`${globalize.translate('EpoNoDataTitle')} (${noData.length})`} color='#ffca28'>
+                            {noData.map(e => <EpisodeLine key={e.Id} e={e} color='#ffca28' detail={e.ExpectedName ? globalize.translate('EpoExpected', e.ExpectedName) : undefined} />)}
+                        </IssueGroup>
+                    )}
+                </Stack>
+            )}
+        </Stack>
+    );
+};
+
+interface SeriesRow {
+    series: BaseItemDto;
+    unmatched: number;
+    identified: boolean;
+    source?: string;
+}
+
+const SeriesCard: FC<{ row: SeriesRow }> = ({ row }) => {
+    const { api } = useApi();
+    const { series, unmatched, identified, source } = row;
+    const [ open, setOpen ] = useState(false);
+    const tvdbId = series.ProviderIds?.Tvdb;
+    const tmdbId = series.ProviderIds?.Tmdb;
+    const accent = !identified ? '#ef5350' : unmatched ? '#ff9800' : '#4caf50';
+    const imageUrl = series.ImageTags?.Primary && api ? getImageApi(api).getItemImageUrlById(series.Id || '', ImageType.Primary, { maxHeight: 160, tag: series.ImageTags.Primary }) : undefined;
+
+    const identify = useCallback(() => {
+        void import('components/itemidentifier/itemidentifier').then(({ default: identifier }) =>
+            identifier.show(series.Id, series.ServerId)
+        ).then(() => void queryClient.invalidateQueries({ queryKey: [ 'EpisodeOrderData' ] }), () => undefined);
+    }, [ series.Id, series.ServerId ]);
+
+    return (
+        <Paper elevation={0} sx={{ position: 'relative', overflow: 'hidden', borderRadius: '16px', border: `1px solid ${accent}44`, gridColumn: open ? '1 / -1' : undefined }}>
             <Box sx={{ position: 'absolute', top: 0, left: '1.25rem', right: '1.25rem', height: '2px', background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }} />
             <Box sx={{ display: 'flex', gap: 1.75, p: 2 }}>
                 <Box sx={{ width: 64, height: 96, borderRadius: '10px', overflow: 'hidden', flexShrink: 0, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -145,61 +385,53 @@ const SeriesCard: FC<{ row: SeriesRow }> = ({ row }) => {
                         {series.Name}{series.ProductionYear ? ` (${series.ProductionYear})` : ''}
                     </Typography>
                     <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap', alignItems: 'center' }}>
-                        <Badge label={`${globalize.translate('EpoCurrent')}: ${orderLabel(series.DisplayOrder)}`} color='#00a4dc' />
-                        {problems > 0 ? (
-                            <Badge label={globalize.translate('EpoProblems', problems)} color='#ff9800' dot />
+                        {identified ? (
+                            <>
+                                <Badge label={`${globalize.translate('EpoCurrent')}: ${orderLabel(series.DisplayOrder)}`} color='#00a4dc' />
+                                {source && <Badge label={globalize.translate('EpoSourceChip', source)} color='#aa5cc3' />}
+                                {unmatched > 0 ? (
+                                    <Badge label={globalize.translate('EpoProblems', unmatched)} color='#ff9800' dot />
+                                ) : (
+                                    <Badge label={globalize.translate('EpoAllMatched')} color='#4caf50' dot />
+                                )}
+                            </>
                         ) : (
-                            <Badge label={globalize.translate('EpoAllMatched')} color='#4caf50' dot />
+                            <Badge label={globalize.translate('EpoUnidentified')} color='#ef5350' dot />
                         )}
                         <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>{globalize.translate('EpoEpisodes', series.RecursiveItemCount ?? 0)}</Typography>
                     </Box>
+                    {!identified && <Typography sx={{ fontSize: '0.74rem', color: 'rgba(255,255,255,0.6)' }}>{globalize.translate('EpoUnidentifiedHelp')}</Typography>}
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center', mt: 0.5 }}>
-                        <TextField select size='small' label={globalize.translate('EpoOrder')} value={order} onChange={e => setOrder(e.target.value)} sx={{ minWidth: 190 }}
-                            slotProps={{ select: { displayEmpty: true }, inputLabel: { shrink: true } }}>
-                            {ORDERS.map(o => <MenuItem key={o.value || 'aired'} value={o.value}>{globalize.translate(o.labelKey)}</MenuItem>)}
-                        </TextField>
-                        <Button variant='contained' size='small' onClick={doApply} disabled={!changed || apply.isPending}
-                            startIcon={apply.isPending ? <CircularProgress size={14} color='inherit' /> : <SortIcon />}>
-                            {globalize.translate('EpoApply')}
-                        </Button>
+                        {identified ? (
+                            <Button variant='contained' size='small' onClick={() => setOpen(v => !v)} startIcon={<TravelExploreIcon />}
+                                endIcon={<ExpandMoreIcon sx={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />}>
+                                {globalize.translate('EpoAnalyze')}
+                            </Button>
+                        ) : (
+                            <Button variant='contained' color='error' size='small' onClick={identify} startIcon={<HelpOutlineIcon />}>
+                                {globalize.translate('EpoIdentify')}
+                            </Button>
+                        )}
                         {tvdbId && (
-                            <Button size='small' component={Link} href={`https://thetvdb.com/dereferrer/series/${tvdbId}`} target='_blank' rel='noopener noreferrer' endIcon={<OpenInNewIcon sx={{ fontSize: '0.9rem !important' }} />}>
+                            <Button size='small' component={Link} href={`https://thetvdb.com/dereferrer/series/${encodeURIComponent(tvdbId)}`} target='_blank' rel='noopener noreferrer' endIcon={<OpenInNewIcon sx={{ fontSize: '0.9rem !important' }} />}>
                                 TVDB
                             </Button>
                         )}
-                        <Button size='small' component={RouterLink} to={`/details?id=${series.Id}`}>{globalize.translate('HlthOpen')}</Button>
+                        {tmdbId && (
+                            <Button size='small' component={Link} href={`https://www.themoviedb.org/tv/${encodeURIComponent(tmdbId)}`} target='_blank' rel='noopener noreferrer' endIcon={<OpenInNewIcon sx={{ fontSize: '0.9rem !important' }} />}>
+                                TMDb
+                            </Button>
+                        )}
+                        <Button size='small' component={RouterLink} to={`/details?id=${series.Id}&serverId=${series.ServerId}`}>{globalize.translate('HlthOpen')}</Button>
                     </Box>
-                    {help && changed && <Typography sx={{ fontSize: '0.74rem', color: 'rgba(255,255,255,0.55)' }}>{globalize.translate(help)}</Typography>}
-                    {apply.isSuccess && <Alert severity='success' sx={{ py: 0 }}>{globalize.translate('EpoApplied')}</Alert>}
-                    {apply.isError && <Alert severity='error' sx={{ py: 0 }}>{globalize.translate('EpoApplyError')}</Alert>}
-                    {!tvdbId && <Typography sx={{ fontSize: '0.72rem', color: '#ffca28' }}>{globalize.translate('EpoNoTvdb')}</Typography>}
                 </Box>
             </Box>
-
-            {problems > 0 && (
-                <>
-                    <Box onClick={toggle} sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, py: 1, cursor: 'pointer', borderTop: '1px solid rgba(255,255,255,0.06)', '&:hover': { background: 'rgba(255,255,255,0.03)' } }}>
-                        <LinkOffIcon sx={{ fontSize: '1rem', color: '#ff9800' }} />
-                        <Typography sx={{ fontSize: '0.78rem', flex: 1 }}>{globalize.translate('EpoSeeEpisodes')}</Typography>
-                        <ExpandMoreIcon sx={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', color: 'rgba(255,255,255,0.5)' }} />
+            {identified && (
+                <Collapse in={open} unmountOnExit>
+                    <Box sx={{ borderTop: '1px solid rgba(255,255,255,0.06)', pt: 1.5 }}>
+                        <AnalysisPanel series={series} />
                     </Box>
-                    <Collapse in={open}>
-                        <Stack spacing={0.5} sx={{ px: 2, pb: 1.5 }}>
-                            {unmatched.map(e => (
-                                <Box key={e.Id} sx={{ display: 'flex', gap: 1, alignItems: 'baseline' }}>
-                                    <Typography sx={{ fontFamily: 'monospace', fontSize: '0.76rem', color: '#ff9800', flexShrink: 0 }}>{epCode(e)}</Typography>
-                                    <Typography sx={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.7)' }}>{e.Name} · {globalize.translate('EpoNoMatch')}</Typography>
-                                </Box>
-                            ))}
-                            {misses.map(m => (
-                                <Box key={`${m.episode}-${m.date}`} sx={{ display: 'flex', gap: 1, alignItems: 'baseline' }}>
-                                    <Typography sx={{ fontFamily: 'monospace', fontSize: '0.76rem', color: '#ffca28', flexShrink: 0 }}>{m.episode}</Typography>
-                                    <Typography sx={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.7)' }}>{m.name} · {globalize.translate('EpoNotInTvdb')}</Typography>
-                                </Box>
-                            ))}
-                        </Stack>
-                    </Collapse>
-                </>
+                </Collapse>
             )}
         </Paper>
     );
@@ -207,45 +439,65 @@ const SeriesCard: FC<{ row: SeriesRow }> = ({ row }) => {
 
 export const Component = () => {
     const { data, isPending, isError, refetch, isFetching } = useOrderData();
-    const { data: logIssues, refetch: refetchLogs, isFetching: logsFetching } = useLogIssues();
-    const [ showAll, setShowAll ] = useState(false);
+    const [ filter, setFilter ] = useState<Filter>('problems');
     const [ query, setQuery ] = useState('');
 
     const rows = useMemo<SeriesRow[]>(() => {
         if (!data) return [];
-        const bySeries = new Map<string, BaseItemDto[]>();
+        const counts = new Map<string, number>();
         data.unmatched.forEach(e => {
-            if (e.SeriesId) bySeries.set(e.SeriesId, [ ...(bySeries.get(e.SeriesId) || []), e ]);
+            if (e.SeriesId) counts.set(e.SeriesId, (counts.get(e.SeriesId) || 0) + 1);
         });
-        return data.series.map(s => {
-            const tvdb = s.ProviderIds?.Tvdb;
-            // Keep one miss per episode code.
-            const misses = Array.from(new Map((logIssues?.tvdb || []).filter(m => tvdb && m.tvdbId === tvdb).map(m => [ m.episode, m ])).values());
-            return { series: s, unmatched: (bySeries.get(s.Id || '') || []).sort((a, b) => epCode(a).localeCompare(epCode(b))), misses };
-        }).sort((a, b) => (b.unmatched.length + b.misses.length) - (a.unmatched.length + a.misses.length) || (a.series.Name || '').localeCompare(b.series.Name || ''));
-    }, [ data, logIssues ]);
+        const sources = new Map(Object.entries(data.sources).map(([ k, v ]) => [ k.replace(/-/g, '').toLowerCase(), v ]));
+        return data.series.map(s => ({
+            series: s,
+            unmatched: counts.get(s.Id || '') || 0,
+            identified: isIdentified(s),
+            source: sources.get((s.Id || '').replace(/-/g, '').toLowerCase())
+        })).sort((a, b) =>
+            Number(a.identified) - Number(b.identified)
+            || b.unmatched - a.unmatched
+            || (a.series.Name || '').localeCompare(b.series.Name || ''));
+    }, [ data ]);
 
-    const withProblems = rows.filter(r => r.unmatched.length + r.misses.length > 0);
-    const custom = rows.filter(r => r.series.DisplayOrder).length;
+    const counts = {
+        problems: rows.filter(r => r.identified && r.unmatched > 0).length,
+        unidentified: rows.filter(r => !r.identified).length,
+        custom: rows.filter(r => r.series.DisplayOrder || r.source).length,
+        all: rows.length
+    };
     const q = query.toLowerCase();
-    const visible = (showAll || q ? rows : withProblems).filter(r => !q || (r.series.Name || '').toLowerCase().includes(q));
+    const visible = rows
+        .filter(r => {
+            if (q) return true;
+            switch (filter) {
+                case 'problems': return r.identified && r.unmatched > 0;
+                case 'unidentified': return !r.identified;
+                case 'custom': return !!(r.series.DisplayOrder || r.source);
+                default: return true;
+            }
+        })
+        .filter(r => !q || (r.series.Name || '').toLowerCase().includes(q));
 
-    const onRefresh = useCallback(() => {
-        void refetch();
-        void refetchLogs();
-    }, [ refetch, refetchLogs ]);
+    const onRefresh = useCallback(() => void refetch(), [ refetch ]);
 
     if (isPending) return <Loading />;
-    const busy = isFetching || logsFetching;
+
+    const filters: { key: Filter; label: string; color: string }[] = [
+        { key: 'problems', label: globalize.translate('EpoFilterProblems'), color: '#ff9800' },
+        { key: 'unidentified', label: globalize.translate('EpoFilterUnidentified'), color: '#ef5350' },
+        { key: 'custom', label: globalize.translate('EpoFilterCustom'), color: '#aa5cc3' },
+        { key: 'all', label: globalize.translate('EpoFilterAll'), color: '#00a4dc' }
+    ];
 
     return (
         <Page id='episodeOrderPage' title={globalize.translate('EpoTitle')} className='mainAnimatedPage type-interior fullWidthContent'>
             <Box className='content-primary'>
                 <PageHeader
                     title={globalize.translate('EpoTitle')}
-                    subtitle={globalize.translate('EpoSubtitle')}
+                    subtitle={globalize.translate('EpoSubtitle2')}
                     actions={(
-                        <Button variant='outlined' size='small' onClick={onRefresh} disabled={busy} startIcon={busy ? <CircularProgress size={14} /> : <RefreshIcon />}>
+                        <Button variant='outlined' size='small' onClick={onRefresh} disabled={isFetching} startIcon={isFetching ? <CircularProgress size={14} /> : <RefreshIcon />}>
                             {globalize.translate('HlthAnalyze')}
                         </Button>
                     )}
@@ -256,18 +508,22 @@ export const Component = () => {
                 ) : (
                     <>
                         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 1.5, mb: 2.5 }}>
-                            <StatTile icon={<TvIcon />} label={globalize.translate('EpoSeries')} value={rows.length} color='#00a4dc' active={showAll} onClick={() => setShowAll(true)} />
-                            <StatTile icon={<LinkOffIcon />} label={globalize.translate('EpoWithProblems')} value={withProblems.length} color='#ff9800' active={!showAll} onClick={() => setShowAll(false)} />
-                            <StatTile icon={<LinkOffIcon />} label={globalize.translate('EpoUnmatchedEpisodes')} value={data?.unmatched.length ?? 0} color='#ef5350' />
-                            <StatTile icon={<FormatListNumberedIcon />} label={globalize.translate('EpoCustomOrder')} value={custom} color='#aa5cc3' />
+                            <StatTile icon={<TvIcon />} label={globalize.translate('EpoSeries')} value={counts.all} color='#00a4dc' active={filter === 'all'} onClick={() => setFilter('all')} />
+                            <StatTile icon={<LinkOffIcon />} label={globalize.translate('EpoWithProblems')} value={counts.problems} color='#ff9800' active={filter === 'problems'} onClick={() => setFilter('problems')} />
+                            <StatTile icon={<HelpOutlineIcon />} label={globalize.translate('EpoFilterUnidentified')} value={counts.unidentified} color='#ef5350' active={filter === 'unidentified'} onClick={() => setFilter('unidentified')} />
+                            <StatTile icon={<FormatListNumberedIcon />} label={globalize.translate('EpoFilterCustom')} value={counts.custom} color='#aa5cc3' active={filter === 'custom'} onClick={() => setFilter('custom')} />
+                            <StatTile icon={<LinkOffIcon />} label={globalize.translate('EpoUnmatchedEpisodes')} value={data?.unmatched.length ?? 0} color='#ffca28' />
                         </Box>
 
                         <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center', mb: 2 }}>
                             <TextField size='small' placeholder={globalize.translate('EpoSearch')} value={query} onChange={e => setQuery(e.target.value)} sx={{ flex: '1 1 240px' }}
                                 slotProps={{ input: { startAdornment: <InputAdornment position='start'><SearchIcon fontSize='small' /></InputAdornment> } }} />
-                            <Box component='label' sx={{ display: 'flex', alignItems: 'center', fontSize: '0.8rem', color: 'rgba(255,255,255,0.7)', cursor: 'pointer' }}>
-                                <Switch size='small' checked={showAll} onChange={(_, v) => setShowAll(v)} />
-                                {globalize.translate('EpoShowAll')}
+                            <Box sx={{ display: 'flex', gap: 0.75, flexWrap: 'wrap' }}>
+                                {filters.map(f => (
+                                    <Chip key={f.key} label={`${f.label} · ${counts[f.key]}`} onClick={() => setFilter(f.key)}
+                                        variant={filter === f.key ? 'filled' : 'outlined'}
+                                        sx={{ fontWeight: 700, borderColor: `${f.color}66`, color: filter === f.key ? '#000' : f.color, background: filter === f.key ? f.color : 'transparent', '&:hover': { background: filter === f.key ? f.color : `${f.color}22` } }} />
+                                ))}
                             </Box>
                         </Box>
 
@@ -282,15 +538,15 @@ export const Component = () => {
                             </Box>
                         )}
 
-                        <SectionCard title={globalize.translate('EpoAbout')} icon={<SortIcon />} accentColor='#26c6da' description={globalize.translate('EpoAboutHelp')}>
+                        <SectionCard title={globalize.translate('EpoAbout')} icon={<SortIcon />} accentColor='#26c6da' description={globalize.translate('EpoAboutHelp2')}>
                             <Stack spacing={1}>
-                                {ORDERS.slice(0, 5).map(o => (
-                                    <Box key={o.value || 'aired'}>
-                                        <Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>{globalize.translate(o.labelKey)}</Typography>
-                                        <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>{globalize.translate(o.helpKey)}</Typography>
+                                {[ '', 'dvd', 'absolute', 'alternate', 'regional' ].map(v => (
+                                    <Box key={v || 'aired'}>
+                                        <Typography sx={{ fontSize: '0.84rem', fontWeight: 600 }}>{orderLabel(v)}</Typography>
+                                        <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)' }}>{globalize.translate(`${ORDER_KEYS[v]}Help`)}</Typography>
                                     </Box>
                                 ))}
-                                <Alert severity='info' sx={{ fontSize: '0.8rem' }}>{globalize.translate('EpoTip')}</Alert>
+                                <Alert severity='info' sx={{ fontSize: '0.8rem' }}>{globalize.translate('EpoTip2')}</Alert>
                             </Stack>
                         </SectionCard>
                     </>

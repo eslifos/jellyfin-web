@@ -187,6 +187,29 @@ $glass: rgba(8, 10, 22, 0.62);
     }
 
     .cosmicChip-edition { color: #ffca28; }
+
+    .cosmicChip-imdb {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.4em;
+        color: #fff;
+        text-decoration: none;
+        border-color: rgba(245, 197, 24, 0.55);
+
+        b {
+            padding: 0.05em 0.35em;
+            border-radius: 4px;
+            color: #000;
+            background: #f5c518;
+        }
+
+        small {
+            font-weight: 600;
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        &:hover { border-color: #f5c518; }
+    }
     .cosmicChip-multi { color: #9ef01a; }
 
     // ---------- Version / edition buttons ----------
@@ -334,9 +357,73 @@ $glass: rgba(8, 10, 22, 0.62);
         backdrop-filter: blur(14px);
     }
 
-    // The info block under the banner is not shown (main genre and details live in the banner)
-    .detailPagePrimaryContent > .detailSection {
+    // The info text under the banner is not shown (main genre and details live in the banner),
+    // but its sections (seasons, next up, episodes, audio/subtitle pickers) are.
+    // Video / audio / subtitle pickers too: playback starts with the defaults, they can be changed in the player.
+    .detailPagePrimaryContent > .detailSection > .trackSelections,
+    .detailPagePrimaryContent > .detailSection > .detailSectionContent,
+    .detailPagePrimaryContent > .detailSection > .itemDetailsGroup {
         display: none !important;
+    }
+
+    // ---------- Series / season navigation ----------
+    .cosmicSeasonNav:not(.hide) {
+        display: flex;
+        flex-wrap: wrap;
+        align-items: center;
+        gap: 0.6em;
+        padding: 0.9em 1.1em;
+    }
+
+    .cosmicSeasonNav-back {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.3em;
+        margin: 0 0.6em 0 0 !important;
+        padding: 0.5em 1em 0.5em 0.7em !important;
+        border-radius: 999px;
+        font-weight: 800;
+        color: #fff !important;
+        text-decoration: none;
+        background: linear-gradient(135deg, rgba(0, 164, 220, 0.35), rgba(170, 92, 195, 0.3));
+        border: 1px solid rgba(0, 164, 220, 0.45);
+
+        &:hover {
+            background: linear-gradient(135deg, rgba(0, 164, 220, 0.55), rgba(170, 92, 195, 0.45));
+        }
+    }
+
+    .cosmicSeasonNav-pills {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 0.45em;
+    }
+
+    .cosmicSeasonPill {
+        margin: 0 !important;
+        padding: 0.42em 0.95em !important;
+        border-radius: 999px;
+        font: inherit;
+        font-size: 0.9em;
+        font-weight: 700;
+        color: rgba(255, 255, 255, 0.85) !important;
+        text-decoration: none;
+        background: rgba(255, 255, 255, 0.06);
+        border: 1px solid rgba(255, 255, 255, 0.14);
+        cursor: pointer;
+        transition: all 0.2s;
+
+        &:hover {
+            color: #fff !important;
+            border-color: rgba(0, 164, 220, 0.6);
+        }
+
+        &.active {
+            color: #fff !important;
+            background: #00a4dc;
+            border-color: #00a4dc;
+            box-shadow: 0 0 14px rgba(0, 164, 220, 0.5);
+        }
     }
 
     .detailVerticalSection .detailVerticalSection {

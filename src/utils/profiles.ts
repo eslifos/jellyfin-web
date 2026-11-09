@@ -80,16 +80,55 @@ export const deleteProfile = async (profileId: string, apiClient?: ApiClient) =>
     await client.ajax({ type: 'DELETE', url: client.getUrl(`Profiles/${profileId}`) });
 };
 
-/** Switches the session to another profile and reloads the app on `target`. */
+const statusOf = (err: unknown) => (err as { status?: number } | undefined)?.status;
+
+const askAccountPassword = async (wrong: boolean): Promise<string | null> => {
+    const [ { default: prompt }, { default: globalize } ] = await Promise.all([
+        import('components/prompt/prompt'),
+        import('lib/globalize')
+    ]);
+    try {
+        return await prompt({
+            title: globalize.translate('ProfileSwitchPasswordTitle'),
+            label: globalize.translate('LabelPassword'),
+            description: globalize.translate(wrong ? 'ProfileSwitchPasswordWrong' : 'ProfileSwitchPasswordHelp'),
+            inputType: 'password',
+            confirmText: globalize.translate('ButtonOk')
+        }) as string;
+    } catch {
+        return null; // cancelled
+    }
+};
+
+/**
+ * Switches the session to another profile and reloads the app on `target`.
+ * Leaving a secondary profile needs the account password (the server answers 428 until it is sent).
+ */
 export const switchProfile = async (profileId: string, target = '/home') => {
     const client = getClient();
     if (!client) throw new Error('No api client');
 
-    const result = await client.ajax({
-        type: 'POST',
-        url: client.getUrl(`Profiles/${profileId}/Switch`),
-        dataType: 'json'
-    }) as AuthResult;
+    let password: string | null | undefined;
+    let wrong = false;
+    let result: AuthResult | undefined;
+    for (let attempt = 0; attempt < 4 && !result; attempt++) {
+        try {
+            result = await client.ajax({
+                type: 'POST',
+                url: client.getUrl(`Profiles/${profileId}/Switch`),
+                data: JSON.stringify(password ? { Password: password } : {}),
+                contentType: 'application/json',
+                dataType: 'json'
+            }) as AuthResult;
+        } catch (err) {
+            const status = statusOf(err);
+            if (status !== 428 && !(status === 403 && password)) throw err;
+            wrong = status === 403;
+            password = await askAccountPassword(wrong);
+            if (!password) return; // cancelled: stay on the current profile
+        }
+    }
+    if (!result) throw new Error('Profile switch failed');
 
     if (client.onAuthenticated) {
         await client.onAuthenticated(client, result);

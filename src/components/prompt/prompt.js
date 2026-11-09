@@ -20,6 +20,7 @@ export default (() => {
             txtInput.setAttribute('label', options.label || '');
         }
         txtInput.value = options.value || '';
+        if (options.inputType) txtInput.setAttribute('type', options.inputType);
     }
 
     function showDialog(options) {

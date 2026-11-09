@@ -20,6 +20,8 @@ interface ItemBadges {
     CommunityRating?: number | null;
     CriticRating?: number | null;
     ImdbId?: string | null;
+    ImdbRating?: number | null;
+    ImdbVotes?: number | null;
     EpisodeCode?: string | null;
     RuntimeMinutes?: number | null;
 }
@@ -59,8 +61,10 @@ const ratingsHtml = (b: ItemBadges) => {
         const fresh = b.CriticRating >= 60;
         html += `<span class="jfB jfB-rate jfB-rt ${fresh ? 'fresh' : 'rotten'}" title="Rotten Tomatoes"><i>${fresh ? '🍅' : '🤢'}</i>${Math.round(b.CriticRating)}%</span>`;
     }
-    if (b.CommunityRating) {
-        html += `<span class="jfB jfB-rate jfB-star" title="${b.ImdbId ? 'IMDb / TMDb' : 'TMDb'}"><i>★</i>${b.CommunityRating.toFixed(1)}</span>`;
+    if (b.ImdbRating) {
+        html += `<span class="jfB jfB-rate jfB-imdb" title="IMDb${b.ImdbVotes ? ` · ${b.ImdbVotes.toLocaleString()}` : ''}"><i>IMDb</i>${b.ImdbRating.toFixed(1)}</span>`;
+    } else if (b.CommunityRating) {
+        html += `<span class="jfB jfB-rate jfB-star" title="TMDb"><i>★</i>${b.CommunityRating.toFixed(1)}</span>`;
     }
     return html ? `<div class="jfB-right">${html}</div>` : '';
 };
@@ -75,12 +79,13 @@ const render = (b: ItemBadges, type: string) => {
         top += `<span class="jfB jfB-res">${escapeHtml(b.Resolution === '1080P' ? '1080P' : b.Resolution)}${b.Resolution === '1080P' && !b.Hdr ? ' <b>FHD</b>' : ''}${b.Hdr ? ` <b class="jfB-${hdrClass(b.Hdr)}">${escapeHtml(b.Hdr)}</b>` : ''}</span>`;
     }
     if (b.Audio) top += `<span class="jfB jfB-audio">${audioHtml(b.Audio)}</span>`;
-    if (top || b.Network) {
-        html += `<div class="jfB-top"><div class="jfB-topleft">${top}</div>`;
-        if (b.Network && !isEpisode) html += `<span class="jfB jfB-net jfB-net-${escapeHtml(b.Network)}">${escapeHtml(NETWORKS[b.Network] || b.Network)}</span>`;
-        html += '</div>';
-    }
+    if (top) html += `<div class="jfB-top"><div class="jfB-topleft">${top}</div></div>`;
     if (b.Edition) html += `<div class="jfB-edition">${escapeHtml(b.Edition.toUpperCase())}</div>`;
+
+    // Network on the left, at the height of the ratings
+    if (b.Network && !isEpisode) {
+        html += `<div class="jfB-left"><span class="jfB jfB-net jfB-net-${escapeHtml(b.Network)}">${escapeHtml(NETWORKS[b.Network] || b.Network)}</span></div>`;
+    }
 
     html += ratingsHtml(b);
 

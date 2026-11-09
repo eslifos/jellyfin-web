@@ -9,6 +9,7 @@ import dialogHelper from 'components/dialogHelper/dialogHelper';
 import globalize from 'lib/globalize';
 import datetime from 'scripts/datetime';
 import { getReadableSize } from 'utils/file';
+import { ServerConnections } from 'lib/jellyfin-apiclient';
 
 import './cosmicInfoDialog.scss';
 
@@ -122,7 +123,7 @@ function buildHtml(item, source) {
         row(t('InfoReleaseDate'), premiere || (item.ProductionYear ? String(item.ProductionYear) : '')),
         row(t('InfoRuntime'), escapeHtml(runtimeLabel(item.RunTimeTicks))),
         row(t('InfoRating'), escapeHtml(item.OfficialRating || '')),
-        row(t('InfoScores'), ratings),
+        row(t('InfoScores'), ratings + '<span class="cInfo-imdb"></span>') || '',
         row(t('Genres'), escapeHtml((item.Genres || []).join(', '))),
         row(t('InfoStatus'), escapeHtml(item.Status === 'Continuing' ? t('InfoContinuing') : (item.Status === 'Ended' ? t('InfoEnded') : ''))),
         row(t('InfoCountries'), escapeHtml((item.ProductionLocations || []).join(', '))),
@@ -200,6 +201,31 @@ function buildHtml(item, source) {
         </div>`;
 }
 
+/** Adds the IMDb rating and votes (from the server's IMDb data) to the scores row. */
+function fillImdb(dlg, item) {
+    const slot = dlg.querySelector('.cInfo-imdb');
+    const apiClient = ServerConnections.getApiClient(item.ServerId);
+    if (!slot || !apiClient) return;
+    apiClient.ajax({
+        type: 'POST',
+        url: apiClient.getUrl('ItemBadges'),
+        data: JSON.stringify([ item.Id ]),
+        contentType: 'application/json',
+        dataType: 'json'
+    }).then(result => {
+        const b = (result || [])[0];
+        if (!b?.ImdbRating || !/^tt\d+$/.test(b.ImdbId || '')) {
+            if (!slot.parentElement.textContent.trim()) slot.closest('.cInfo-row')?.remove();
+            return;
+        }
+        const votes = b.ImdbVotes ? ` (${new Intl.NumberFormat(globalize.getCurrentLocale()).format(b.ImdbVotes)} ${t('InfoVotes')})` : '';
+        const separator = slot.parentElement.textContent.trim() ? ' &nbsp; ' : '';
+        slot.innerHTML = `${separator}<a href="https://www.imdb.com/title/${b.ImdbId}/" target="_blank" rel="noopener noreferrer" class="cInfo-imdbLink"><b>IMDb</b> ${b.ImdbRating.toFixed(1)}</a>${escapeHtml(votes)}`;
+    }).catch(() => {
+        if (!slot.parentElement.textContent.trim()) slot.closest('.cInfo-row')?.remove();
+    });
+}
+
 /** Opens the popup for the item and the version currently chosen on the page. */
 export function showCosmicInfo(item, mediaSourceId) {
     const source = (item.MediaSources || []).find(s => s.Id === mediaSourceId) || (item.MediaSources || [])[0];
@@ -207,5 +233,6 @@ export function showCosmicInfo(item, mediaSourceId) {
     dlg.classList.add('cosmicInfoDialog');
     dlg.innerHTML = buildHtml(item, source);
     dlg.querySelector('.cInfo-close').addEventListener('click', () => dialogHelper.close(dlg));
+    fillImdb(dlg, item);
     return dialogHelper.open(dlg);
 }

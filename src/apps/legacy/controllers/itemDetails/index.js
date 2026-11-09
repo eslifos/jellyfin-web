@@ -323,6 +323,10 @@ function renderHeroBadges(page, item, apiClient) {
         const b = (result || [])[0];
         if (!b) return;
         const chips = [];
+        if (b.ImdbRating && /^tt\d+$/.test(b.ImdbId || '')) {
+            const votes = b.ImdbVotes ? ' <small>' + escapeHtml(new Intl.NumberFormat(globalize.getCurrentLocale(), { notation: 'compact' }).format(b.ImdbVotes)) + '</small>' : '';
+            chips.push('<a class="cosmicChip cosmicChip-imdb" href="https://www.imdb.com/title/' + b.ImdbId + '/" target="_blank" rel="noopener noreferrer"><b>IMDb</b> ' + b.ImdbRating.toFixed(1) + votes + '</a>');
+        }
         if (b.Resolution) chips.push('<span class="cosmicChip cosmicChip-res">' + escapeHtml(b.Resolution) + (b.Hdr ? ' <b>' + escapeHtml(b.Hdr) + '</b>' : '') + '</span>');
         if (b.Audio) chips.push('<span class="cosmicChip">' + escapeHtml(b.Audio) + '</span>');
         if (b.Source) chips.push('<span class="cosmicChip">' + escapeHtml(b.Source) + '</span>');
@@ -1184,6 +1188,7 @@ function renderDetails(page, instance, item, apiClient, context) {
     renderItemCollections(page, item, apiClient, context);
     renderSimilarItems(page, item, context);
     renderMoreFromSeason(page, item, apiClient);
+    renderSeasonNav(page, item, apiClient);
     renderMoreFromArtist(page, item, apiClient);
     renderChannelGuide(page, apiClient, item);
     renderTagline(page, item);
@@ -1237,7 +1242,64 @@ function renderLyricsContainer(view, item, apiClient) {
     }
 }
 
-function renderMoreFromSeason(view, item, apiClient) {
+/**
+ * Bar on season and episode pages: back to the series and one pill per season.
+ * On a season page the pills open the season; on an episode page they swap the episode row below.
+ */
+function renderSeasonNav(view, item, apiClient) {
+    const nav = view.querySelector('.cosmicSeasonNav');
+    if (!nav) return;
+
+    if ((item.Type !== 'Season' && item.Type !== 'Episode') || !item.SeriesId) {
+        nav.classList.add('hide');
+        nav.innerHTML = '';
+        return;
+    }
+
+    const currentSeasonId = item.Type === 'Season' ? item.Id : item.SeasonId;
+    apiClient.getSeasons(item.SeriesId, {
+        userId: apiClient.getCurrentUserId()
+    }).then(function (result) {
+        const seasons = result.Items || [];
+        const seriesHref = appRouter.getRouteUrl({ Id: item.SeriesId, ServerId: item.ServerId, Type: 'Series', IsFolder: true });
+        let html = '<a is="emby-linkbutton" class="cosmicSeasonNav-back" href="' + seriesHref + '">'
+            + '<span class="material-icons" aria-hidden="true">arrow_back</span>'
+            + escapeHtml(item.SeriesName || globalize.translate('Series')) + '</a>';
+
+        if (seasons.length > 1 || item.Type === 'Episode') {
+            html += '<div class="cosmicSeasonNav-pills" role="tablist" aria-label="' + escapeHtml(globalize.translate('HeaderSeasons')) + '">';
+            html += seasons.map(function (s) {
+                const active = s.Id === currentSeasonId ? ' active' : '';
+                const name = escapeHtml(s.Name || ('S' + s.IndexNumber));
+                if (item.Type === 'Episode') {
+                    return '<button type="button" role="tab" class="cosmicSeasonPill' + active + '" aria-selected="' + !!active
+                        + '" data-id="' + s.Id + '" data-name="' + name + '">' + name + '</button>';
+                }
+                return '<a is="emby-linkbutton" role="tab" class="cosmicSeasonPill' + active + '" aria-selected="' + !!active
+                    + '" href="' + appRouter.getRouteUrl(s) + '">' + name + '</a>';
+            }).join('');
+            html += '</div>';
+        }
+
+        nav.innerHTML = html;
+        nav.classList.remove('hide');
+
+        if (item.Type === 'Episode') {
+            nav.querySelectorAll('button.cosmicSeasonPill').forEach(function (btn) {
+                btn.addEventListener('click', function () {
+                    nav.querySelectorAll('.cosmicSeasonPill').forEach(function (p) {
+                        p.classList.toggle('active', p === btn);
+                        p.setAttribute('aria-selected', String(p === btn));
+                    });
+                    renderMoreFromSeason(view, item, apiClient, btn.dataset.id, btn.getAttribute('data-name'));
+                    view.querySelector('.moreFromSeasonSection')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                });
+            });
+        }
+    });
+}
+
+function renderMoreFromSeason(view, item, apiClient, seasonId, seasonName) {
     const section = view.querySelector('.moreFromSeasonSection');
 
     if (section) {
@@ -1246,19 +1308,23 @@ function renderMoreFromSeason(view, item, apiClient) {
             return;
         }
 
+        const targetSeasonId = seasonId || item.SeasonId;
+        const otherSeason = targetSeasonId !== item.SeasonId;
         const userId = apiClient.getCurrentUserId();
         apiClient.getEpisodes(item.SeriesId, {
-            SeasonId: item.SeasonId,
+            SeasonId: targetSeasonId,
             UserId: userId,
             Fields: 'ItemCounts,PrimaryImageAspectRatio,CanDelete,MediaSourceCount'
         }).then(function (result) {
-            if (result.Items.length < 2) {
+            if (result.Items.length < (otherSeason ? 1 : 2)) {
                 section.classList.add('hide');
                 return;
             }
 
             section.classList.remove('hide');
-            section.querySelector('h2').innerText = globalize.translate('MoreFromValue', item.SeasonName);
+            section.querySelector('h2').innerText = otherSeason ?
+                (seasonName || '') :
+                globalize.translate('MoreFromValue', item.SeasonName);
             const itemsContainer = section.querySelector('.itemsContainer');
             cardBuilder.buildCards(result.Items, {
                 parentContainer: section,
@@ -1272,7 +1338,7 @@ function renderMoreFromSeason(view, item, apiClient) {
                 includeParentInfoInTitle: false,
                 allowBottomPadding: false
             });
-            const card = itemsContainer.querySelector('.card[data-id="' + item.Id + '"]');
+            const card = otherSeason ? itemsContainer.querySelector('.card') : itemsContainer.querySelector('.card[data-id="' + item.Id + '"]');
 
             if (card) {
                 setTimeout(function () {

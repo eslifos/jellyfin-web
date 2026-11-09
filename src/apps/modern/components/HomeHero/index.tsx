@@ -41,6 +41,26 @@ const dailyShuffle = <T,>(list: T[]) => {
         .map(x => x.item);
 };
 
+interface HeroPick {
+    ItemId: string;
+    Reason: string;
+    NewEpisodes: number;
+    ImdbRating?: number | null;
+    ImdbVotes?: number | null;
+}
+
+interface HeroData {
+    items: BaseItemDto[];
+    newEpisodes: Record<string, number>;
+    months: number;
+    imdb: Record<string, number>;
+}
+
+const normId = (id?: string | null) => (id || '').replace(/-/g, '').toLowerCase();
+
+/** Window of the fallback: this year or the last 6 months, whichever goes further back. */
+const windowMonths = () => Math.max(6, new Date().getMonth() + 1);
+
 /** Community rating (TMDb/TVDB votes, 0-10) plus a bit of critic score when known. */
 const popularity = (i: BaseItemDto) => (i.CommunityRating || 0) + (i.CriticRating ? i.CriticRating / 40 : 0);
 
@@ -59,7 +79,7 @@ const HomeHero: FC = () => {
 
     const { data } = useQuery({
         queryKey: [ 'HomeHeroPopular', user?.Id ],
-        queryFn: async ({ signal }) => {
+        queryFn: async ({ signal }): Promise<HeroData> => {
             const lib = getLibraryApi(api!);
             const detail = {
                 userId: user?.Id,
@@ -71,9 +91,39 @@ const HomeHero: FC = () => {
                 imageTypeLimit: 1
             };
 
+            // Server ranking: releases of this year / last 6 months by IMDb votes, TMDb popularity and rating.
+            try {
+                const res = await api!.axiosInstance.get<HeroPick[]>(`${api!.basePath}/Discovery/Hero`, {
+                    headers: { Authorization: api!.authorizationHeader },
+                    params: { limit: SLIDES + 2 },
+                    signal
+                });
+                const picks = res.data || [];
+                if (picks.length) {
+                    const full = (await lib.getItems({ ...detail, hasOverview: undefined, ids: picks.map(p => p.ItemId) }, { signal })).data.Items || [];
+                    const byId = new Map(full.map(i => [ normId(i.Id), i ]));
+                    const order = picks.map(p => normId(p.ItemId));
+                    const ranked = order.map(id => byId.get(id)).filter((i): i is BaseItemDto => !!i);
+                    const top = dailyShuffle(ranked.slice(0, SLIDES + 2)).slice(0, SLIDES)
+                        .sort((a, b) => order.indexOf(normId(a.Id)) - order.indexOf(normId(b.Id)));
+                    const newEpisodes: Record<string, number> = {};
+                    const imdb: Record<string, number> = {};
+                    picks.forEach(p => {
+                        const item = byId.get(normId(p.ItemId));
+                        if (!item?.Id) return;
+                        if (p.NewEpisodes && p.Reason !== 'Movie') newEpisodes[item.Id] = p.NewEpisodes;
+                        if (p.ImdbRating) imdb[item.Id] = p.ImdbRating;
+                    });
+                    if (top.length) return { items: top, newEpisodes, months: windowMonths(), imdb };
+                }
+            } catch (err) {
+                if (signal?.aborted) throw err;
+                // Server without the Discovery endpoint: rank here below
+            }
+
             // Recent = released in the window (movies) or with new episodes aired in it (series).
             // Popular = best community/critic rating. Widen the window if there are too few.
-            for (const months of [ 3, 6, 12 ]) {
+            for (const months of [ windowMonths(), 12 ]) {
                 const since = new Date();
                 since.setMonth(since.getMonth() - months);
                 const now = new Date().toISOString();
@@ -105,7 +155,7 @@ const HomeHero: FC = () => {
                         // Mix the top a bit each day so the banner isn't always the same order.
                         const top = dailyShuffle(candidates.slice(0, SLIDES + 2)).slice(0, SLIDES)
                             .sort((a, b) => popularity(b) - popularity(a));
-                        return { items: top, newEpisodes, months };
+                        return { items: top, newEpisodes, months, imdb: {} as Record<string, number> };
                     }
                     break;
                 }
@@ -119,7 +169,7 @@ const HomeHero: FC = () => {
                 sortOrder: [ SortOrder.Descending ],
                 limit: 30
             }, { signal });
-            return { items: dailyShuffle(res.data.Items || []).slice(0, SLIDES), newEpisodes: {} as Record<string, number>, months: 0 };
+            return { items: dailyShuffle(res.data.Items || []).slice(0, SLIDES), newEpisodes: {} as Record<string, number>, months: 0, imdb: {} as Record<string, number> };
         },
         enabled: !!api && !!user,
         staleTime: 30 * 60 * 1000
@@ -229,7 +279,13 @@ const HomeHero: FC = () => {
                 )}
 
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, flexWrap: 'wrap', mb: 1.5, color: 'rgba(255,255,255,0.85)', fontSize: '0.9rem', fontWeight: 600 }}>
-                    {!!item.CommunityRating && (
+                    {!!(item.Id && data?.imdb[item.Id]) && (
+                        <Box component='span' sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
+                            <Box component='span' sx={{ px: 0.6, borderRadius: '4px', fontSize: '0.72rem', fontWeight: 900, color: '#000', background: '#f5c518' }}>IMDb</Box>
+                            {data.imdb[item.Id].toFixed(1)}
+                        </Box>
+                    )}
+                    {!!item.CommunityRating && !(item.Id && data?.imdb[item.Id]) && (
                         <Box component='span' sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.4, color: '#ffca28' }}>
                             <StarRoundedIcon sx={{ fontSize: '1.1rem' }} />{item.CommunityRating.toFixed(1)}
                         </Box>
