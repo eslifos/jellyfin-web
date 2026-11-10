@@ -3,10 +3,8 @@ import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client/models/base
 import { BaseItemKind } from '@jellyfin/sdk/lib/generated-client/models/base-item-kind';
 import { ItemFields } from '@jellyfin/sdk/lib/generated-client/models/item-fields';
 import { LocationType } from '@jellyfin/sdk/lib/generated-client/models/location-type';
-import { MetadataRefreshMode } from '@jellyfin/sdk/lib/generated-client/models/metadata-refresh-mode';
 import { ImageType } from '@jellyfin/sdk/lib/generated-client/models/image-type';
 import { getImageApi } from '@jellyfin/sdk/lib/utils/api/image-api';
-import { getItemUpdateApi } from '@jellyfin/sdk/lib/utils/api/item-update-api';
 import { getLibraryApi } from '@jellyfin/sdk/lib/utils/api/library-api';
 import { useMutation, useQuery } from '@tanstack/react-query';
 import Alert from '@mui/material/Alert';
@@ -16,6 +14,7 @@ import Chip from '@mui/material/Chip';
 import CircularProgress from '@mui/material/CircularProgress';
 import Collapse from '@mui/material/Collapse';
 import InputAdornment from '@mui/material/InputAdornment';
+import LinearProgress from '@mui/material/LinearProgress';
 import Link from '@mui/material/Link';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
@@ -69,6 +68,7 @@ interface OrderOption {
     EpisodeCount: number;
     Matched: number;
     IsCurrent: boolean;
+    SeasonEpisodeCounts?: Record<string, number>;
 }
 
 interface OrderEpisode {
@@ -81,9 +81,14 @@ interface OrderEpisode {
     HasProviderData: boolean;
     InOrder?: boolean | null;
     ExpectedName?: string | null;
+    Outdated?: boolean;
+    AlsoIn: string[];
+    DataFrom: string[];
 }
 
 interface Analysis {
+    RefreshState: 'Idle' | 'Queued' | 'Running' | 'Done' | 'Failed';
+    RefreshProgress?: number | null;
     CurrentOrder: string;
     PrimarySource?: string | null;
     EffectiveSource?: string | null;
@@ -110,7 +115,8 @@ const useOrderData = () => {
                     recursive: true,
                     includeItemTypes: [ BaseItemKind.Series ],
                     fields: [ ItemFields.ProviderIds, ItemFields.RecursiveItemCount, ItemFields.Path ],
-                    enableUserData: false,
+                    // The server only counts the episodes (RecursiveItemCount) together with the user data
+                    enableUserData: true,
                     imageTypeLimit: 1
                 }, { signal }),
                 // Episodes on disk that no metadata provider could match.
@@ -147,7 +153,10 @@ const useAnalysis = (seriesId: string, enabled: boolean) => {
             return data;
         },
         enabled: !!api && enabled,
-        staleTime: 5 * 60 * 1000
+        staleTime: 0,
+        refetchOnMount: 'always',
+        // Follow the refresh of the series while it runs
+        refetchInterval: q => (q.state.data && [ 'Running', 'Queued' ].includes(q.state.data.RefreshState) ? 3000 : false)
     });
 };
 
@@ -190,20 +199,13 @@ const AnalysisPanel: FC<{ series: BaseItemDto }> = ({ series }) => {
     const sourceValue = source ?? (picked && selected ? (sourceFor(selected.Provider, data?.Sources || []) ?? data?.PrimarySource ?? '') : (data?.PrimarySource ?? ''));
     const changed = !!data && ((selected?.Value ?? data.CurrentOrder) !== data.CurrentOrder || sourceValue !== (data.PrimarySource ?? ''));
 
+    // Saves order + source and refreshes the series right away on the server (it does not wait for library scans)
     const apply = useMutation({
         mutationFn: async () => {
-            const lib = getLibraryApi(api!);
-            const headers = { Authorization: api!.authorizationHeader };
-            await api!.axiosInstance.post(api!.getUri(`/EpisodeOrder/${seriesId}/Source`, { source: sourceValue || undefined }), null, { headers });
-            const { data: full } = await lib.getItem({ itemId: seriesId });
-            await getItemUpdateApi(api!).updateItem({ itemId: seriesId, baseItemDto: { ...full, DisplayOrder: selected?.Value ?? data?.CurrentOrder ?? '' } });
-            await lib.refreshItem({
-                itemId: seriesId,
-                metadataRefreshMode: MetadataRefreshMode.FullRefresh,
-                imageRefreshMode: MetadataRefreshMode.Default,
-                replaceAllMetadata: true,
-                replaceAllImages: false
-            });
+            await api!.axiosInstance.post(api!.getUri(`/EpisodeOrder/${seriesId}/Apply`, {
+                order: selected?.Value ?? data?.CurrentOrder ?? '',
+                source: sourceValue || undefined
+            }), null, { headers: { Authorization: api!.authorizationHeader } });
         },
         onSuccess: () => {
             setPicked(null);
@@ -212,6 +214,17 @@ const AnalysisPanel: FC<{ series: BaseItemDto }> = ({ series }) => {
             void queryClient.invalidateQueries({ queryKey: [ 'EpisodeOrderAnalysis', seriesId ] });
         }
     });
+
+    // When the refresh ends, reload the cards (names, counts) once
+    const refreshState = data?.RefreshState;
+    const [ lastState, setLastState ] = useState(refreshState);
+    if (refreshState !== lastState) {
+        setLastState(refreshState);
+        if (lastState === 'Running' && (refreshState === 'Done' || refreshState === 'Failed')) {
+            void queryClient.invalidateQueries({ queryKey: [ 'EpisodeOrderData' ] });
+        }
+    }
+    const refreshing = refreshState === 'Running' || refreshState === 'Queued';
 
     const fixNumbers = useMutation({
         mutationFn: async () => {
@@ -240,7 +253,21 @@ const AnalysisPanel: FC<{ series: BaseItemDto }> = ({ series }) => {
 
     const noNumber = data.Episodes.filter(e => e.Season == null || e.Number == null);
     const notInOrder = data.Episodes.filter(e => e.Season != null && e.Number != null && e.InOrder === false);
+    // Files the order in use does not have: some still got data from another source (complemented), the rest have none
+    const complemented = notInOrder.filter(e => e.HasProviderData);
+    const missing = notInOrder.filter(e => !e.HasProviderData);
+    const providerName = current?.Provider === 'Tvdb' ? 'TVDB' : 'TMDb';
+    const missingDetail = (e: OrderEpisode) => {
+        const parts: string[] = [];
+        const inSeason = current?.SeasonEpisodeCounts?.[String(e.Season)];
+        parts.push(inSeason ?
+            globalize.translate('EpoSeasonHas', providerName, inSeason, e.Season) :
+            globalize.translate('EpoSeasonMissing', providerName, e.Season));
+        parts.push(e.AlsoIn.length ? globalize.translate('EpoAlsoIn', e.AlsoIn.join(', ')) : globalize.translate('EpoNowhere'));
+        return parts.join(' · ');
+    };
     const noData = data.Episodes.filter(e => !e.HasProviderData && e.Season != null && e.Number != null && e.InOrder !== false);
+    const outdated = data.Episodes.filter(e => e.HasProviderData && e.Outdated);
     const libraryCount = data.Episodes.length;
     const groups = [ 'Tvdb', 'Tmdb' ].map(p => ({ provider: p, options: data.Orders.filter(o => o.Provider === p) })).filter(g => g.options.length);
 
@@ -305,17 +332,37 @@ const AnalysisPanel: FC<{ series: BaseItemDto }> = ({ series }) => {
                     <MenuItem value=''>{data.PrimarySource || !data.EffectiveSource ? globalize.translate('EpoSourceAutoPlain') : globalize.translate('EpoSourceAuto', data.EffectiveSource)}</MenuItem>
                     {data.Sources.map(s => <MenuItem key={s} value={s}>{s}</MenuItem>)}
                 </TextField>
-                <Button variant='contained' size='small' onClick={() => apply.mutate()} disabled={!changed || apply.isPending}
+                <Button variant='contained' size='small' onClick={() => apply.mutate()} disabled={!changed || apply.isPending || refreshing}
                     startIcon={apply.isPending ? <CircularProgress size={14} color='inherit' /> : <SortIcon />}>
                     {globalize.translate('EpoApply')}
                 </Button>
+                {!changed && !refreshing && (
+                    <Button size='small' onClick={() => apply.mutate()} disabled={apply.isPending} startIcon={<RefreshIcon />}>
+                        {globalize.translate('EpoRefreshNow')}
+                    </Button>
+                )}
             </Box>
             <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)', mt: '4px !important' }}>{globalize.translate('EpoSourceHelp')}</Typography>
-            {apply.isSuccess && <Alert severity='success' sx={{ py: 0 }}>{globalize.translate('EpoApplied')}</Alert>}
-            {apply.isError && <Alert severity='error' sx={{ py: 0 }}>{globalize.translate('EpoApplyError')}</Alert>}
+            {refreshing && (
+                <Box sx={{ p: 1.25, borderRadius: '12px', border: '1px solid rgba(0,164,220,0.35)', background: 'rgba(0,164,220,0.08)' }}>
+                    <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: '#00a4dc', mb: 0.75 }}>
+                        {globalize.translate(refreshState === 'Queued' ? 'EpoRefreshQueued' : 'EpoRefreshing')}
+                        {data.RefreshProgress ? ` · ${Math.floor(data.RefreshProgress)}%` : ''}
+                    </Typography>
+                    <LinearProgress variant={data.RefreshProgress ? 'determinate' : 'indeterminate'} value={data.RefreshProgress ?? 0}
+                        sx={{ height: 5, borderRadius: 3, '& .MuiLinearProgress-bar': { background: 'linear-gradient(90deg, #00a4dc, #aa5cc3)' } }} />
+                </Box>
+            )}
+            {refreshState === 'Done' && <Alert severity='success' sx={{ py: 0 }}>{globalize.translate('EpoRefreshDone')}</Alert>}
+            {refreshState === 'Failed' && <Alert severity='error' sx={{ py: 0 }}>{globalize.translate('EpoRefreshFailed')}</Alert>}
+            {apply.isError && (
+                <Alert severity='error' sx={{ py: 0 }}>
+                    {globalize.translate((apply.error as { response?: { status?: number } })?.response?.status === 409 ? 'EpoRefreshBusy' : 'EpoApplyError')}
+                </Alert>
+            )}
 
             {/* Episodes that do not fit */}
-            {noNumber.length + notInOrder.length + noData.length === 0 ? (
+            {noNumber.length + notInOrder.length + noData.length + outdated.length === 0 ? (
                 <Alert severity='success' sx={{ py: 0 }}>{globalize.translate('EpoNoIssues')}</Alert>
             ) : (
                 <Stack spacing={1}>
@@ -335,9 +382,23 @@ const AnalysisPanel: FC<{ series: BaseItemDto }> = ({ series }) => {
                             {noNumber.map(e => <EpisodeLine key={e.Id} e={e} color='#ef5350' detail={e.FileName || undefined} />)}
                         </IssueGroup>
                     )}
-                    {notInOrder.length > 0 && (
-                        <IssueGroup title={`${globalize.translate('EpoNotInOrderTitle', current ? `${current.Name}` : orderLabel(data.CurrentOrder))} (${notInOrder.length})`} color='#ff9800'>
-                            {notInOrder.map(e => <EpisodeLine key={e.Id} e={e} color='#ff9800' />)}
+                    {missing.length > 0 && (
+                        <IssueGroup
+                            title={`${globalize.translate('EpoNotInOrderTitle', current ? `${current.Name}` : orderLabel(data.CurrentOrder))} (${missing.length})`}
+                            color='#ff9800'
+                            help={globalize.translate('EpoMissingHelp')}
+                        >
+                            {missing.map(e => <EpisodeLine key={e.Id} e={e} color='#ff9800' detail={missingDetail(e)} />)}
+                        </IssueGroup>
+                    )}
+                    {complemented.length > 0 && (
+                        <IssueGroup title={`${globalize.translate('EpoComplementedTitle', providerName)} (${complemented.length})`} color='#4caf50' help={globalize.translate('EpoComplementedHelp', providerName)}>
+                            {complemented.map(e => <EpisodeLine key={e.Id} e={e} color='#4caf50' detail={globalize.translate('EpoDataFrom', e.DataFrom.join(', '))} />)}
+                        </IssueGroup>
+                    )}
+                    {outdated.length > 0 && (
+                        <IssueGroup title={`${globalize.translate('EpoOutdatedTitle')} (${outdated.length})`} color='#26c6da' help={globalize.translate('EpoOutdatedHelp')}>
+                            {outdated.map(e => <EpisodeLine key={e.Id} e={e} color='#26c6da' detail={e.ExpectedName ? globalize.translate('EpoShouldBe', e.ExpectedName) : undefined} />)}
                         </IssueGroup>
                     )}
                     {noData.length > 0 && (

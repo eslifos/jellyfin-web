@@ -4,17 +4,17 @@ import { type Theme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { Outlet, useLocation } from 'react-router-dom';
 
+import LibraryScanIndicator from 'apps/dashboard/features/libraries/components/LibraryScanIndicator';
 import AppBody from 'components/AppBody';
 import { initCardBadges } from 'components/cardbuilder/cardBadges';
 import CustomCss from 'components/CustomCss';
-import OffsetAppBar from 'components/OffsetAppBar';
 import ThemeCss from 'components/ThemeCss';
 import { useApi } from 'hooks/useApi';
 import { PUBLIC_PATHS } from 'components/router/appRouter';
 
 import AppDrawer, { isDrawerPath } from './components/drawers/AppDrawer';
 import FloatingNav from './components/FloatingNav';
-import LibraryToolbar from './features/libraries/components/LibraryToolbar';
+import LibraryTopBar from './features/libraries/components/LibraryTopBar';
 import { LibraryProvider } from './features/libraries/hooks/useLibrary';
 import { isLibraryPath } from './features/libraries/utils/path';
 
@@ -52,11 +52,7 @@ export const Component = () => {
             >
                 <StrictMode>
                     {/* Library filters/sort toolbar (v12.4), only on library pages */}
-                    {isLibraryPath(location.pathname) && (
-                        <OffsetAppBar dense>
-                            <LibraryToolbar />
-                        </OffsetAppBar>
-                    )}
+                    {isLibraryPath(location.pathname) && <LibraryTopBar />}
 
                     {isDrawerAvailable && (
                         <AppDrawer
@@ -79,6 +75,7 @@ export const Component = () => {
                     <AppBody>
                         <Outlet />
                     </AppBody>
+                    <LibraryScanIndicator />
                 </Box>
             </Box>
 

@@ -7,6 +7,7 @@ import type { LibraryTabContent } from 'types/libraryTabContent';
 import GenresView from './GenresView';
 import GuideView from './GuideView';
 import ItemsView from './ItemsView';
+import MoviesHomeView from './MoviesHomeView';
 import ProgramsSectionView from './ProgramsSectionView';
 import SuggestionsSectionView from './SuggestionsSectionView';
 import UpcomingView from './UpcomingView';
@@ -28,6 +29,12 @@ const PageTabContent: FC<PageTabContentProps> = ({ parentId, currentTab }) => {
                     currentTab.sectionsView?.isMovieRecommendations
                 }
             />
+        );
+    }
+
+    if (currentTab.viewType === LibraryTab.Home) {
+        return (
+            <MoviesHomeView parentId={parentId} />
         );
     }
 

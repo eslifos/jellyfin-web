@@ -13,13 +13,13 @@ const fetchVirtualFolders = async (api: Api, options?: AxiosRequestConfig) => {
 };
 
 /** @param refetchInterval poll interval in ms (used while a scan is running to show per-library progress). */
-export const useVirtualFolders = (refetchInterval?: number | false) => {
+export const useVirtualFolders = (refetchInterval?: number | false, enabled = true) => {
     const { api } = useApi();
 
     return useQuery({
         queryKey: [ QUERY_KEY ],
         queryFn: ({ signal }) => fetchVirtualFolders(api!, { signal }),
-        enabled: !!api,
+        enabled: !!api && enabled,
         refetchInterval
     });
 };

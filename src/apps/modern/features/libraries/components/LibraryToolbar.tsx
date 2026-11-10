@@ -11,16 +11,15 @@ import React, { type SetStateAction, useMemo, type FC } from 'react';
 import { playbackManager } from 'components/playback/playbackmanager';
 import { useApi } from 'hooks/useApi';
 import { useItem } from 'hooks/useItem';
-import { useUserSettings } from 'hooks/useUserSettings';
 import globalize from 'lib/globalize';
 import type { LibraryViewSettings } from 'types/library';
 import { LibraryTab } from 'types/libraryTab';
 
 import FilterButton from './filter/FilterButton';
 import LibraryViewMenu from './LibraryViewMenu';
+import LibraryTabsBar from './LibraryTabsBar';
 import NewCollectionButton from './NewCollectionButton';
 import NewPlaylistButton from './NewPlaylistButton';
-import Pagination from './Pagination';
 import PlayAllButton from './PlayAllButton';
 import QueueButton from './QueueButton';
 import ShuffleButton from './ShuffleButton';
@@ -32,6 +31,7 @@ import { getDefaultLibraryViewSettings } from '../utils/settings';
 
 /** Views that only show the menu, not the toolbar buttons */
 const MENU_ONLY_VIEWS = [
+    LibraryTab.Home,
     LibraryTab.Genres,
     LibraryTab.Guide,
     LibraryTab.Suggestions,
@@ -55,7 +55,7 @@ const LibraryToolbar: FC = () => {
     const libraryViewSettings = viewSettings ?? getDefaultLibraryViewSettings(viewType);
     // eslint-disable-next-line @typescript-eslint/no-unused-vars
     const setLibraryViewSettings = setViewSettings ?? ((action: SetStateAction<LibraryViewSettings>) => { /* no-op */ });
-    const { itemType, isPaginationEnabled, isBtnPlayAllEnabled, isBtnQueueEnabled, isBtnShuffleEnabled, isBtnSortEnabled, isBtnFilterEnabled, isBtnNewCollectionEnabled, isBtnNewPlaylistEnabled, isBtnGridListEnabled } = content ?? {};
+    const { itemType, isBtnPlayAllEnabled, isBtnQueueEnabled, isBtnShuffleEnabled, isBtnSortEnabled, isBtnFilterEnabled, isBtnNewCollectionEnabled, isBtnNewPlaylistEnabled, isBtnGridListEnabled } = content ?? {};
 
     const isSmallScreen = useMediaQuery(t => t.breakpoints.up('sm'));
 
@@ -73,24 +73,12 @@ const LibraryToolbar: FC = () => {
     // This should be used to invalidate queries that affect multiple parents, such as collections and playlists.
     const allItemsQueryKey = useMemo(() => ['User', user?.Id, 'Items'], [user?.Id]);
 
-    // Pagination
-    const startIndex = viewSettings?.StartIndex ?? 0;
-    const { libraryPageSize: paginationLimit } = useUserSettings();
-    const paginationStart = totalRecordCount ? startIndex + 1 : 0;
-    const paginationEnd = paginationLimit ?
-        Math.min(startIndex + paginationLimit, totalRecordCount) :
-        totalRecordCount;
-    const isUserPaginationEnabled = paginationLimit > 0;
-    /** True if the data is larger than the page limit */
-    const isPaginationRequired = isUserPaginationEnabled && paginationLimit < totalRecordCount;
-
+    // Items load while scrolling: show the total
     const itemCountDisplay = useMemo(() => {
         if (isPending) return '\u2219'; // Bullet "operator" character as a loading indicator
 
-        return isPaginationRequired ?
-            globalize.translate('ListPaging', paginationStart, paginationEnd, totalRecordCount) :
-            totalRecordCount;
-    }, [isPending, isPaginationRequired, paginationStart, paginationEnd, totalRecordCount]);
+        return totalRecordCount.toLocaleString();
+    }, [isPending, totalRecordCount]);
 
     if (!isLibraryPath) return null;
 
@@ -104,7 +92,8 @@ const LibraryToolbar: FC = () => {
                 alignItems: 'center'
             }}
         >
-            <LibraryViewMenu />
+            {/* Library sections always visible as tabs; the old dropdown only for routes without tabs */}
+            <LibraryTabsBar fallback={<LibraryViewMenu />} />
 
             {!MENU_ONLY_VIEWS.includes(viewType) && (
                 <>
@@ -262,15 +251,6 @@ const LibraryToolbar: FC = () => {
                             )}
                         </ButtonGroup>
 
-                        {isPaginationEnabled && isUserPaginationEnabled && (
-                            <Pagination
-                                setLibraryViewSettings={setLibraryViewSettings}
-                                index={startIndex}
-                                pageSize={paginationLimit}
-                                total={totalRecordCount}
-                                disabled={isPending || !isPaginationRequired || itemsResult?.isPlaceholderData}
-                            />
-                        )}
                     </Stack>
                 </>
             )}

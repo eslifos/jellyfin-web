@@ -2,7 +2,8 @@ import { ImageType } from '@jellyfin/sdk/lib/generated-client/models/image-type'
 import { ItemSortBy } from '@jellyfin/sdk/lib/generated-client/models/item-sort-by';
 import Box from '@mui/material/Box';
 import classNames from 'classnames';
-import React, { type FC, SetStateAction, useCallback, useMemo } from 'react';
+import CircularProgress from '@mui/material/CircularProgress';
+import React, { type FC, SetStateAction, useCallback, useEffect, useMemo, useRef } from 'react';
 
 import { useLibrary } from 'apps/modern/features/libraries/hooks/useLibrary';
 import { getDefaultLibraryViewSettings } from 'apps/modern/features/libraries/utils/settings';
@@ -193,6 +194,23 @@ const ItemsView: FC = () => {
 
     const hasSortName = !libraryViewSettings.SortBy.includes(ItemSortBy.Random);
 
+    // Infinite scroll: a marker after the grid asks for the next page before it gets on screen
+    const sentinel = useRef<HTMLDivElement>(null);
+    const hasNextPage = !!itemsResult?.hasNextPage;
+    const isFetchingNextPage = !!itemsResult?.isFetchingNextPage;
+    const fetchNextPage = itemsResult?.fetchNextPage;
+    useEffect(() => {
+        const el = sentinel.current;
+        if (!el || !hasNextPage || !fetchNextPage) return;
+        const observer = new IntersectionObserver(entries => {
+            if (entries.some(e => e.isIntersecting) && !isFetchingNextPage) {
+                void fetchNextPage();
+            }
+        }, { rootMargin: '1200px 0px' });
+        observer.observe(el);
+        return () => observer.disconnect();
+    }, [ hasNextPage, isFetchingNextPage, fetchNextPage, itemsResult?.data?.Items?.length ]);
+
     const itemsContainerClass = classNames(
         'padded-left padded-right',
         libraryViewSettings.ViewMode === ViewMode.ListView ?
@@ -220,6 +238,12 @@ const ItemsView: FC = () => {
                 >
                     {getItems()}
                 </ItemsContainer>
+            )}
+
+            {hasNextPage && (
+                <Box ref={sentinel} sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                    {isFetchingNextPage && <CircularProgress size={32} />}
+                </Box>
             )}
         </Box>
     );

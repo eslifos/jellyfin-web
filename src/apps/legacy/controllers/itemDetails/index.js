@@ -651,7 +651,9 @@ function renderName(item, container, context) {
 }
 
 function setTrailerButtonVisibility(page, item) {
-    if ((item.LocalTrailerCount || item.RemoteTrailers?.length) && playbackManager.getSupportedCommands().indexOf('PlayTrailers') !== -1) {
+    // Online trailers come from the server (TMDb, in the library language); local trailer files play as always
+    const hasOnlineTrailer = (item.Type === 'Movie' || item.Type === 'Series') && (item.ProviderIds?.Tmdb || item.RemoteTrailers?.length);
+    if (item.LocalTrailerCount || hasOnlineTrailer) {
         hideAll(page, 'btnPlayTrailer', true);
     } else {
         hideAll(page, 'btnPlayTrailer');
@@ -2248,7 +2250,16 @@ export default function (view, params) {
     }
 
     function onPlayTrailerClick() {
-        playTrailer();
+        if (currentItem.LocalTrailerCount) {
+            playTrailer();
+            return;
+        }
+
+        import('apps/modern/components/Trailer/showTrailerDialog').then(({ showTrailerDialog }) => {
+            showTrailerDialog(currentItem.Id);
+        }).catch(err => {
+            console.error('[ItemDetails] failed to open the trailer', err);
+        });
     }
 
     function onDownloadClick() {

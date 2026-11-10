@@ -111,15 +111,15 @@ export const LibraryRoutes: LibraryRoute[] = [
         type: CollectionType.Movies,
         views: [
             {
-                index: 0,
+                index: 1,
                 label: 'Movies',
-                view: LibraryTab.Movies,
+                view: LibraryTab.Home,
                 isDefault: true
             },
             {
-                index: 1,
-                label: 'Suggestions',
-                view: LibraryTab.Suggestions
+                index: 0,
+                label: 'LibraryTabLibrary',
+                view: LibraryTab.Movies
             },
             {
                 index: 2,

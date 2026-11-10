@@ -20,10 +20,12 @@ import Typography from '@mui/material/Typography';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import MovieRoundedIcon from '@mui/icons-material/MovieRounded';
 import PlayArrowRoundedIcon from '@mui/icons-material/PlayArrowRounded';
 import StarRoundedIcon from '@mui/icons-material/StarRounded';
 import { useNavigate } from 'react-router-dom';
 
+import { TrailerDialog } from 'apps/modern/components/Trailer';
 import { playbackManager } from 'components/playback/playbackmanager';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
@@ -71,14 +73,22 @@ const runtime =(ticks?: number | null) => {
     return h ? `${h} h ${min % 60} min` : `${min} min`;
 };
 
-const HomeHero: FC = () => {
+interface HomeHeroProps {
+    /** Show these items (in this order) instead of the home picks, e.g. the top 10 of a library */
+    itemIds?: string[];
+    /** Inside a library page: no overlap with the header and a bit shorter */
+    embedded?: boolean;
+}
+
+const HomeHero: FC<HomeHeroProps> = ({ itemIds, embedded = false }) => {
     const { api, user } = useApi();
     const navigate = useNavigate();
     const [ index, setIndex ] = useState(0);
     const [ paused, setPaused ] = useState(false);
+    const [ trailerFor, setTrailerFor ] = useState<string | null>(null);
 
     const { data } = useQuery({
-        queryKey: [ 'HomeHeroPopular', user?.Id ],
+        queryKey: [ 'HomeHeroPopular', user?.Id, itemIds?.join(',') ],
         queryFn: async ({ signal }): Promise<HeroData> => {
             const lib = getLibraryApi(api!);
             const detail = {
@@ -90,6 +100,13 @@ const HomeHero: FC = () => {
                 enableImageTypes: [ ImageType.Backdrop, ImageType.Logo ],
                 imageTypeLimit: 1
             };
+
+            if (itemIds?.length) {
+                const full = (await lib.getItems({ ...detail, hasOverview: undefined, ids: itemIds }, { signal })).data.Items || [];
+                const byId = new Map(full.map(i => [ normId(i.Id), i ]));
+                const ordered = itemIds.map(id => byId.get(normId(id))).filter((i): i is BaseItemDto => !!i);
+                return { items: ordered, newEpisodes: {}, months: 1, imdb: {} };
+            }
 
             // Server ranking: releases of this year / last 6 months by IMDb votes, TMDb popularity and rating.
             try {
@@ -171,7 +188,7 @@ const HomeHero: FC = () => {
             }, { signal });
             return { items: dailyShuffle(res.data.Items || []).slice(0, SLIDES), newEpisodes: {} as Record<string, number>, months: 0, imdb: {} as Record<string, number> };
         },
-        enabled: !!api && !!user,
+        enabled: !!api && !!user && (itemIds === undefined || itemIds.length > 0),
         staleTime: 30 * 60 * 1000
     });
 
@@ -180,10 +197,10 @@ const HomeHero: FC = () => {
     const go = useCallback((delta: number) => setIndex(i => (i + delta + count) % Math.max(1, count)), [ count ]);
 
     useEffect(() => {
-        if (paused || count < 2) return;
+        if (paused || count < 2 || trailerFor) return;
         const t = window.setTimeout(() => go(1), ROTATE_MS);
         return () => window.clearTimeout(t);
-    }, [ index, paused, count, go ]);
+    }, [ index, paused, count, go, trailerFor ]);
 
     if (!api || !count) return null;
     const item: BaseItemDto = items[Math.min(index, count - 1)];
@@ -218,8 +235,8 @@ const HomeHero: FC = () => {
             onMouseLeave={() => setPaused(false)}
             sx={{
                 position: 'relative', width: '100%', overflow: 'hidden',
-                height: { xs: '62vh', md: '74vh' }, minHeight: { xs: 380, md: 460 }, maxHeight: 760,
-                mt: { xs: '-66px', md: '-72px' }, mb: 1
+                height: embedded ? { xs: '50vh', md: '60vh' } : { xs: '62vh', md: '74vh' }, minHeight: { xs: 360, md: 420 }, maxHeight: 760,
+                mt: embedded ? 0 : { xs: '-66px', md: '-72px' }, mb: 1
             }}
         >
             {/* Backdrops (cross-fade) */}
@@ -337,6 +354,16 @@ const HomeHero: FC = () => {
                     }}>
                         {globalize.translate('HeroMoreInfo')}
                     </Button>
+                    <Button onClick={() => setTrailerFor(item.Id || null)} startIcon={<MovieRoundedIcon />} sx={{
+                        px: 2.5, py: 1.1, borderRadius: '14px', textTransform: 'none', fontSize: '1rem', fontWeight: 700,
+                        color: 'rgba(255,255,255,0.92)', background: 'rgba(8, 10, 22, 0.62)',
+                        backdropFilter: 'blur(20px) saturate(1.4)', WebkitBackdropFilter: 'blur(20px) saturate(1.4)',
+                        border: '1px solid rgba(0, 164, 220, 0.3)', transition: 'all 0.2s',
+                        '& svg': { color: '#00a4dc' },
+                        '&:hover': { color: '#fff', background: 'rgba(0, 164, 220, 0.16)', borderColor: 'rgba(0, 164, 220, 0.6)', transform: 'translateY(-1px)' }
+                    }}>
+                        {globalize.translate('HeroTrailer')}
+                    </Button>
                 </Box>
             </Box>
 
@@ -365,6 +392,7 @@ const HomeHero: FC = () => {
                     </Box>
                 </>
             )}
+            <TrailerDialog open={!!trailerFor} onClose={() => setTrailerFor(null)} source={{ itemId: trailerFor || undefined }} />
         </Box>
     );
 };

@@ -1,12 +1,10 @@
 import { CollectionType } from '@jellyfin/sdk/lib/generated-client/models/collection-type';
-import { UseQueryResult } from '@tanstack/react-query';
 import React, { type FC, type PropsWithChildren, createContext, useContext, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useLocalStorage } from 'usehooks-ts';
 
 import useCurrentTab from 'hooks/useCurrentTab';
-import { useGetItemsViewByType } from 'hooks/useFetchItems';
-import { ItemDtoQueryResult } from 'types/base/models/item-dto-query-result';
+import { type ItemsViewResult, useGetItemsViewByType } from 'hooks/useFetchItems';
 import { LibraryViewSettings } from 'types/library';
 import { LibraryTab } from 'types/libraryTab';
 import { LibraryTabContent } from 'types/libraryTabContent';
@@ -21,7 +19,7 @@ interface LibraryState {
     content?: LibraryTabContent;
     isLibraryPath: boolean;
     id?: string;
-    itemsResult?: UseQueryResult<ItemDtoQueryResult | undefined, Error>;
+    itemsResult?: ItemsViewResult;
     viewSettings?: LibraryViewSettings;
     setViewSettings?: React.Dispatch<React.SetStateAction<LibraryViewSettings>>;
 }

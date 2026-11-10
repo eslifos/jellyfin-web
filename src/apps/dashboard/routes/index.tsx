@@ -20,6 +20,7 @@ import useShutdownServer from '../features/system/api/useShutdownServer';
 import useRestartServer from '../features/system/api/useRestartServer';
 import useLiveTasks from '../features/tasks/hooks/useLiveTasks';
 import RunningTasksWidget from '../components/widgets/RunningTasksWidget';
+import LibraryScansPanel from '../features/libraries/components/LibraryScansPanel';
 import { useStartTask } from '../features/tasks/api/useStartTask';
 import ItemCountsWidget from '../components/widgets/ItemCountsWidget';
 
@@ -125,6 +126,7 @@ export const Component = () => {
                                 onShutdownClick={promptShutdown}
                                 isScanning={librariesTask?.State !== TaskState.Idle}
                             />
+                            <LibraryScansPanel />
                             <ResourceMonitorWidget />
                             <ItemCountsWidget />
                             <RunningTasksWidget tasks={tasks} />

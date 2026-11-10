@@ -22,6 +22,7 @@ import { invalidateVirtualFolders } from 'apps/dashboard/features/libraries/api/
 import { QUERY_KEY as STATS_QUERY_KEY, refreshLibraryStats, useLibraryStats } from 'apps/dashboard/features/libraries/api/useLibraryStats';
 import { useVirtualFolders } from 'apps/dashboard/features/libraries/api/useVirtualFolders';
 import LibraryCard from 'apps/dashboard/features/libraries/components/LibraryCard';
+import LibraryScansPanel from 'apps/dashboard/features/libraries/components/LibraryScansPanel';
 import getCollectionTypeOptions from 'apps/dashboard/features/libraries/utils/collectionTypeOptions';
 import { formatNumber, formatRelative, formatRuntime, formatSize } from 'apps/dashboard/features/libraries/utils/libraryUi';
 import { useStartTask } from 'apps/dashboard/features/tasks/api/useStartTask';
@@ -176,6 +177,8 @@ export const Component = () => {
                                 />
                             </Paper>
                         )}
+
+                        <Box sx={{ mb: 2.5, '&:empty': { display: 'none' } }}><LibraryScansPanel /></Box>
 
                         {/* ── Summary ── */}
                         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(210px, 1fr))', gap: 2, mb: 1.5 }}>

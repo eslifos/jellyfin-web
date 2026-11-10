@@ -40,6 +40,7 @@ import { ServerConnections } from 'lib/jellyfin-apiclient';
 import { getLibraryIcon } from 'utils/image';
 
 import { invalidateVirtualFolders } from '../api/invalidateVirtualFolders';
+import { useLibraryScan } from '../api/useLibraryScans';
 import type { LibraryStats } from '../api/useLibraryStats';
 import { useRemoveVirtualFolder } from '../api/useRemoveVirtualFolder';
 import { useRenameVirtualFolder } from '../api/useRenameVirtualFolder';
@@ -98,7 +99,9 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
     const typeName = getCollectionTypeOptions().find(t => t.value == virtualFolder.CollectionType)?.name
         || globalize.translate('Other');
 
-    const isScanning = virtualFolder.RefreshStatus === 'Active' || (virtualFolder.RefreshProgress != null && virtualFolder.RefreshProgress < 100);
+    const scan = useLibraryScan(virtualFolder.ItemId);
+    const isScanning = !!scan;
+    const scanProgress = scan?.progress ?? null;
     const mainStats = getMainStats(virtualFolder.CollectionType, stats);
 
     const optionChips = useMemo(() => {
@@ -275,13 +278,13 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
                 {isScanning ? (
                     <Box>
                         <LinearProgress
-                            variant={virtualFolder.RefreshProgress != null ? 'determinate' : 'indeterminate'}
-                            value={virtualFolder.RefreshProgress ?? 0}
+                            variant={scanProgress ? 'determinate' : 'indeterminate'}
+                            value={scanProgress ?? 0}
                             sx={{ height: 4, background: `${accent}22`, '& .MuiLinearProgress-bar': { background: `linear-gradient(90deg, ${accent}, #aa5cc3)` } }}
                         />
                         <Typography sx={{ px: 2, pt: 0.75, fontSize: '0.72rem', color: accent, fontWeight: 600 }}>
                             {globalize.translate('LibScanning')}
-                            {virtualFolder.RefreshProgress != null && ` ${Math.round(virtualFolder.RefreshProgress)}%`}
+                            {scanProgress == null ? ` · ${globalize.translate('LibScanQueued')}` : ` ${Math.floor(scanProgress)}%`}
                         </Typography>
                     </Box>
                 ) : (

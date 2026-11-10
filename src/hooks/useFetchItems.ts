@@ -17,7 +17,8 @@ import { getPlaylistApi } from '@jellyfin/sdk/lib/utils/api/playlist-api';
 import { getLibraryApi } from '@jellyfin/sdk/lib/utils/api/library-api';
 import { getLiveTvApi } from '@jellyfin/sdk/lib/utils/api/live-tv-api';
 import { getUserDataApi } from '@jellyfin/sdk/lib/utils/api/user-data-api';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useInfiniteQuery, useMutation, useQuery } from '@tanstack/react-query';
+import { useMemo } from 'react';
 import datetime from 'scripts/datetime';
 
 import { type JellyfinApiContext, useApi } from './useApi';
@@ -365,7 +366,9 @@ export const useGetItemsViewByType = (
     libraryViewSettings: LibraryViewSettings
 ) => {
     const currentApi = useApi();
-    return useQuery({
+    // Pages are loaded while scrolling, so the start index of the settings is not part of the query
+    const settingsKey = { ...libraryViewSettings, StartIndex: undefined };
+    const result = useInfiniteQuery({
         queryKey: [
             'User',
             currentApi.user?.Id,
@@ -375,18 +378,24 @@ export const useGetItemsViewByType = (
             viewType,
             {
                 itemType,
-                libraryViewSettings
+                libraryViewSettings: settingsKey
             }
         ],
-        queryFn: ({ signal }) =>
+        initialPageParam: 0,
+        queryFn: ({ signal, pageParam }) =>
             fetchGetItemsViewByType(
                 currentApi,
                 viewType,
                 parentId,
                 itemType,
-                libraryViewSettings!,
+                { ...libraryViewSettings, StartIndex: pageParam },
                 { signal }
             ),
+        getNextPageParam: (lastPage, allPages) => {
+            const loaded = allPages.reduce((n, p) => n + (p?.Items?.length ?? 0), 0);
+            const total = lastPage?.TotalRecordCount ?? 0;
+            return lastPage?.Items?.length && loaded < total ? loaded : undefined;
+        },
         refetchOnWindowFocus: false,
         enabled: !!currentApi.api && !!currentApi.user?.Id
             && viewType
@@ -414,7 +423,29 @@ export const useGetItemsViewByType = (
                 LibraryTab.Mixed
             ].includes(viewType)
     });
+
+    // Same shape as a normal query (all loaded items in data.Items) plus the infinite scroll helpers
+    const { data, fetchNextPage, hasNextPage, isFetchingNextPage } = result;
+    const merged = useMemo(() => {
+        if (!data) return undefined;
+        const pages = data.pages.filter(Boolean) as ItemDtoQueryResult[];
+        return {
+            Items: pages.flatMap(p => p.Items ?? []),
+            TotalRecordCount: pages[0]?.TotalRecordCount ?? 0,
+            StartIndex: 0
+        } as ItemDtoQueryResult;
+    }, [ data ]);
+
+    return useMemo(() => ({
+        ...result,
+        data: merged,
+        fetchNextPage,
+        hasNextPage,
+        isFetchingNextPage
+    }), [ result, merged, fetchNextPage, hasNextPage, isFetchingNextPage ]);
 };
+
+export type ItemsViewResult = ReturnType<typeof useGetItemsViewByType>;
 
 const fetchPlaylistsMoveItem = async (
     currentApi: JellyfinApiContext,
