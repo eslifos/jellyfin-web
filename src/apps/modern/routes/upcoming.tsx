@@ -197,7 +197,7 @@ const UpcomingPage: FC = () => {
                 fields: [ ItemFields.PrimaryImageAspectRatio ],
                 enableUserData: false,
                 imageTypeLimit: 1,
-                limit: 2000
+                limit: 5000
             }, { signal });
             return res.data.Items || [];
         },
@@ -236,7 +236,7 @@ const UpcomingPage: FC = () => {
     }, [ items, releases ]);
 
     const filtered = useMemo(() => merged.filter(i =>
-        filter === 'all' || (filter === 'shows' ? i.Type === BaseItemKind.Episode : i.Type === BaseItemKind.Movie)), [ filter, items ]);
+        filter === 'all' || (filter === 'shows' ? i.Type === BaseItemKind.Episode : i.Type === BaseItemKind.Movie)), [ filter, merged ]);
 
     const byDay = useMemo(() => {
         const map = new Map<string, CalItem[]>();

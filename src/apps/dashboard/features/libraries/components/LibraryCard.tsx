@@ -28,11 +28,11 @@ import RefreshIcon from '@mui/icons-material/Refresh';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import StorageIcon from '@mui/icons-material/Storage';
 import SettingsIcon from '@mui/icons-material/Settings';
+import SwapHorizIcon from '@mui/icons-material/SwapHoriz';
 
 import ConfirmDialog from 'components/ConfirmDialog';
 import InputDialog from 'components/InputDialog';
 import imageeditor from 'components/imageeditor/imageeditor';
-import MediaLibraryEditor from 'components/mediaLibraryEditor/mediaLibraryEditor';
 import RefreshDialog from 'components/refreshdialog/refreshdialog';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
@@ -45,6 +45,8 @@ import type { LibraryStats } from '../api/useLibraryStats';
 import { useRemoveVirtualFolder } from '../api/useRemoveVirtualFolder';
 import { useRenameVirtualFolder } from '../api/useRenameVirtualFolder';
 import getCollectionTypeOptions from '../utils/collectionTypeOptions';
+import ChangeLibraryTypeDialog from './ChangeLibraryTypeDialog';
+import LibraryManageDialog from './LibraryManageDialog';
 import {
     formatFullDate,
     formatNumber,
@@ -81,6 +83,8 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
     const [ isRenameLibraryDialogOpen, setIsRenameLibraryDialogOpen ] = useState(false);
     const [ isConfirmDeleteDialogOpen, setIsConfirmDeleteDialogOpen ] = useState(false);
     const [ showAllLocations, setShowAllLocations ] = useState(false);
+    const [ isChangeTypeOpen, setIsChangeTypeOpen ] = useState(false);
+    const [ isManageOpen, setIsManageOpen ] = useState(false);
     const renameVirtualFolder = useRenameVirtualFolder();
     const removeVirtualFolder = useRemoveVirtualFolder();
 
@@ -151,15 +155,9 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
 
     const showMediaLibraryEditor = useCallback(() => {
         setAnchorEl(null);
-        const mediaLibraryEditor = new MediaLibraryEditor({
-            library: virtualFolder,
-            refresh: true
-        }) as Promise<boolean>;
-
-        void mediaLibraryEditor.then((hasChanges: boolean) => {
-            if (hasChanges) invalidateVirtualFolders(user, virtualFolder);
-        });
-    }, [ user, virtualFolder ]);
+        setIsManageOpen(true);
+    }, []);
+    const closeManage = useCallback(() => setIsManageOpen(false), []);
 
     const showImageEditor = useCallback(() => {
         setAnchorEl(null);
@@ -191,6 +189,12 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
         }
     }, [ virtualFolder, removeVirtualFolder ]);
 
+    const openChangeType = useCallback(() => {
+        setAnchorEl(null);
+        setIsChangeTypeOpen(true);
+    }, []);
+    const closeChangeType = useCallback(() => setIsChangeTypeOpen(false), []);
+
     const toggleLocations = useCallback(() => setShowAllLocations(v => !v), []);
 
     return (
@@ -205,6 +209,9 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
                 confirmButtonText={globalize.translate('ButtonRename')}
                 onConfirm={renameLibrary}
             />
+
+            <LibraryManageDialog open={isManageOpen} virtualFolder={virtualFolder} onClose={closeManage} />
+            <ChangeLibraryTypeDialog open={isChangeTypeOpen} virtualFolder={virtualFolder} onClose={closeChangeType} />
 
             <ConfirmDialog
                 open={isConfirmDeleteDialogOpen}
@@ -412,6 +419,10 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
                 <MenuItem onClick={openRenameDialog}>
                     <ListItemIcon><EditIcon /></ListItemIcon>
                     <ListItemText>{globalize.translate('ButtonRename')}</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={openChangeType}>
+                    <ListItemIcon><SwapHorizIcon /></ListItemIcon>
+                    <ListItemText>{globalize.translate('LibChangeType')}</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={showRefreshDialog}>
                     <ListItemIcon><RefreshIcon /></ListItemIcon>
