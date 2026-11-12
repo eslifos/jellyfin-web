@@ -3183,5 +3183,18 @@
     "MngImgBoxRear": "Box rear",
     "MngImgMenu": "Menu",
     "MngImgBackdropCount": "Backdrops per item",
-    "MngImgBackdropWidth": "Minimum backdrop width (px)"
+    "MngImgBackdropWidth": "Minimum backdrop width (px)",
+    "StreamVideo": "Video",
+    "StreamAudio": "Audio",
+    "StreamSubtitles": "Subtitles",
+    "StreamStereo": "Stereo",
+    "StreamUnknownLanguage": "Unknown language",
+    "StreamNoSubtitles": "No subtitles",
+    "StreamSubtitlesAvailable": "{0} available",
+    "StreamForced": "Forced",
+    "StreamExternal": "External file",
+    "StreamBurnedIn": "Burned into the video",
+    "DetQuality": "Quality",
+    "DetQualityAuto": "Automatic",
+    "DetQualityForcedHint": "This version will be played. If your device cannot open it as it is, the server converts it, which can take longer to load."
 }

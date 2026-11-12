@@ -538,7 +538,7 @@ function pickVersionForConnection(versions, requestedId) {
     return transcodable[transcodable.length - 1] || candidates[candidates.length - 1];
 }
 
-function getOptimalMediaSource(apiClient, item, versions, requestedId) {
+function getOptimalMediaSource(apiClient, item, versions, requestedId, forceRequested) {
     const promises = versions.map(function (v) {
         return supportsDirectPlay(apiClient, item, v);
     });
@@ -550,6 +550,12 @@ function getOptimalMediaSource(apiClient, item, versions, requestedId) {
     return Promise.all(promises).then(function (results) {
         for (let i = 0, length = versions.length; i < length; i++) {
             versions[i].enableDirectPlay = results[i] || false;
+        }
+
+        // The user chose a quality by hand: play exactly that version (transcoding it if needed)
+        const forced = forceRequested && requestedId ? versions.find(v => v.Id === requestedId) : null;
+        if (forced) {
+            return forced;
         }
 
         // Same edition in several qualities: choose by connection / device
@@ -708,6 +714,7 @@ function truncatePlayOptions(playOptions) {
         aspectRatio: playOptions.aspectRatio,
         fullscreen: playOptions.fullscreen,
         mediaSourceId: playOptions.mediaSourceId,
+        forceMediaSource: playOptions.forceMediaSource,
         audioStreamIndex: playOptions.audioStreamIndex,
         subtitleStreamIndex: playOptions.subtitleStreamIndex,
         startPositionTicks: playOptions.startPositionTicks
@@ -2750,6 +2757,7 @@ export class PlaybackManager {
                     audioStreamIndex,
                     subtitleStreamIndex,
                     startIndex: playOptions.startIndex,
+                    forceMediaSource: !!playOptions.forceMediaSource,
                     enableDirectPlay: null,
                     enableDirectStream: null,
                     allowVideoStreamCopy: null,
@@ -3069,7 +3077,7 @@ export class PlaybackManager {
 
             return infoPromise.then(function (playbackInfoResult) {
                 if (validatePlaybackInfoResult(self, playbackInfoResult)) {
-                    return getOptimalMediaSource(apiClient, item, playbackInfoResult.MediaSources, mediaSourceId).then(function (mediaSource) {
+                    return getOptimalMediaSource(apiClient, item, playbackInfoResult.MediaSources, mediaSourceId, options.forceMediaSource).then(function (mediaSource) {
                         if (mediaSource) {
                             // Remember whether alternate versions exists
                             mediaSource.hasAlternateVersions = playbackInfoResult.MediaSources.length > 1

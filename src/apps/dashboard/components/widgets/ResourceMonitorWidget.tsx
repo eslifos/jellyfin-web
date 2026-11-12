@@ -18,6 +18,7 @@ import playmethodhelper from 'components/playback/playmethodhelper';
 import globalize from 'lib/globalize';
 import { getReadableSize } from 'utils/file';
 
+import StreamMediaInfo from './StreamMediaInfo';
 import Widget from './Widget';
 
 const HISTORY_LENGTH = 40;
@@ -163,6 +164,7 @@ export const StreamRow: FC<{ session: SessionInfoDto }> = ({ session }) => {
                     {globalize.translate(METHOD_LABELS[method] ?? method)}
                 </Box>
             </Box>
+            <StreamMediaInfo session={session} />
             {details && (
                 <Typography sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', mt: 0.5 }}>{details}</Typography>
             )}

@@ -3168,5 +3168,18 @@
     "MngImgBoxRear": "Caja trasera",
     "MngImgMenu": "Menú",
     "MngImgBackdropCount": "Fondos por elemento",
-    "MngImgBackdropWidth": "Ancho mínimo del fondo (px)"
+    "MngImgBackdropWidth": "Ancho mínimo del fondo (px)",
+    "StreamVideo": "Video",
+    "StreamAudio": "Audio",
+    "StreamSubtitles": "Subtítulos",
+    "StreamStereo": "Estéreo",
+    "StreamUnknownLanguage": "Idioma desconocido",
+    "StreamNoSubtitles": "Sin subtítulos",
+    "StreamSubtitlesAvailable": "{0} disponibles",
+    "StreamForced": "Forzados",
+    "StreamExternal": "Archivo externo",
+    "StreamBurnedIn": "Grabados en el video",
+    "DetQuality": "Calidad",
+    "DetQualityAuto": "Automática",
+    "DetQualityForcedHint": "Se reproducirá esta versión. Si tu equipo no puede abrirla tal cual, el servidor la convertirá, lo que puede tardar más en cargar."
 }

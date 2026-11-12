@@ -35,6 +35,7 @@ import datetime from 'scripts/datetime';
 import dom from 'utils/dom';
 import { renderComponent } from 'utils/reactUtils';
 import { download } from 'scripts/fileDownloader';
+import { getReadableSize } from 'utils/file';
 import libraryMenu from 'scripts/libraryMenu';
 import * as userSettings from 'scripts/settings/userSettings';
 import Dashboard from 'utils/dashboard';
@@ -232,9 +233,18 @@ function qualityLabel(source) {
     return h ? 'SD' : '';
 }
 
+/** HDR kind of a version: DV / HDR10+ / HDR ('' for SDR). */
+function getSourceHdr(source) {
+    const video = (source.MediaStreams || []).find(s => s.Type === 'Video');
+    const range = video?.VideoRangeType || '';
+    if (range.startsWith('DOVI')) return 'DV';
+    if (range === 'HDR10Plus') return 'HDR10+';
+    return range === 'HDR10' || range === 'HLG' ? 'HDR' : '';
+}
+
 /**
- * Banner: one button per EDITION (Open Matte, Extended...). Versions of an edition (4K / 1080p)
- * are not shown as choices: playback picks one by connection speed, so only a hint is shown.
+ * Banner: one button per EDITION (Open Matte, Extended...), and the quality of the edition:
+ * automatic (playback picks the version by connection and device) or one version chosen by hand.
  */
 function renderVersionButtons(page, mediaSources, selectedId) {
     const container = page.querySelector('.cosmicVersions');
@@ -279,10 +289,25 @@ function renderVersionButtons(page, mediaSources, selectedId) {
         }).join('');
     }
     if (current.versions.length > 1) {
-        html += '<span class="cosmicAutoQuality" title="' + escapeHtml(globalize.translate('DetAutoQualityHelp')) + '">'
-            + '<span class="material-icons" aria-hidden="true">speed</span>'
-            + escapeHtml(globalize.translate('DetAutoQuality', [ ...new Set(qualities) ].join(' · ')))
+        // Quality: automatic (by connection / device) or one version chosen by hand
+        const forced = current.versions.some(v => v.Id === container.dataset.forced) ? container.dataset.forced : '';
+        html += '<span class="cosmicQuality" role="group" aria-label="' + escapeHtml(globalize.translate('DetQuality')) + '">'
+            + '<span class="cosmicVersions-label">' + escapeHtml(globalize.translate('DetQuality')) + '</span>'
+            + '<button type="button" class="cosmicQualityBtn' + (forced ? '' : ' active') + '" data-quality="auto" title="'
+            + escapeHtml(globalize.translate('DetAutoQualityHelp')) + '"><span class="material-icons" aria-hidden="true">speed</span>'
+            + escapeHtml(globalize.translate('DetQualityAuto')) + '</button>'
+            + current.versions.map(function (v, i) {
+                const label = qualityLabel(v) || describeSource(v) || String(i + 1);
+                const hdr = getSourceHdr(v);
+                const size = v.Size ? getReadableSize(v.Size) : '';
+                const title = [ v.Name, describeSource(v), size ].filter(Boolean).join(' · ');
+                return '<button type="button" class="cosmicQualityBtn' + (forced === v.Id ? ' active' : '') + '" data-quality="' + v.Id + '" title="' + escapeHtml(title) + '">'
+                    + escapeHtml(label) + (hdr ? ' <small>' + escapeHtml(hdr) + '</small>' : '') + '</button>';
+            }).join('')
             + '</span>';
+        if (forced && qualities.length) {
+            html += '<span class="cosmicQualityHint">' + escapeHtml(globalize.translate('DetQualityForcedHint')) + '</span>';
+        }
     }
 
     if (!html) {
@@ -297,10 +322,31 @@ function renderVersionButtons(page, mediaSources, selectedId) {
         btn.addEventListener('click', function () {
             const select = page.querySelector('.selectSource');
             if (select.value === btn.dataset.id) return;
+            container.dataset.forced = '';
             select.value = btn.dataset.id;
             select.dispatchEvent(new Event('change', { bubbles: true }));
         });
     });
+
+    container.querySelectorAll('.cosmicQualityBtn').forEach(function (btn) {
+        btn.addEventListener('click', function () {
+            const select = page.querySelector('.selectSource');
+            const isAuto = btn.dataset.quality === 'auto';
+            container.dataset.forced = isAuto ? '' : btn.dataset.quality;
+            const target = isAuto ? current.versions[0].Id : btn.dataset.quality;
+            if (select.value === target) {
+                renderVersionButtons(page, mediaSources, target);
+                return;
+            }
+            select.value = target;
+            select.dispatchEvent(new Event('change', { bubbles: true }));
+        });
+    });
+}
+
+/** Version chosen by hand in the quality buttons ('' = automatic). */
+function getForcedVersion(page) {
+    return page.querySelector('.cosmicVersions')?.dataset.forced || '';
 }
 
 /** Resolution / HDR / audio / source chips in the banner (custom /ItemBadges endpoint). */
@@ -2182,6 +2228,7 @@ export default function (view, params) {
         return {
             startPositionTicks: startPosition,
             mediaSourceId: view.querySelector('.selectSource').value,
+            forceMediaSource: !!getForcedVersion(view) && getForcedVersion(view) === view.querySelector('.selectSource').value,
             audioStreamIndex: audioStreamIndex,
             subtitleStreamIndex: view.querySelector('.selectSubtitles').value
         };
