@@ -4,11 +4,13 @@ import Box from '@mui/material/Box/Box';
 import Paper from '@mui/material/Paper/Paper';
 import Typography from '@mui/material/Typography/Typography';
 import classNames from 'classnames';
-import React, { type FC, useEffect } from 'react';
+import React, { type FC, useEffect, useMemo } from 'react';
 import { useRouteError } from 'react-router-dom';
 
 import loading from 'components/loading/loading';
 import Page from 'components/Page';
+
+import { reloadOnChunkError } from './chunkReload';
 
 interface ErrorBoundaryParams {
     pageClasses?: string[]
@@ -18,10 +20,13 @@ const ErrorBoundary: FC<ErrorBoundaryParams> = ({
     pageClasses = [ 'libraryPage' ]
 }) => {
     const error = useRouteError() as Error;
+    const reloading = useMemo(() => reloadOnChunkError(error), [ error ]);
 
     useEffect(() => {
-        loading.hide();
-    }, []);
+        if (!reloading) loading.hide();
+    }, [ reloading ]);
+
+    if (reloading) return null;
 
     return (
         <Page

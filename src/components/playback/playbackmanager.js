@@ -2871,6 +2871,13 @@ export class PlaybackManager {
             });
         };
 
+        /** Version that automatic quality would play on this device (same rules as playback). */
+        self.getAutoMediaSource = function (item, requestedId) {
+            return self.getPlaybackMediaSources(item).then(function (sources) {
+                return getOptimalMediaSource(ServerConnections.getApiClient(item.ServerId), item, sources || [], requestedId);
+            });
+        };
+
         self.getPlaybackMediaSources = function (item, options) {
             options = options || {};
             const startPosition = options.startPositionTicks || 0;

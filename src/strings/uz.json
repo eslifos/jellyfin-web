@@ -373,7 +373,6 @@
     "FileNotFound": "Fayl topilmadi.",
     "File": "Fayl",
     "FFmpegSavePathNotFound": "Siz kiritgan yoʻlda FFmpeg topilmadi. FFprobe ham talab qilinadi va bir xil papkada bo'lishi kerak. Ushbu komponentlar odatda bitta yuklab olish paketida birga yuboriladi. Yo'lni tekshiring va qayta urinib ko'ring.",
-    "FetchingData": "Qoʻshimcha maʼlumotlar olinmoqda",
     "Features": "Imkoniyatlar",
     "Favorites": "Sevimlilar",
     "Favorite": "Sevimlilar",

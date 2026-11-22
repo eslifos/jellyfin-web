@@ -978,7 +978,6 @@
     "ButtonAddImage": "Aggiungi Immagine",
     "CopyStreamURL": "Copia Indirizzo dello Stream",
     "CopyStreamURLSuccess": "Indirizzo copiato con successo.",
-    "FetchingData": "Recupero di dati aggiuntivi",
     "LabelServerHost": "Host",
     "LabelServerHostHelp": "192.168.1.100:8096 o https://myserver.com",
     "HeaderTypeImageFetchers": "Scaricatori di immagini ({0})",

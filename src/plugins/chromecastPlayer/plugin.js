@@ -101,6 +101,12 @@ class CastPlayer {
             return;
         }
 
+        // Chrome only exposes the Cast SDK on secure pages (https or localhost): don't poll forever on http
+        if (!window.isSecureContext && window.appMode !== 'cordova' && window.appMode !== 'android') {
+            console.warn('Not initializing chromecast: the page is not a secure context (https)');
+            return;
+        }
+
         if (!chrome.cast?.isAvailable) {
             setTimeout(this.initializeCastPlayer.bind(this), 1000);
             return;

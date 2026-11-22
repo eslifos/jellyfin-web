@@ -35,6 +35,7 @@ import datetime from 'scripts/datetime';
 import dom from 'utils/dom';
 import { renderComponent } from 'utils/reactUtils';
 import { download } from 'scripts/fileDownloader';
+import { canDownloadItem } from 'apps/modern/features/downloads/support';
 import { getReadableSize } from 'utils/file';
 import libraryMenu from 'scripts/libraryMenu';
 import * as userSettings from 'scripts/settings/userSettings';
@@ -328,6 +329,12 @@ function renderVersionButtons(page, mediaSources, selectedId) {
         });
     });
 
+    if (current.versions.length > 1) {
+        refreshPlayQuality(page, current.versions, container.dataset.forced || '');
+    } else {
+        setQualityChip(page, selected);
+    }
+
     container.querySelectorAll('.cosmicQualityBtn').forEach(function (btn) {
         btn.addEventListener('click', function () {
             const select = page.querySelector('.selectSource');
@@ -341,6 +348,61 @@ function renderVersionButtons(page, mediaSources, selectedId) {
             select.value = target;
             select.dispatchEvent(new Event('change', { bubbles: true }));
         });
+    });
+}
+
+/** Resolution chip of the banner: the version that will play (chosen by hand, or the automatic one). */
+function setQualityChip(page, source) {
+    page._cosmicPlaySource = source || null;
+    const container = page.querySelector('.cosmicHeroBadges');
+    if (!container || !source) return;
+    const label = qualityLabel(source);
+    if (!label) return;
+    const hdr = getSourceHdr(source);
+    const html = escapeHtml(label) + (hdr ? ' <b>' + escapeHtml(hdr) + '</b>' : '');
+    let chip = container.querySelector('.cosmicChip-res');
+    if (!chip) {
+        chip = document.createElement('span');
+        chip.className = 'cosmicChip cosmicChip-res';
+        const imdb = container.querySelector('.cosmicChip-imdb');
+        container.insertBefore(chip, imdb ? imdb.nextSibling : null);
+    }
+    chip.innerHTML = html;
+    chip.title = describeSource(source);
+}
+
+/** Works out which version will play and shows it in the banner and on the Automatic button. */
+function refreshPlayQuality(page, versions, forcedId) {
+    const item = page._cosmicItem;
+    const forced = forcedId ? versions.find(v => v.Id === forcedId) : null;
+    if (forced) {
+        setQualityChip(page, forced);
+        return;
+    }
+    if (!item) return;
+    const key = item.Id + '|' + versions[0].Id;
+    const showAuto = function (source) {
+        if (!source || page._cosmicAutoKey !== key || getForcedVersion(page)) return;
+        setQualityChip(page, source);
+        const autoBtn = page.querySelector('.cosmicQualityBtn[data-quality="auto"]');
+        const label = qualityLabel(source);
+        if (autoBtn && label && !autoBtn.querySelector('.cosmicQualityAuto')) {
+            autoBtn.insertAdjacentHTML('beforeend', ' <small class="cosmicQualityAuto">' + escapeHtml(label) + '</small>');
+        }
+    };
+    if (page._cosmicAutoKey === key && page._cosmicAutoSource) {
+        showAuto(page._cosmicAutoSource);
+        return;
+    }
+    page._cosmicAutoKey = key;
+    page._cosmicAutoSource = null;
+    playbackManager.getAutoMediaSource(item, versions[0].Id).then(function (source) {
+        // The result is a PlaybackInfo source: match it to the item's own version for its streams
+        const match = source ? (versions.find(v => v.Id === source.Id) || source) : null;
+        if (page._cosmicAutoKey === key) page._cosmicAutoSource = match;
+        showAuto(match);
+    }).catch(function () {
+        // no playback info: the server badge stays
     });
 }
 
@@ -379,6 +441,7 @@ function renderHeroBadges(page, item, apiClient) {
         if (b.Edition) chips.push('<span class="cosmicChip cosmicChip-edition">' + escapeHtml(b.Edition) + '</span>');
         if (b.AudioLanguages >= 2) chips.push('<span class="cosmicChip cosmicChip-multi">' + (b.AudioLanguages === 2 ? 'DUAL AUDIO' : 'MULTI AUDIO') + '</span>');
         container.innerHTML = genreHtml + chips.join('');
+        if (page._cosmicPlaySource) setQualityChip(page, page._cosmicPlaySource);
     }).catch(function () {
         // server without the endpoint
     });
@@ -398,6 +461,11 @@ function renderTrackSelections(page, instance, item, forceReload) {
 
     const mediaSources = item.MediaSources;
     instance._currentPlaybackMediaSources = mediaSources;
+    if (page._cosmicItem?.Id !== item.Id) {
+        page._cosmicPlaySource = null;
+        page._cosmicAutoKey = null;
+    }
+    page._cosmicItem = item;
 
     page.querySelector('.trackSelections').classList.remove('hide');
     select.setLabel(globalize.translate('LabelVersion'));
@@ -791,6 +859,10 @@ function reloadFromItem(instance, page, params, item, user) {
     const groupedVersions = (item.MediaSources || []).filter(function (g) {
         return g.Type == 'Grouping';
     });
+
+    if (canDownloadItem(item) && user.Policy.EnableContentDownloading) {
+        hideAll(page, 'btnDownload', true);
+    }
 
     if (user.Policy.IsAdministrator && groupedVersions.length) {
         page.querySelector('.btnSplitVersions').classList.remove('hide');
@@ -2310,6 +2382,11 @@ export default function (view, params) {
     }
 
     function onDownloadClick() {
+        if (canDownloadItem(currentItem)) {
+            import('apps/modern/features/downloads/DownloadDialog').then(({ openDownloadDialog }) => openDownloadDialog(currentItem));
+            return;
+        }
+
         const api = ServerConnections.getApi(currentItem.ServerId);
         if (!api) {
             console.error('[ItemDetails] no Api instance available for server', currentItem.ServerId);

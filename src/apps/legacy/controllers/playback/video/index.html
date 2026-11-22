@@ -8,12 +8,9 @@
     <div class="upNextContainer hide"></div>
     <div class="videoOsdBottom videoOsdBottom-maincontrols">
         <div class="osdControls">
+            <div class="cosmicOsdTitleBlock"></div>
             <div class="osdTextContainer osdMainTextContainer">
                 <h3 class="osdTitle"></h3>
-                <div class="osdMediaStatus hide">
-                    <span class="material-icons animate autorenew" aria-hidden="true"></span>
-                    <span>${FetchingData}</span>
-                </div>
             </div>
 
             <div class="osdTextContainer osdSecondaryMediaInfo"></div>
@@ -84,8 +81,14 @@
                         <input is="emby-slider" type="range" step="1" min="0" max="100" value="0" class="osdVolumeSlider" />
                     </div>
                 </div>
-                <button is="paper-icon-button-light" class="btnVideoOsdSettings autoSize" title="${Settings}">
-                    <span class="largePaperIconButton material-icons settings" aria-hidden="true"></span>
+                <button is="paper-icon-button-light" class="btnCosmicQueue hide autoSize" title="${VpQueue}" aria-label="${VpQueue}">
+                    <span class="xlargePaperIconButton material-icons playlist_play" aria-hidden="true"></span>
+                </button>
+                <button is="paper-icon-button-light" class="btnVideoOsdSettings autoSize" title="${VpPlaybackMenuHint}" aria-label="${VpPlaybackMenuHint}">
+                    <span class="xlargePaperIconButton material-icons tune" aria-hidden="true"></span>
+                </button>
+                <button is="paper-icon-button-light" class="btnCosmicCast hide autoSize" title="${RpRemotePlayback}" aria-label="${RpRemotePlayback}">
+                    <span class="xlargePaperIconButton material-icons cast" aria-hidden="true"></span>
                 </button>
                 <button is="paper-icon-button-light" class="btnAirPlay hide autoSize" title="${AirPlay}">
                     <span class="xlargePaperIconButton material-icons airplay" aria-hidden="true"></span>
@@ -97,6 +100,16 @@
                     <span class="xlargePaperIconButton material-icons fullscreen" aria-hidden="true"></span>
                 </button>
             </div>
+
+            <div class="cosmicOsdDetails hide">
+                <button type="button" class="cosmicOsdDetailsToggle" aria-expanded="false">
+                    <span class="cosmicOsdDetailsPeek"></span>
+                    <span class="cosmicOsdDetailsChevron material-icons expand_less" aria-hidden="true"></span>
+                </button>
+                <div class="cosmicOsdDetailsBody"></div>
+            </div>
         </div>
     </div>
+    <aside class="cosmicOsdPanel cosmicOsdSettingsPanel" aria-hidden="true"><div class="cosmicOsdPanel-inner"></div></aside>
+    <aside class="cosmicOsdPanel cosmicOsdQueuePanel" aria-hidden="true"><div class="cosmicOsdPanel-inner"></div></aside>
 </div>

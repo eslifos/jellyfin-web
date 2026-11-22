@@ -3,7 +3,6 @@ import { CollectionType } from '@jellyfin/sdk/lib/generated-client/models/collec
 
 import { LibraryTab } from 'types/libraryTab';
 import type { LibraryTabContent } from 'types/libraryTabContent';
-import { SectionType } from 'types/sections';
 
 const foldersTabContent: LibraryTabContent = {
     viewType: LibraryTab.Folders,
@@ -11,18 +10,6 @@ const foldersTabContent: LibraryTabContent = {
     isBtnPlayAllEnabled: true,
     isBtnShuffleEnabled: true,
     itemType: [BaseItemKind.Folder, BaseItemKind.MusicVideo]
-};
-
-const suggestionsTabContent: LibraryTabContent = {
-    viewType: LibraryTab.Suggestions,
-    collectionType: CollectionType.Musicvideos,
-    sectionsView: {
-        suggestionSections: [
-            SectionType.LatestMusicVideos,
-            SectionType.FrequentlyPlayedMusicVideos,
-            SectionType.RecentlyPlayedMusicVideos
-        ]
-    }
 };
 
 const musicVideosTabContent: LibraryTabContent = {
@@ -42,9 +29,15 @@ const playlistsTabContent: LibraryTabContent = {
     itemType: [BaseItemKind.Playlist]
 };
 
+/** Start screen of the library, like the home screen: top 10, recently added, genres… */
+const homeTabContent: LibraryTabContent = {
+    viewType: LibraryTab.Home,
+    collectionType: CollectionType.Musicvideos
+};
+
 const musicVideosViews: Record<number, LibraryTabContent> = {
     0: foldersTabContent,
-    1: suggestionsTabContent,
+    1: homeTabContent,
     2: musicVideosTabContent,
     3: playlistsTabContent
 };

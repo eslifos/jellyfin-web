@@ -123,7 +123,6 @@ html {
 }
 
 .backgroundContainer,
-.nowPlayingPlaylist,
 html {
     background-color: var(--jf-palette-background-default, $background-default);
     background-image: var(--jf-palette-background-defaultImage, $background-defaultImage);
@@ -255,7 +254,6 @@ a[data-role="button"],
 .fieldDescription,
 .guide-programNameCaret,
 .listItem .secondary,
-.nowPlayingBarSecondaryText,
 .programSecondaryTitle,
 .secondaryText {
     color: var(--jf-palette-text-secondary, $text-secondary);

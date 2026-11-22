@@ -1058,7 +1058,6 @@
     "LabelAudioSampleRate": "Taux d’échantillonnage audio",
     "LabelAudioCodec": "Codec audio",
     "LabelAudioChannels": "Canaux audio",
-    "FetchingData": "Récupération de données supplémentaires",
     "CopyStreamURLSuccess": "URL copiée avec succès.",
     "CopyStreamURL": "Copier l'URL du flux",
     "LabelBaseUrlHelp": "Ajouter un sous-dossier personalisé a l'addresse du serveur. Par exemple : https://example.com/<baseurl>",

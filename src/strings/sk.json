@@ -836,7 +836,6 @@
     "H264CrfHelp": "Constant Rate Factor (CRF) je predvoleným nastavením kvality pre softvérové x264 a x265 kódery. Môžete mu nadstaviť hodnotu medzi 0 a 51, kde nižšia hodnota vedie k vyššej kvalite (za cenu väčšieho súboru). Rozumné hodnoty sú medzi 18 a 28. Predvolená hodnota pre x264 je 23 a pre x265 je 28, ktoré môžete použiť ako východzie body. Hardvérové kódery tieto nastavenia nepoužívajú.",
     "GuideProviderSelectListings": "Výber zobrazenia",
     "GroupVersions": "Skupinové verzie",
-    "FetchingData": "Načítavanie dodatočných dát",
     "Extras": "Bonusové materiály",
     "FastForward": "Rýchlo dopredu",
     "FFmpegSavePathNotFound": "Nepodarilo sa nám nájsť FFmpeg pomocou vami zadanej cesty. FFprobe je taktiež potrebná a musí existovať v rovnakom priečinku. Tieto komponenty sú za normálnych okolností zabalené spolu do toho istého priečinku. Prosím, overte zadanú cestu a skúste to znova.",

@@ -897,7 +897,6 @@
     "FileNotFound": "搵唔到檔案。",
     "File": "檔案",
     "FFmpegSavePathNotFound": "我哋根據你輸入嘅路徑搵唔到 FFmpeg。同時亦需要埋 FFprobe，而且一定要擺喺同一個資料夾入面。呢啲組件通常係包埋一齊下載嘅。唔該check吓個路徑再試過。",
-    "FetchingData": "攞緊額外資料",
     "Features": "功能",
     "Favorite": "心水",
     "FastForward": "快進",

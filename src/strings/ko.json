@@ -806,7 +806,6 @@
     "Genre": "장르",
     "General": "일반",
     "FileReadCancelled": "파일 읽기 작업이 취소되었습니다.",
-    "FetchingData": "추가 데이터를 가져오는 중",
     "ExtraLarge": "매우 크게",
     "ErrorStartHourGreaterThanEnd": "종료 시간은 시작 시간보다 커야 합니다.",
     "Display": "디스플레이",

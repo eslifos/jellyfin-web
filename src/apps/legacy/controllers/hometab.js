@@ -14,6 +14,11 @@ class HomeTab {
         view.querySelector('.sections').addEventListener('settingschange', onHomeScreenSettingsChanged.bind(this));
     }
     onResume(options) {
+        // The new home feed (React) replaces these sections unless the classic home was chosen
+        if (this.sectionsContainer?.dataset.disabled) {
+            return Promise.resolve();
+        }
+
         if (this.sectionsRendered) {
             const sectionsContainer = this.sectionsContainer;
 

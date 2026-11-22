@@ -29,6 +29,9 @@ import { Link } from 'react-router-dom';
 import Page from 'components/Page';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
+import { readPref, writePref } from 'utils/syncedPrefs';
+
+import { useLiveLibraryRefresh } from '../components/HomeFeed/useLiveLibraryRefresh';
 
 type View = 'calendar' | 'list';
 type Filter = 'all' | 'shows' | 'movies';
@@ -82,6 +85,21 @@ const fromRelease = (r: UpcomingRelease): CalItem => (r.Kind === 'Episode' ? {
 
 const dayKey = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
 const isAvailable = (i: BaseItemDto) => i.LocationType !== 'Virtual';
+const episodeKey = (seriesId?: string | null, season?: number | null, episode?: number | null) => `${normId(seriesId)}-${season}-${episode}`;
+/** A day and a half: the air date of TMDb and the one of the library can differ by the time zone. */
+const NEAR_MS = 36 * 60 * 60 * 1000;
+
+/**
+ * The library can keep the "missing" placeholder of an episode after its file arrives: one item per episode, the
+ * one with the file when there is one.
+ */
+const onePerEpisode = (items: CalItem[]) => {
+    const real = new Set(items
+        .filter(i => i.Type === BaseItemKind.Episode && isAvailable(i))
+        .map(i => episodeKey(i.SeriesId, i.ParentIndexNumber, i.IndexNumber)));
+    return items.filter(i => i.Type !== BaseItemKind.Episode || isAvailable(i)
+        || !real.has(episodeKey(i.SeriesId, i.ParentIndexNumber, i.IndexNumber)));
+};
 
 /** Several episodes of one series on the same day are shown as one entry. */
 interface Entry {
@@ -146,9 +164,11 @@ const EntryChip: FC<{ e: Entry; compact?: boolean }> = ({ e, compact }) => {
 
 const UpcomingPage: FC = () => {
     const { api, user } = useApi();
+    // New episodes get the check as soon as the scan adds them
+    useLiveLibraryRefresh();
     const [ view, setView ] = useState<View>(() => {
         try {
-            return (localStorage.getItem(VIEW_KEY) as View) || 'calendar';
+            return (readPref(VIEW_KEY) as View) || 'calendar';
         } catch {
             return 'calendar';
         }
@@ -225,12 +245,17 @@ const UpcomingPage: FC = () => {
     });
 
     const merged = useMemo<CalItem[]>(() => {
-        const library = (items || []) as CalItem[];
+        const library = onePerEpisode((items || []) as CalItem[]);
         const known = new Set(library
             .filter(i => i.Type === BaseItemKind.Episode)
-            .map(i => `${normId(i.SeriesId)}-${i.ParentIndexNumber}-${i.IndexNumber}`));
+            .map(i => episodeKey(i.SeriesId, i.ParentIndexNumber, i.IndexNumber)));
+        // TMDb may count the episodes another way (anime: one long season): an episode of the same series in the
+        // library a day around is the same one
+        const near = (r: UpcomingRelease) => library.some(i => i.Type === BaseItemKind.Episode
+            && normId(i.SeriesId) === normId(r.SeriesId) && !!i.PremiereDate
+            && Math.abs(new Date(i.PremiereDate).getTime() - new Date(r.ReleaseDate).getTime()) <= NEAR_MS);
         const extra = (releases || [])
-            .filter(r => r.Kind !== 'Episode' || !known.has(`${normId(r.SeriesId)}-${r.SeasonNumber}-${r.EpisodeNumber}`))
+            .filter(r => r.Kind !== 'Episode' || (!known.has(episodeKey(r.SeriesId, r.SeasonNumber, r.EpisodeNumber)) && !near(r)))
             .map(fromRelease);
         return [ ...library, ...extra ];
     }, [ items, releases ]);
@@ -258,7 +283,7 @@ const UpcomingPage: FC = () => {
     const setViewSaved = (v: View) => {
         setView(v);
         try {
-            localStorage.setItem(VIEW_KEY, v);
+            writePref(VIEW_KEY, v);
         } catch {
             // storage blocked
         }

@@ -14,6 +14,23 @@ const DISPLAY_PREFERENCES_ID = 'usersettings';
 // TODO: We should really update the client ID at some point
 const CLIENT_ID = 'emby';
 
+/**
+ * Preferences that belong to each device and are not synchronized: they depend on the network, the screen or
+ * the audio hardware of the device. Everything else the user sets is kept on the server, so every app and
+ * device of the user shows the same (order of the home page, menu, theme, language, subtitles…).
+ * Streaming quality and bitrate live in appSettings, which is per device as well.
+ */
+const DEVICE_ONLY = new Set([
+    'allowedAudioChannels',
+    'preferFmp4HlsContainer',
+    'limitSegmentLength'
+]);
+
+const isSynced = name => !DEVICE_ONLY.has(name);
+
+/** How often a device looks for changes made on another device (when it comes back to the foreground). */
+const REFRESH_AFTER_MS = 60 * 1000;
+
 function onSaveTimeout() {
     const self = this;
     self.saveTimeout = null;
@@ -58,6 +75,43 @@ const defaultComicsPlayerSettings = {
     pagesPerView: 1
 };
 
+/**
+ * Preferences saved before synchronization existed live only in this device: they are sent to the server once,
+ * unless the server already has a value (set on another device).
+ * @param {UserSettings} instance - The settings.
+ * @param {string} userId - The user.
+ */
+function uploadLocalPreferences(instance, userId) {
+    const prefix = userId + '-';
+    const custom = instance.displayPrefs.CustomPrefs;
+    let added = false;
+    for (let i = 0; i < localStorage.length; i++) {
+        const key = localStorage.key(i);
+        if (!key?.startsWith(prefix)) continue;
+        const name = key.slice(prefix.length);
+        if (!isSynced(name) || Object.hasOwn(custom, name)) continue;
+        const value = localStorage.getItem(key);
+        if (value == null) continue;
+        custom[name] = value;
+        added = true;
+    }
+    if (added) saveServerPreferences(instance);
+}
+
+/**
+ * When the app comes back to the foreground, preferences changed on another device are applied.
+ * @param {UserSettings} instance - The settings.
+ */
+function watchOtherDevices(instance) {
+    if (instance.watching || typeof document === 'undefined') return;
+    instance.watching = true;
+    document.addEventListener('visibilitychange', () => {
+        if (document.visibilityState === 'visible' && Date.now() - (instance.loadedAt || 0) > REFRESH_AFTER_MS) {
+            void instance.refreshFromServer();
+        }
+    });
+}
+
 export class UserSettings {
     /**
      * Bind UserSettings instance to user.
@@ -92,7 +146,32 @@ export class UserSettings {
             .then(result => {
                 result.CustomPrefs = result.CustomPrefs || {};
                 self.displayPrefs = result;
+                self.loadedAt = Date.now();
+                uploadLocalPreferences(self, userId);
+                watchOtherDevices(self);
             });
+    }
+
+    /**
+     * Reads the preferences again from the server and applies what another device changed.
+     * @returns {Promise<void>}
+     */
+    refreshFromServer() {
+        const userId = this.currentUserId;
+        const apiClient = this.currentApiClient;
+        if (!userId || !apiClient || !this.displayPrefs || this.saveTimeout) return Promise.resolve();
+
+        const api = ServerConnections.getApi(apiClient.serverId());
+        const query = getDisplayPreferencesQuery(api, { displayPreferencesId: DISPLAY_PREFERENCES_ID, client: CLIENT_ID, userId });
+        return queryClient.fetchQuery({ ...query, staleTime: 0 }).then(result => {
+            if (userId !== this.currentUserId || !this.displayPrefs) return;
+            const incoming = result.CustomPrefs || {};
+            const current = this.displayPrefs.CustomPrefs;
+            const changed = Object.keys({ ...incoming, ...current }).filter(key => incoming[key] !== current[key]);
+            this.displayPrefs = { ...result, CustomPrefs: { ...incoming } };
+            this.loadedAt = Date.now();
+            for (const key of changed) Events.trigger(this, 'change', [key]);
+        }).catch(err => console.warn('[userSettings] preferences could not be refreshed', err));
     }
 
     // FIXME: 'appSettings.set' doesn't return any value
@@ -107,7 +186,7 @@ export class UserSettings {
         const currentValue = this.get(name, enableOnServer);
         const result = appSettings.set(name, value, userId);
 
-        if (enableOnServer !== false && this.displayPrefs) {
+        if ((enableOnServer !== false || isSynced(name)) && this.displayPrefs) {
             this.displayPrefs.CustomPrefs[name] = value == null ? value : value.toString();
             saveServerPreferences(this);
         }
@@ -127,8 +206,10 @@ export class UserSettings {
      */
     get(name, enableOnServer) {
         const userId = this.currentUserId;
-        if (enableOnServer !== false && this.displayPrefs) {
-            return this.displayPrefs.CustomPrefs[name];
+        if ((enableOnServer !== false || isSynced(name)) && this.displayPrefs) {
+            const custom = this.displayPrefs.CustomPrefs;
+            // Not on the server yet: what this device had before
+            return Object.hasOwn(custom, name) ? custom[name] : appSettings.get(name, userId);
         }
 
         return appSettings.get(name, userId);

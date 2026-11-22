@@ -1,8 +1,8 @@
+import { CollectionType } from '@jellyfin/sdk/lib/generated-client/models/collection-type';
 import { BaseItemKind } from '@jellyfin/sdk/lib/generated-client/models/base-item-kind';
 
 import { LibraryTab } from 'types/libraryTab';
 import type { LibraryTabContent } from 'types/libraryTabContent';
-import { SectionType } from 'types/sections';
 
 const foldersTabContent: LibraryTabContent = {
     viewType: LibraryTab.Folders,
@@ -10,18 +10,6 @@ const foldersTabContent: LibraryTabContent = {
     isBtnPlayAllEnabled: true,
     isBtnShuffleEnabled: true,
     itemType: [BaseItemKind.Folder, BaseItemKind.Movie, BaseItemKind.Series]
-};
-
-const suggestionsTabContent: LibraryTabContent = {
-    viewType: LibraryTab.Suggestions,
-    collectionType: null,
-    sectionsView: {
-        suggestionSections: [
-            SectionType.ContinueWatchingMixed,
-            SectionType.LatestMixed,
-            SectionType.NextUp
-        ]
-    }
 };
 
 const mixedTabContent: LibraryTabContent = {
@@ -49,9 +37,15 @@ const playlistsTabContent: LibraryTabContent = {
     itemType: [BaseItemKind.Playlist]
 };
 
+/** Start screen of the library, like the home screen: top 10, recently added, genres… */
+const homeTabContent: LibraryTabContent = {
+    viewType: LibraryTab.Home,
+    collectionType: CollectionType.Unknown
+};
+
 const mixedViews: Record<number, LibraryTabContent> = {
     0: foldersTabContent,
-    1: suggestionsTabContent,
+    1: homeTabContent,
     2: mixedTabContent,
     3: collectionsTabContent,
     4: playlistsTabContent

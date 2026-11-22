@@ -14,7 +14,6 @@ export interface ViewManagerPageProps {
     view: string
     type?: string
     isFullscreen?: boolean
-    isNowPlayingBarEnabled?: boolean
     isThemeMediaSupported?: boolean
     transition?: string
 }
@@ -29,7 +28,6 @@ interface ViewOptions {
     transition?: string
     options: {
         supportsThemeMedia?: boolean
-        enableMediaControl?: boolean
     }
 }
 
@@ -85,7 +83,6 @@ const ViewManagerPage: FunctionComponent<ViewManagerPageProps> = ({
     view,
     type,
     isFullscreen = false,
-    isNowPlayingBarEnabled = true,
     isThemeMediaSupported = false,
     transition
 }) => {
@@ -102,8 +99,7 @@ const ViewManagerPage: FunctionComponent<ViewManagerPageProps> = ({
                 fullscreen: isFullscreen,
                 transition,
                 options: {
-                    supportsThemeMedia: isThemeMediaSupported,
-                    enableMediaControl: isNowPlayingBarEnabled
+                    supportsThemeMedia: isThemeMediaSupported
                 }
             };
 
@@ -131,7 +127,6 @@ const ViewManagerPage: FunctionComponent<ViewManagerPageProps> = ({
         view,
         type,
         isFullscreen,
-        isNowPlayingBarEnabled,
         isThemeMediaSupported,
         transition,
         location.pathname,

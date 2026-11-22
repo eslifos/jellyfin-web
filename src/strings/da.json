@@ -1088,7 +1088,6 @@
     "LabelAudioChannels": "Lydkanaler",
     "LabelAudioBitrate": "Lydbitrate",
     "LabelAudioBitDepth": "Lydens bitdybde",
-    "FetchingData": "Henter øvrige data",
     "Episode": "Episode",
     "DeinterlaceMethodHelp": "Vælg den deinterlacing-metode, der skal anvendes ved softwaretranskodning af interlaced indhold. Når hardwareacceleration med understøttelse af hardwarebaseret deinterlacing er aktiveret, vil den hardwarebaserede deinterlacer blive anvendt i stedet for denne indstilling.",
     "CopyStreamURLSuccess": "URL kopieret.",

@@ -15,6 +15,7 @@ import AppHeader from 'components/AppHeader';
 import Backdrop from 'components/Backdrop';
 import layoutManager from 'components/layoutManager';
 import BangRedirect from 'components/router/BangRedirect';
+import RootErrorBoundary from 'components/router/RootErrorBoundary';
 import { createRouterHistory } from 'components/router/routerHistory';
 import appTheme from 'themes';
 import { ThemeStorageManager } from 'themes/themeStorageManager';
@@ -22,6 +23,7 @@ import { ThemeStorageManager } from 'themes/themeStorageManager';
 const router = createHashRouter([
     {
         element: <RootAppLayout />,
+        errorElement: <RootErrorBoundary />,
         children: [
             ...(layoutManager.modern ? MODERN_APP_ROUTES : LEGACY_APP_ROUTES),
             ...DASHBOARD_APP_ROUTES,

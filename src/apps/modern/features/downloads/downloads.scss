@@ -1,0 +1,593 @@
+// Downloads page, Settings › Downloads and the player of downloads.
+.dl-page {
+    --dl-accent: #00a4dc;
+    --dl-soft: rgba(255, 255, 255, 0.65);
+    --dl-line: rgba(255, 255, 255, 0.1);
+
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 90px 16px 120px;
+    color: #fff;
+}
+
+.dl-head {
+    margin-bottom: 20px;
+
+    h1 {
+        margin: 0;
+        font-size: clamp(1.8rem, 5vw, 2.4rem);
+        font-weight: 900;
+    }
+
+    p {
+        margin: 6px 0 0;
+        color: var(--dl-soft);
+    }
+}
+
+.dl-offline {
+    display: inline-block;
+    margin-top: 10px;
+    padding: 4px 12px;
+    border-radius: 99px;
+    font-size: 0.78rem;
+    font-weight: 800;
+    color: #1a1020;
+    background: #ffb547;
+}
+
+.dl-empty {
+    padding: 24px 0;
+    color: var(--dl-soft);
+}
+
+.dl-card {
+    margin-bottom: 18px;
+    padding: 16px;
+    border-radius: 18px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--dl-line);
+}
+
+.dl-card-title {
+    margin: 0 0 12px;
+    font-size: 1.05rem;
+    font-weight: 900;
+}
+
+// Space: downloads, the rest of the app, and the 10% kept free
+.dl-space-bar {
+    display: flex;
+    height: 12px;
+    border-radius: 99px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.12);
+
+    span {
+        display: block;
+        height: 100%;
+    }
+}
+
+.dl-legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+    font-size: 0.82rem;
+    color: var(--dl-soft);
+
+    li {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+    }
+
+    i {
+        width: 10px;
+        height: 10px;
+        border-radius: 3px;
+    }
+}
+
+.dl-space-bar .is-downloads,
+.dl-legend .is-downloads {
+    background: var(--dl-accent);
+}
+
+.dl-space-bar .is-other {
+    background: #7e57c2;
+}
+
+.dl-space-bar .is-reserve,
+.dl-legend .is-reserve {
+    background: repeating-linear-gradient(45deg, #ff6b6b 0 4px, #c62828 4px 8px);
+}
+
+.dl-legend .is-free {
+    background: rgba(255, 255, 255, 0.3);
+}
+
+.dl-section {
+    margin-bottom: 22px;
+}
+
+.dl-section-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 6px 14px;
+    margin-bottom: 8px;
+
+    h2 {
+        margin: 0 auto 0 0;
+        font-size: 1.15rem;
+        font-weight: 900;
+    }
+}
+
+.dl-link {
+    padding: 4px 0;
+    border: 0;
+    background: none;
+    color: var(--dl-accent);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+
+    &.is-danger {
+        color: #ff8a8a;
+    }
+}
+
+.dl-list {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.dl-row {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--dl-line);
+
+    &.is-error {
+        border-color: rgba(255, 107, 107, 0.45);
+    }
+}
+
+.dl-cover {
+    flex: 0 0 auto;
+    width: 52px;
+    aspect-ratio: 2 / 3;
+    display: grid;
+    place-items: center;
+    border-radius: 10px;
+    overflow: hidden;
+    background: #1a2036;
+    font-size: 1.3rem;
+
+    &.is-square {
+        width: 60px;
+        aspect-ratio: 1;
+    }
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+}
+
+.dl-row-body {
+    min-width: 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+    gap: 3px;
+}
+
+.dl-row-title {
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dl-row-sub,
+.dl-row-state {
+    font-size: 0.78rem;
+    color: var(--dl-soft);
+}
+
+.dl-bar {
+    display: block;
+    height: 5px;
+    margin-top: 3px;
+    border-radius: 99px;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.12);
+
+    span {
+        display: block;
+        height: 100%;
+        border-radius: 99px;
+        background: var(--dl-accent);
+        transition: width 0.4s ease;
+    }
+
+    &.is-watched span {
+        background: #2ec4b6;
+    }
+}
+
+.dl-row-actions {
+    flex: 0 0 auto;
+    display: flex;
+    gap: 6px;
+}
+
+.dl-btn {
+    width: 40px;
+    height: 40px;
+    border: 1px solid rgba(255, 255, 255, 0.18);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font: inherit;
+    font-size: 0.95rem;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible {
+        background: rgba(255, 255, 255, 0.16);
+    }
+}
+
+.dl-btn-main {
+    border-color: transparent;
+    background: var(--dl-accent);
+}
+
+.dl-btn-danger {
+    color: #ff8a8a;
+}
+
+// Preferences
+.dl-field {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    padding: 10px 0;
+    border-top: 1px solid var(--dl-line);
+
+    .dl-field-text {
+        display: flex;
+        flex-direction: column;
+        font-weight: 700;
+    }
+
+    small {
+        font-weight: 500;
+        font-size: 0.78rem;
+        color: var(--dl-soft);
+    }
+
+    select {
+        min-width: 150px;
+        padding: 8px 10px;
+        border-radius: 10px;
+        border: 1px solid rgba(255, 255, 255, 0.2);
+        background: #141a30;
+        color: #fff;
+        font: inherit;
+    }
+
+    input[type='checkbox'] {
+        width: 22px;
+        height: 22px;
+        accent-color: var(--dl-accent);
+    }
+}
+
+/* ---------- Player of downloads ---------- */
+
+.dl-player {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    z-index: 1400;
+    display: flex;
+    flex-direction: column;
+    background: #000;
+    color: #fff;
+}
+
+.dl-player-top {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: max(10px, env(safe-area-inset-top, 0px)) 14px 10px;
+    background: linear-gradient(180deg, rgba(0, 0, 0, 0.85), transparent);
+}
+
+.dl-player-title {
+    flex: 1 1 auto;
+    min-width: 0;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dl-round {
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    color: #fff;
+    cursor: pointer;
+
+    svg {
+        width: 22px;
+        height: 22px;
+        fill: none;
+        stroke: currentcolor;
+        stroke-width: 2.4;
+        stroke-linecap: round;
+    }
+}
+
+.dl-player-media {
+    flex: 1 1 auto;
+    width: 100%;
+    min-height: 0;
+    background: #000;
+
+    &.is-audio {
+        object-fit: contain;
+    }
+}
+
+.dl-player-error {
+    margin: auto;
+    padding: 24px;
+    text-align: center;
+    color: var(--dl-soft, rgba(255, 255, 255, 0.7));
+}
+
+// Settings › Downloads is a narrower column
+.dl-page.is-narrow {
+    max-width: 640px;
+}
+
+.dl-head-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.dl-settings {
+    flex: 0 0 auto;
+    font-size: 1.25rem;
+    text-decoration: none;
+}
+
+.dl-card-note {
+    margin: 0 0 12px;
+    color: var(--dl-soft);
+    font-size: 0.9rem;
+}
+
+.dl-card-actions {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+}
+
+.dl-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 18px;
+    border: 1px solid var(--dl-line);
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 800;
+    text-decoration: none;
+    cursor: pointer;
+
+    &:disabled {
+        opacity: 0.4;
+        cursor: default;
+    }
+
+    &.is-main {
+        border-color: transparent;
+        background: var(--dl-accent);
+    }
+
+    &.is-danger {
+        border-color: rgba(255, 107, 107, 0.45);
+        color: #ff8a8a;
+    }
+}
+
+// Filters: all, series, movies, music and audiobooks
+.dl-chips {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 14px;
+    overflow-x: auto;
+    scrollbar-width: none;
+}
+
+.dl-chip {
+    flex: 0 0 auto;
+    padding: 7px 16px;
+    border: 1px solid var(--dl-line);
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--dl-soft);
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 800;
+    cursor: pointer;
+
+    &.is-active {
+        border-color: var(--dl-accent);
+        background: rgba(0, 164, 220, 0.18);
+        color: #fff;
+    }
+}
+
+// What is downloaded: a poster per series, movie, album or audiobook
+.dl-grid {
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 18px 14px;
+
+    @media (max-width: 480px) {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 14px 10px;
+    }
+}
+
+.dl-tile {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.dl-tile-open {
+    position: relative;
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+}
+
+.dl-poster {
+    width: 100%;
+    aspect-ratio: 2 / 3;
+    display: grid;
+    place-items: center;
+    border-radius: 14px;
+    overflow: hidden;
+    background: #1a2036;
+    font-size: 2rem;
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.45);
+
+    &.is-square {
+        aspect-ratio: 1;
+    }
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+}
+
+.dl-tile-bar {
+    position: absolute;
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    margin: 0;
+}
+
+.dl-tile-play {
+    position: absolute;
+    top: 8px;
+    right: 8px;
+    width: 36px;
+    height: 36px;
+    display: grid;
+    place-items: center;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(0, 164, 220, 0.92);
+    color: #fff;
+    font-size: 0.85rem;
+    cursor: pointer;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.45);
+}
+
+.dl-tile-title {
+    margin-top: 8px;
+    font-size: 0.9rem;
+    font-weight: 800;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.dl-tile-sub {
+    font-size: 0.75rem;
+    color: var(--dl-soft);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+// One series, album or movie
+.dl-back {
+    margin-bottom: 12px;
+    font-size: 1rem;
+}
+
+.dl-hero {
+    display: flex;
+    align-items: flex-end;
+    gap: 18px;
+    margin-bottom: 22px;
+
+    .dl-poster {
+        flex: 0 0 auto;
+        width: clamp(110px, 28vw, 180px);
+    }
+
+    h1 {
+        margin: 0;
+        font-size: clamp(1.4rem, 5vw, 2.2rem);
+        font-weight: 900;
+        line-height: 1.15;
+    }
+
+    p {
+        margin: 6px 0 14px;
+        color: var(--dl-soft);
+    }
+}
+
+.dl-hero-body {
+    min-width: 0;
+}

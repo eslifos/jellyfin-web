@@ -82,7 +82,6 @@ const VideoPage: FC = () => {
                 view='playback/video/index.html'
                 type='video-osd'
                 isFullscreen
-                isNowPlayingBarEnabled={false}
                 isThemeMediaSupported
             />
         </>

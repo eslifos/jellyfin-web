@@ -24,7 +24,7 @@ import globalize from 'lib/globalize';
 import { getLibraryIcon } from 'utils/image';
 
 import { invalidateVirtualFolders } from '../api/invalidateVirtualFolders';
-import getCollectionTypeOptions from '../utils/collectionTypeOptions';
+import { getLibraryKind, getLibraryKinds } from '../utils/libraryKinds';
 import { getLibraryAccent } from '../utils/libraryUi';
 
 interface ChangeLibraryTypeDialogProps {
@@ -36,11 +36,12 @@ interface ChangeLibraryTypeDialogProps {
 const useChangeLibraryType = () => {
     const { api, user } = useApi();
     return useMutation({
-        mutationFn: async ({ name, collectionType, itemId, scan }: { name: string; collectionType: string; itemId?: string | null; scan: boolean }) => {
+        mutationFn: async ({ name, collectionType, theme, itemId, scan }: { name: string; collectionType: string; theme?: string; itemId?: string | null; scan: boolean }) => {
             const headers = { Authorization: api!.authorizationHeader };
             await api!.axiosInstance.post(`${api!.basePath}/Library/VirtualFolders/CollectionType`, null, {
                 headers,
-                params: { name, collectionType }
+                // Anime and kids are mixed libraries with a theme
+                params: { name, collectionType, theme }
             });
 
             if (scan && itemId) {
@@ -62,7 +63,7 @@ const useChangeLibraryType = () => {
 };
 
 const ChangeLibraryTypeDialog: FC<ChangeLibraryTypeDialogProps> = ({ open, virtualFolder, onClose }) => {
-    const current = virtualFolder.CollectionType || 'mixed';
+    const current = getLibraryKind(virtualFolder);
     const [ selected, setSelected ] = useState<string>(current);
     const [ scan, setScan ] = useState(true);
     const changeType = useChangeLibraryType();
@@ -76,15 +77,17 @@ const ChangeLibraryTypeDialog: FC<ChangeLibraryTypeDialogProps> = ({ open, virtu
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [ open, current ]);
 
-    const types = getCollectionTypeOptions().filter(t => t.value);
+    const types = getLibraryKinds();
 
     const confirm = useCallback(() => {
         if (!virtualFolder.Name || selected === current) return;
+        const kind = types.find(t => t.value === selected);
+        if (!kind) return;
         changeType.mutate(
-            { name: virtualFolder.Name, collectionType: selected, itemId: virtualFolder.ItemId, scan },
+            { name: virtualFolder.Name, collectionType: kind.collectionType, theme: kind.theme, itemId: virtualFolder.ItemId, scan },
             { onSuccess: onClose }
         );
-    }, [ changeType, current, onClose, scan, selected, virtualFolder ]);
+    }, [ changeType, current, onClose, scan, selected, types, virtualFolder ]);
 
     return (
         <Dialog
@@ -122,7 +125,7 @@ const ChangeLibraryTypeDialog: FC<ChangeLibraryTypeDialogProps> = ({ open, virtu
                             >
                                 <Icon sx={{ color: accent }}>{getLibraryIcon(type.value)}</Icon>
                                 <Box sx={{ minWidth: 0 }}>
-                                    <Typography sx={{ fontSize: '0.9rem', fontWeight: 700 }}>{type.name}</Typography>
+                                    <Typography sx={{ fontSize: '0.9rem', fontWeight: 700 }}>{type.label}</Typography>
                                     {type.value === current && (
                                         <Typography sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>
                                             {globalize.translate('LibChangeTypeCurrent')}

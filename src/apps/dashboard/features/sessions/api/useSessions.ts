@@ -21,7 +21,8 @@ const fetchSessions = async (
 };
 
 export const useSessions = (
-    requestParams: SessionApiGetSessionsRequest
+    requestParams: SessionApiGetSessionsRequest,
+    refetchInterval?: number
 ) => {
     const { api } = useApi();
     return useQuery({
@@ -29,6 +30,8 @@ export const useSessions = (
         queryFn: ({ signal }) =>
             fetchSessions(api!, requestParams, { signal }),
         enabled: !!api,
-        refetchOnWindowFocus: false
+        refetchOnWindowFocus: false,
+        refetchInterval,
+        refetchIntervalInBackground: false
     });
 };

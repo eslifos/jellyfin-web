@@ -328,7 +328,6 @@
     "ErrorAddingXmlTvFile": "Ndodhi një problem gjatë aksesimit të skedarit XMLTV. Sigurohuni që skedari në fjalë ekziston dhe provoni përsëri.",
     "ErrorGettingTvLineups": "Ndodhi një problem gjatë shkarkimit të formacionit të TV-së. Ju lutem sigurohuni që informacioni juaj është korrekt dhe provoni përsëri.",
     "ErrorPlayerNotFound": "Asnjë instrument nuk i gjend për median në fjalë.",
-    "FetchingData": "Duke marrë të dhëna të tjera",
     "ErrorDefault": "Ndodhi një problem gjatë procesimit të kërkesës. Ju lutem provojeni përseri.",
     "GroupVersions": "Versionet e grupimit",
     "DownloadAll": "Shkarkoni të gjitha",

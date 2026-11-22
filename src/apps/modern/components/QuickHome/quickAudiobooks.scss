@@ -1,0 +1,402 @@
+// Audiobooks: the layout of the other libraries with a warm palette, square covers and a record player feel.
+.ab-page {
+    --ab-coral: #ff7a59;
+    --ab-amber: #ffb547;
+    --ab-plum: #9b6bff;
+    --ab-teal: #2ec4b6;
+    --ab-rose: #ff5c8a;
+}
+
+/* ---------- Banner ---------- */
+
+.ab-hero {
+    align-items: stretch;
+    background: #120d22;
+}
+
+.ab-hero-bg {
+    position: absolute;
+    inset: -10%;
+    width: 120%;
+    height: 120%;
+    object-fit: cover;
+    z-index: -3;
+    filter: blur(48px) saturate(1.4) brightness(0.7);
+    animation: qhFade 0.8s ease;
+}
+
+.ab-hero-glow {
+    position: absolute;
+    inset: 0;
+    z-index: -2;
+    background:
+        radial-gradient(circle at 18% 25%, rgba(255, 122, 89, 0.38), transparent 45%),
+        radial-gradient(circle at 82% 70%, rgba(155, 107, 255, 0.38), transparent 50%);
+    animation: abDrift 14s ease-in-out infinite alternate;
+}
+
+.ab-hero-inner {
+    position: relative;
+    width: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(20px, 4vw, 64px);
+    padding: 96px var(--qh-gutter) clamp(90px, 9vw, 120px);
+}
+
+.ab-hero-body {
+    padding: 0;
+    flex: 1 1 auto;
+    min-width: 0;
+}
+
+.ab-hero-note {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 12px;
+    padding: 5px 14px;
+    border-radius: 99px;
+    font-size: 0.75rem;
+    font-weight: 900;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: #fff;
+    background: linear-gradient(90deg, var(--ab-coral), var(--ab-rose));
+}
+
+.ab-hero-note-new {
+    color: #1a1020;
+    background: linear-gradient(90deg, var(--ab-amber), var(--ab-coral));
+}
+
+.ab-hero-progress {
+    max-width: 460px;
+    margin: 4px 0 18px;
+}
+
+.ab-hero-progress-text {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 6px;
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--qh-soft);
+}
+
+.ab-bar {
+    flex: 1 1 auto;
+    height: 7px;
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.14);
+    overflow: hidden;
+
+    span {
+        display: block;
+        height: 100%;
+        border-radius: 99px;
+        background: linear-gradient(90deg, var(--ab-amber), var(--ab-coral), var(--ab-rose));
+    }
+}
+
+.ab-btn-main {
+    color: #fff;
+    background: linear-gradient(135deg, var(--ab-coral), var(--ab-rose));
+    box-shadow: 0 10px 26px rgba(255, 92, 138, 0.45);
+
+    &:hover,
+    &:focus-visible {
+        background: linear-gradient(135deg, #ff8d70, #ff7aa0);
+    }
+}
+
+.ab-stats {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 18px;
+}
+
+.ab-pill {
+    padding: 3px 10px;
+    border-radius: 99px;
+    font-size: 0.72rem;
+    font-weight: 800;
+    color: #1a1020;
+}
+
+.ab-pill-amber { background: var(--ab-amber); }
+.ab-pill-teal { background: var(--ab-teal); }
+.ab-pill-plum { background: var(--ab-plum); }
+
+// Cover with a record behind it
+.ab-hero-art {
+    position: relative;
+    flex: 0 0 auto;
+    width: clamp(190px, 24vw, 330px);
+    aspect-ratio: 1;
+    margin-right: clamp(50px, 7vw, 110px);
+}
+
+.ab-vinyl {
+    position: absolute;
+    top: 6%;
+    left: 36%;
+    width: 88%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background-color: #161616;
+    background-image:
+        radial-gradient(circle, var(--ab-coral) 0 14%, #111 15% 17%, transparent 18%),
+        repeating-radial-gradient(circle, #1a1a1a 0 2px, #242424 2px 4px);
+    box-shadow: inset 0 0 0 6px #0c0c0c, 0 12px 34px rgba(0, 0, 0, 0.6);
+
+    &.is-spinning {
+        animation: abSpin 6s linear infinite;
+    }
+}
+
+.ab-hero-cover {
+    position: relative;
+    display: block;
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    border-radius: 18px;
+    box-shadow: 0 24px 50px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
+    animation: qhRise 0.6s ease;
+}
+
+.ab-pick {
+    width: 52px;
+    height: 52px;
+}
+
+// "Now playing" bars
+.ab-eq {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 2px;
+    height: 12px;
+
+    i {
+        width: 3px;
+        height: 100%;
+        border-radius: 2px;
+        background: currentcolor;
+        transform-origin: bottom;
+        animation: abEq 0.9s ease-in-out infinite alternate;
+
+        &:nth-child(2) { animation-delay: 0.25s; }
+        &:nth-child(3) { animation-delay: 0.5s; }
+        &:nth-child(4) { animation-delay: 0.15s; }
+    }
+}
+
+/* ---------- Keep listening ---------- */
+
+.ab-listen {
+    width: clamp(290px, 80vw, 390px);
+    display: flex;
+    gap: 14px;
+    padding: 12px;
+    border-radius: 20px;
+    background: linear-gradient(135deg, rgba(255, 122, 89, 0.15), rgba(155, 107, 255, 0.11));
+    border: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ab-listen-cover {
+    flex: 0 0 auto;
+    width: clamp(92px, 24vw, 116px);
+    aspect-ratio: 1;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+
+    img {
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+        display: block;
+    }
+}
+
+.ab-listen-body {
+    min-width: 0;
+    flex: 1 1 auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.ab-listen-foot {
+    margin-top: auto;
+}
+
+.ab-listen-text {
+    display: flex;
+    justify-content: space-between;
+    gap: 8px;
+    margin-bottom: 6px;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--qh-soft);
+}
+
+.ab-listen-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.ab-play {
+    flex: 0 0 auto;
+    width: 40px;
+    height: 40px;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    font-size: 0.95rem;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--ab-coral), var(--ab-rose));
+    box-shadow: 0 6px 14px rgba(255, 92, 138, 0.4);
+    transition: transform 0.15s;
+
+    &:hover,
+    &:focus-visible {
+        transform: scale(1.08);
+    }
+}
+
+/* ---------- Sagas, authors, narrators ---------- */
+
+.ab-chips {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding: 2px var(--qh-gutter) 6px;
+    scrollbar-width: none;
+
+    &::-webkit-scrollbar {
+        display: none;
+    }
+}
+
+.ab-chip {
+    flex: 0 0 auto;
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 1px;
+    max-width: 240px;
+    padding: 8px 16px;
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    background: rgba(255, 255, 255, 0.06);
+    color: #fff;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.2s;
+
+    small {
+        font-size: 0.7rem;
+        font-weight: 700;
+        color: var(--qh-soft);
+    }
+
+    &:hover,
+    &:focus-visible {
+        background: rgba(255, 255, 255, 0.12);
+    }
+
+    &.is-active {
+        border-color: transparent;
+        background: linear-gradient(135deg, var(--qh-accent), var(--ab-plum));
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.35);
+
+        small {
+            color: rgba(255, 255, 255, 0.85);
+        }
+    }
+}
+
+.ab-chip-name {
+    max-width: 100%;
+    font-size: 0.86rem;
+    font-weight: 900;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ab-fade {
+    animation: abSlide 0.35s ease-out;
+}
+
+.ab-genres {
+    margin-bottom: 24px;
+}
+
+/* ---------- Phones ---------- */
+
+@media (max-width: 760px) {
+    .ab-hero {
+        height: auto;
+        min-height: 0;
+        max-height: none;
+    }
+
+    .ab-hero-inner {
+        flex-direction: column-reverse;
+        align-items: flex-start;
+        gap: 18px;
+        padding: 84px 16px 96px;
+    }
+
+    .ab-hero-art {
+        width: min(46vw, 190px);
+        margin-right: 0;
+        margin-left: 4px;
+    }
+
+    .ab-vinyl {
+        left: 30%;
+    }
+}
+
+@keyframes abSpin {
+    to { transform: rotate(360deg); }
+}
+
+@keyframes abEq {
+    from { transform: scaleY(0.25); }
+    to { transform: scaleY(1); }
+}
+
+@keyframes abDrift {
+    from { transform: translate3d(-2%, -1%, 0) scale(1); }
+    to { transform: translate3d(2%, 1%, 0) scale(1.06); }
+}
+
+@keyframes abSlide {
+    from {
+        opacity: 0;
+        transform: translateX(14px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .ab-hero-glow,
+    .ab-vinyl.is-spinning,
+    .ab-eq i,
+    .ab-fade {
+        animation: none;
+    }
+}

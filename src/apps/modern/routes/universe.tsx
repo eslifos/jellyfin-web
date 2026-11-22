@@ -30,6 +30,7 @@ import globalize from 'lib/globalize';
 import { normId, useUniverse, useUniverseItems } from '../components/Universes/api';
 import UniverseEditor from '../components/Universes/UniverseEditor';
 import { glassCard, MediaCard, PersonCard, RowSection } from '../components/Universes/UniverseParts';
+import { readPref, writePref } from 'utils/syncedPrefs';
 
 const t = (key: string, ...args: (string | number)[]) => globalize.translate(key, ...args);
 const ROTATE_MS = 9000;
@@ -39,7 +40,7 @@ type Order = 'release' | 'chrono';
 
 const readOrder = (): Order => {
     try {
-        return localStorage.getItem(ORDER_KEY) === 'chrono' ? 'chrono' : 'release';
+        return readPref(ORDER_KEY) === 'chrono' ? 'chrono' : 'release';
     } catch {
         return 'release';
     }
@@ -78,7 +79,7 @@ const Universe: FC = () => {
         if (!value) return;
         setOrder(value);
         try {
-            localStorage.setItem(ORDER_KEY, value);
+            writePref(ORDER_KEY, value);
         } catch {
             // ignore
         }

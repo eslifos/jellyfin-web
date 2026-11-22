@@ -120,6 +120,12 @@ export function getLibraryIcon(library: CollectionType | string | null | undefin
             return 'queue';
         case 'channels':
             return 'videocam';
+        case 'anime':
+            return 'temple_buddhist';
+        case 'kids':
+            return 'toys';
+        case 'audiobooks':
+            return 'headphones';
         case undefined:
             return 'ondemand_video';
         default:

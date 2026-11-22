@@ -6,7 +6,8 @@ const SETTINGS_SUB_PATHS = [
     '/mypreferenceshome',
     '/mypreferencesplayback',
     '/mypreferencessubtitles',
-    '/mypreferencescontrols'
+    '/mypreferencescontrols',
+    '/mypreferencesdownloads'
 ];
 
 export const isSettingsSubPath = (pathname: string) => SETTINGS_SUB_PATHS.includes(pathname);

@@ -32,7 +32,8 @@ const LIBRARY_LINKS: GroupLink[] = [
     { to: '/dashboard/libraries/metadata', labelKey: 'LabelMetadata' },
     { to: '/dashboard/libraries/nfo', labelKey: 'TabNfoSettings' },
     { to: '/dashboard/libraries/health', labelKey: 'HlthTitle' },
-    { to: '/dashboard/libraries/episodeorder', labelKey: 'EpoTitle' }
+    { to: '/dashboard/libraries/episodeorder', labelKey: 'EpoTitle' },
+    { to: '/dashboard/libraries/top10', labelKey: 'Top10Title' }
 ];
 
 const PLAYBACK_LINKS: GroupLink[] = [

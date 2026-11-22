@@ -47,6 +47,7 @@ import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 
 import { PageHeader, SectionCard } from '../../components/cosmic';
+import { readPref, writePref } from 'utils/syncedPrefs';
 
 const VIDEO_TYPES = [ BaseItemKind.Movie, BaseItemKind.Episode, BaseItemKind.Video, BaseItemKind.MusicVideo ];
 const IGNORE_KEY = 'dashboardDamagedIgnored';
@@ -64,14 +65,14 @@ const REASONS: Record<ProbeReason | 'unknown' | 'pending', { color: string; labe
 
 const readIgnored = (): string[] => {
     try {
-        return JSON.parse(localStorage.getItem(IGNORE_KEY) || '[]') as string[];
+        return JSON.parse(readPref(IGNORE_KEY) || '[]') as string[];
     } catch {
         return [];
     }
 };
 const writeIgnored = (ids: string[]) => {
     try {
-        localStorage.setItem(IGNORE_KEY, JSON.stringify(ids));
+        writePref(IGNORE_KEY, JSON.stringify(ids));
     } catch {
         // storage blocked
     }

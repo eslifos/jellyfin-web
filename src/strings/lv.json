@@ -818,7 +818,6 @@
     "HeaderKeepSeries": "Paturēt seriālu",
     "ApiKeysCaption": "Pašlaik iespējoto API atslēgu saraksts",
     "EncoderPresetHelp": "Izvēlieties ātrāku vērtību, lai uzlabotu veiktspēju, vai lēnāku vērtību, lai uzlabotu kvalitāti.",
-    "FetchingData": "Iegūst papildu datus",
     "ErrorDeletingItem": "Notika kļūda, dzēšot objektu no servera. Lūdzu, pārbaudiet, vai Jellyfin ir rakstīšanas piekļuve multivides mapei, un mēģiniet vēlreiz.",
     "ErrorAddingTunerDevice": "Notika kļūda, pievienojot uztvērēja ierīci. Lūdzu, pārliecinieties, ka tā ir pieejama, un mēģiniet vēlreiz.",
     "ErrorAddingMediaPathToVirtualFolder": "Notika kļūda, pievienojot multivides ceļu. Lūdzu, pārliecinieties, ka ceļš ir derīgs un Jellyfin ir piekļuve šai atrašanās vietai.",

@@ -1,0 +1,827 @@
+// Modern video OSD: title block, controls, details under the controls and the side menus
+/* stylelint-disable no-descending-specificity */
+
+$accent: #00a4dc;
+$accent2: #8a5cff;
+$panelBg: rgba(12, 12, 26, 0.92);
+$line: rgba(255, 255, 255, 0.08);
+$muted: rgba(255, 255, 255, 0.62);
+
+// ---------- Bottom area ----------
+
+#videoOsdPage .videoOsdBottom {
+    background: linear-gradient(0deg, rgba(6, 6, 14, 0.92) 0%, rgba(6, 6, 14, 0.6) 45%, rgba(6, 6, 14, 0) 100%);
+    padding-top: 9em;
+    transition: opacity 0.3s ease-out, background 0.3s ease-out;
+}
+
+#videoOsdPage.cosmicOsd-detailsOpen .videoOsdBottom {
+    background: linear-gradient(0deg, rgba(6, 6, 14, 0.97) 0%, rgba(6, 6, 14, 0.9) 70%, rgba(6, 6, 14, 0) 100%);
+}
+
+#videoOsdPage .osdControls {
+    padding: 0 2.2em;
+    max-width: 120em;
+    margin: 0 auto;
+    width: 100%;
+    box-sizing: border-box;
+}
+
+// Old title / quick buttons: replaced by the title block and the menu
+#videoOsdPage .osdTitle,
+#videoOsdPage .videoOsdBottom .btnSubtitles,
+#videoOsdPage .videoOsdBottom .btnAudio {
+    display: none !important;
+}
+
+#videoOsdPage .osdMainTextContainer {
+    margin-bottom: 0;
+}
+
+.cosmicOsdTitleBlock {
+    padding: 0 0.5em 0.6em;
+    pointer-events: none;
+
+    &:empty {
+        display: none;
+    }
+}
+
+.cosmicOsdLogo {
+    display: block;
+    max-height: 5.5em;
+    max-width: min(24em, 60vw);
+    object-fit: contain;
+    object-position: left bottom;
+    filter: drop-shadow(0 2px 12px rgba(0, 0, 0, 0.6));
+    margin-bottom: 0.5em;
+}
+
+.cosmicOsdName {
+    font-size: 2em;
+    font-weight: 800;
+    line-height: 1.1;
+    letter-spacing: -0.01em;
+    text-shadow: 0 2px 16px rgba(0, 0, 0, 0.7);
+    margin-bottom: 0.25em;
+}
+
+.cosmicOsdSubtitle {
+    font-size: 1.1em;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.92);
+    text-shadow: 0 1px 8px rgba(0, 0, 0, 0.8);
+}
+
+.cosmicOsdMeta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.35em 0.75em;
+    margin-top: 0.45em;
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.cosmicChip {
+    display: inline-flex;
+    align-items: center;
+    padding: 0.1em 0.5em;
+    border-radius: 0.35em;
+    border: 1px solid rgba(255, 255, 255, 0.35);
+    font-size: 0.82em;
+    font-weight: 700;
+    line-height: 1.5;
+    letter-spacing: 0.02em;
+    white-space: nowrap;
+}
+
+.cosmicChip-strong {
+    border: 0;
+    background: linear-gradient(135deg, rgba($accent, 0.9), rgba($accent2, 0.9));
+    color: #fff;
+}
+
+// Progress bar
+#videoOsdPage .sliderContainer .mdl-slider-background-lower {
+    background: linear-gradient(90deg, $accent, $accent2) !important;
+}
+
+#videoOsdPage .osdPositionText,
+#videoOsdPage .osdDurationText {
+    font-variant-numeric: tabular-nums;
+    font-weight: 600;
+    font-size: 0.92em;
+    margin-bottom: 0;
+}
+
+// Buttons row
+#videoOsdPage .videoOsdBottom .buttons {
+    gap: 0.15em;
+    padding-top: 0.1em;
+
+    .paper-icon-button-light {
+        border-radius: 50%;
+        transition: background 0.15s ease, transform 0.15s ease;
+
+        &:hover,
+        &:focus-visible {
+            background: rgba(255, 255, 255, 0.14);
+        }
+
+        &:active {
+            transform: scale(0.92);
+        }
+    }
+
+    .btnPause {
+        background: #fff;
+        color: #0a0a14;
+        margin: 0 0.35em;
+        box-shadow: 0 4px 18px rgba(0, 0, 0, 0.45);
+
+        &:hover,
+        &:focus-visible {
+            background: #fff;
+            transform: scale(1.06);
+        }
+    }
+
+    .btnVideoOsdSettings,
+    .btnCosmicQueue {
+        &.cosmicOsd-active {
+            background: rgba($accent, 0.3);
+        }
+    }
+}
+
+#videoOsdPage.cosmicOsd-panelOpen .btnVideoOsdSettings {
+    color: $accent;
+}
+
+#videoOsdPage .osdTimeText {
+    color: $muted;
+    font-size: 0.9em;
+}
+
+// ---------- Details under the controls ----------
+
+.cosmicOsdDetails {
+    margin-top: 0.4em;
+    border-top: 1px solid $line;
+}
+
+.cosmicOsdDetailsToggle {
+    display: flex;
+    align-items: center;
+    gap: 0.9em;
+    width: 100%;
+    padding: 0.65em 0.5em 0.2em;
+    background: none;
+    border: 0;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    border-radius: 0.5em;
+
+    &:focus-visible {
+        outline: 2px solid $accent;
+    }
+}
+
+.cosmicOsdDetailsPeek {
+    display: flex;
+    align-items: center;
+    gap: 0.9em;
+    min-width: 0;
+    flex: 1;
+    font-size: 0.9em;
+    color: rgba(255, 255, 255, 0.78);
+}
+
+.cosmicOsdDetailsPeekRatings {
+    display: flex;
+    align-items: center;
+    gap: 0.7em;
+    flex-shrink: 0;
+
+    &:empty {
+        display: none;
+    }
+}
+
+.cosmicOsdDetailsPeekText {
+    min-width: 0;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cosmicOsdDetailsChevron {
+    flex-shrink: 0;
+    width: 1.6em;
+    height: 1.6em;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.1);
+    transition: transform 0.25s ease;
+}
+
+.cosmicOsdDetails-expanded {
+    .cosmicOsdDetailsChevron {
+        transform: rotate(180deg);
+    }
+
+    .cosmicOsdDetailsPeek {
+        visibility: hidden;
+    }
+}
+
+.cosmicOsdDetailsBody {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+    padding: 0 0.5em;
+}
+
+.cosmicOsdDetails-expanded .cosmicOsdDetailsBody {
+    max-height: 44vh;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    scrollbar-width: thin;
+}
+
+.cosmicOsdDetailsGrid {
+    display: grid;
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+    gap: 1.2em 3em;
+    padding: 0.6em 0 0.4em;
+}
+
+.cosmicOsdRatings,
+.cosmicOsdGenres {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5em 1em;
+    margin-bottom: 0.7em;
+}
+
+.cosmicOsdGenres {
+    gap: 0.4em;
+}
+
+.cosmicRating {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25em;
+    font-weight: 700;
+
+    .mediaInfoCriticRating {
+        margin: 0;
+    }
+}
+
+.cosmicRating-star .material-icons {
+    color: #ffc93c;
+    font-size: 1.2em;
+}
+
+.cosmicOsdTagline {
+    margin: 0 0 0.4em;
+    font-size: 1.05em;
+    font-style: italic;
+    font-weight: 600;
+    color: rgba(255, 255, 255, 0.9);
+}
+
+.cosmicOsdOverview {
+    margin: 0;
+    line-height: 1.6;
+    color: rgba(255, 255, 255, 0.85);
+    max-width: 60em;
+}
+
+.cosmicOsdCredits {
+    margin: 0;
+
+    div {
+        margin-bottom: 0.7em;
+    }
+
+    dt {
+        font-size: 0.78em;
+        text-transform: uppercase;
+        letter-spacing: 0.08em;
+        color: $muted;
+    }
+
+    dd {
+        margin: 0.15em 0 0;
+    }
+}
+
+.cosmicOsdCastTitle {
+    font-size: 1.05em;
+    font-weight: 700;
+    margin: 0.8em 0 0.6em;
+}
+
+.cosmicOsdCast {
+    display: flex;
+    gap: 1.1em;
+    overflow-x: auto;
+    padding-bottom: 0.8em;
+    scrollbar-width: thin;
+}
+
+.cosmicCastCard {
+    flex: 0 0 6.4em;
+    text-align: center;
+    font-size: 0.88em;
+
+    strong {
+        display: block;
+        margin-top: 0.45em;
+        line-height: 1.25;
+        font-weight: 600;
+    }
+
+    small {
+        margin-top: 0.15em;
+        color: $muted;
+        line-height: 1.25;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+}
+
+.cosmicCastPhoto {
+    width: 5.6em;
+    height: 5.6em;
+    margin: 0 auto;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba($accent, 0.4), rgba($accent2, 0.4)) center / cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.15em;
+    font-weight: 800;
+    box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
+}
+
+// ---------- Side menus ----------
+
+.cosmicOsdPanel {
+    position: fixed;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: min(26em, 100vw);
+    z-index: 1001;
+    display: flex;
+    flex-direction: column;
+    background: $panelBg;
+    backdrop-filter: blur(24px) saturate(1.3);
+    border-left: 1px solid $line;
+    box-shadow: -12px 0 40px rgba(0, 0, 0, 0.45);
+    color: #fff;
+    transform: translateX(105%);
+    visibility: hidden;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s linear 0.28s;
+    padding-top: env(safe-area-inset-top);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+    user-select: none;
+}
+
+.cosmicOsdPanel-open {
+    transform: none;
+    visibility: visible;
+    transition: transform 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), visibility 0s;
+}
+
+.cosmicOsdPanel-inner {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    flex: 1;
+}
+
+.cosmicPanelHeader {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    padding: 1em 0.8em 0.8em 1.1em;
+    border-bottom: 1px solid $line;
+
+    h3 {
+        flex: 1;
+        margin: 0;
+        font-size: 1.15em;
+        font-weight: 700;
+    }
+}
+
+.cosmicPanelHeaderIcon {
+    display: inline-flex;
+    color: $accent;
+}
+
+.cosmicPanelIconButton {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    width: 2.3em;
+    height: 2.3em;
+    border-radius: 50%;
+    border: 0;
+    background: none;
+    color: inherit;
+    cursor: pointer;
+    flex-shrink: 0;
+
+    &:hover,
+    &:focus-visible {
+        background: rgba(255, 255, 255, 0.12);
+        outline: none;
+    }
+}
+
+.cosmicPanelSubtitle {
+    padding: 0.6em 1.2em 0;
+    font-size: 0.85em;
+    color: $muted;
+}
+
+.cosmicPanelBody {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+    overscroll-behavior: contain;
+    padding: 0.5em 0.6em 1.5em;
+    scrollbar-width: thin;
+}
+
+.cosmicPanelGroupTitle {
+    margin: 1.1em 0.6em 0.4em;
+    font-size: 0.75em;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    color: $muted;
+}
+
+.cosmicPanelRow,
+.cosmicPanelOption {
+    display: flex;
+    align-items: center;
+    gap: 0.85em;
+    width: 100%;
+    padding: 0.75em 0.7em;
+    border: 0;
+    border-radius: 0.6em;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible,
+    &.focused {
+        background: rgba(255, 255, 255, 0.09);
+        outline: none;
+    }
+
+    > .material-icons {
+        flex-shrink: 0;
+        color: rgba(255, 255, 255, 0.75);
+    }
+}
+
+.cosmicPanelRowLabel {
+    flex-shrink: 0;
+    font-weight: 600;
+}
+
+.cosmicPanelRowValue {
+    flex: 1;
+    min-width: 0;
+    text-align: right;
+    font-size: 0.88em;
+    color: $muted;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.cosmicPanelOptionText {
+    flex: 1;
+    min-width: 0;
+
+    small {
+        display: block;
+        font-size: 0.8em;
+        color: $muted;
+        margin-top: 0.1em;
+    }
+}
+
+.cosmicPanelOption.selected {
+    background: rgba($accent, 0.16);
+
+    > .material-icons {
+        color: $accent;
+    }
+
+    .cosmicPanelOptionText {
+        font-weight: 700;
+    }
+}
+
+.cosmicPanelEmpty {
+    padding: 1em;
+    color: $muted;
+}
+
+// Video info card
+.cosmicVideoInfo {
+    margin: 0.4em 0.3em 0;
+    padding: 0.9em 1em;
+    border-radius: 0.8em;
+    background: linear-gradient(135deg, rgba($accent, 0.12), rgba($accent2, 0.1));
+    border: 1px solid rgba(255, 255, 255, 0.07);
+
+    dl {
+        margin: 0.7em 0 0;
+        display: grid;
+        gap: 0.45em;
+    }
+
+    div:not(.cosmicVideoInfoTop) {
+        display: grid;
+        grid-template-columns: 6.5em minmax(0, 1fr);
+        gap: 0.6em;
+        font-size: 0.85em;
+    }
+
+    dt {
+        color: $muted;
+    }
+
+    dd {
+        margin: 0;
+        overflow-wrap: anywhere;
+    }
+}
+
+.cosmicVideoInfoTop {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4em;
+}
+
+.cosmicMethod {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+    padding: 0.15em 0.6em 0.15em 0.4em;
+    border-radius: 1em;
+    font-size: 0.8em;
+    font-weight: 700;
+
+    .material-icons {
+        font-size: 1.2em;
+    }
+}
+
+.cosmicMethod-direct {
+    background: rgba(46, 204, 113, 0.2);
+    color: #6ee7a0;
+}
+
+.cosmicMethod-stream {
+    background: rgba($accent, 0.22);
+    color: #7fd6f5;
+}
+
+.cosmicMethod-transcode {
+    background: rgba(255, 166, 0, 0.2);
+    color: #ffc266;
+}
+
+// Queue
+.cosmicQueueList {
+    padding-top: 0.6em;
+}
+
+.cosmicQueueItem {
+    display: flex;
+    align-items: center;
+    gap: 0.2em;
+    border-radius: 0.7em;
+    margin-bottom: 0.3em;
+
+    &:hover .cosmicQueueRemove,
+    &:focus-within .cosmicQueueRemove {
+        opacity: 1;
+    }
+}
+
+.cosmicQueueItem-current {
+    background: rgba($accent, 0.15);
+    box-shadow: inset 3px 0 0 $accent;
+}
+
+.cosmicQueueItem-past {
+    opacity: 0.55;
+}
+
+.cosmicQueuePlay {
+    display: flex;
+    align-items: center;
+    gap: 0.8em;
+    flex: 1;
+    min-width: 0;
+    padding: 0.5em;
+    border: 0;
+    border-radius: 0.7em;
+    background: none;
+    color: inherit;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+
+    &:hover,
+    &:focus-visible,
+    &.focused {
+        background: rgba(255, 255, 255, 0.08);
+        outline: none;
+    }
+}
+
+.cosmicQueueThumb {
+    position: relative;
+    flex-shrink: 0;
+    width: 8em;
+    aspect-ratio: 16 / 9;
+    border-radius: 0.45em;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.06) center / cover no-repeat;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: $muted;
+}
+
+.cosmicQueueNow {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(0, 0, 0, 0.5);
+    color: $accent;
+
+    .material-icons {
+        font-size: 2em;
+        animation: cosmicPulse 1.4s ease-in-out infinite;
+    }
+}
+
+.cosmicQueueProgress {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 3px;
+    background: rgba(0, 0, 0, 0.5);
+
+    span {
+        display: block;
+        height: 100%;
+        background: $accent;
+    }
+}
+
+.cosmicQueuePlayed {
+    position: absolute;
+    top: 0.3em;
+    right: 0.3em;
+    width: 1.3em;
+    height: 1.3em;
+    border-radius: 50%;
+    background: $accent;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+
+    .material-icons {
+        font-size: 0.95em;
+    }
+}
+
+.cosmicQueueText {
+    min-width: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 0.1em;
+
+    small {
+        font-size: 0.75em;
+        color: $muted;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+
+    strong {
+        font-weight: 600;
+        line-height: 1.25;
+        overflow: hidden;
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+    }
+
+    span {
+        font-size: 0.8em;
+        color: $muted;
+    }
+
+    em {
+        font-style: normal;
+        font-weight: 700;
+        color: $accent;
+    }
+}
+
+.cosmicQueueRemove {
+    opacity: 0;
+    transition: opacity 0.15s ease;
+    margin-right: 0.3em;
+}
+
+@keyframes cosmicPulse {
+    50% {
+        opacity: 0.5;
+    }
+}
+
+// ---------- Small screens ----------
+
+@media all and (max-width: 50em) {
+    #videoOsdPage .osdControls {
+        padding: 0 0.8em;
+    }
+
+    .cosmicOsdName {
+        font-size: 1.4em;
+    }
+
+    .cosmicOsdLogo {
+        max-height: 3.5em;
+    }
+
+    .cosmicOsdDetailsGrid {
+        grid-template-columns: minmax(0, 1fr);
+        gap: 0.4em;
+    }
+
+    .cosmicQueueRemove {
+        opacity: 1;
+    }
+}
+
+@media all and (max-height: 32em) {
+    .cosmicOsdLogo {
+        max-height: 3em;
+    }
+
+    .cosmicOsdMeta {
+        display: none;
+    }
+
+    .cosmicOsdDetails-expanded .cosmicOsdDetailsBody {
+        max-height: 55vh;
+    }
+}
+
+// TV: the remove button is reachable without hover
+.layout-tv .cosmicQueueRemove {
+    opacity: 1;
+}
+
+// Video sent to a Chromecast / screen
+#videoOsdPage .videoOsdBottom .btnCosmicCast.cosmicOsd-castActive {
+    color: $accent;
+    background: rgba($accent, 0.18);
+}

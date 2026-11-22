@@ -635,7 +635,6 @@
     "FileReadError": "Det oppstod ein feil medan fila vart lesen.",
     "FileReadCancelled": "Lesing av fila vart avbroten.",
     "FFmpegSavePathNotFound": "Vi kan dessverre ikkje finna FFmpeg på filbanen du har angitt. FFprobe er òg nødvendig, og må ligga i same mappe. Desse komponentane blir vanlegvis saman leverte i ein nedlasting. Kontroller filbanen og prøv igjen.",
-    "FetchingData": "Hentar ytterlegare data",
     "FastForward": "Framoverspoling",
     "ExtraLarge": "Ekstra stor",
     "ExtractChapterImagesHelp": "Uthenting av kapittelbilete vil gjera det mogleg for klientar å visa bilete i menyar for å velja kapitel. Denne prosessen kan vera treig, ressurskrevande, og kan krevja fleire gigabyte med lagringsplass. Prosessen køyrer når videoar blir oppdaga, og dessutan som ein dagleg planlagt hending. Tidsplanen kan endrast i innstillingar for planlagde hendingar. Det blir ikkje anbefalt at denne prosessen blir køyrd når det er mange aktive brukarar innlogga.",

@@ -576,7 +576,6 @@
     "FastForward": "Hrað spóla",
     "Favorite": "Uppáhalds",
     "Features": "Eiginleikar",
-    "FetchingData": "Sæki fleiri gögn",
     "FFmpegSavePathNotFound": "Okkur tókst ekki að finna FFmpeg á slóðinni sem þú slóst inn. FFprobe er líka nauðsynlegt og verður að vera í sömu möppu. Þessum einingum er venjulega pakkað saman í einu niðurhali. Gakktu úr skugga um að slóðin sé rétt og reyndu aftur.",
     "FileReadCancelled": "Hætt var við að lesa skrána.",
     "FileReadError": "Villa kom upp við að lesa skrána.",

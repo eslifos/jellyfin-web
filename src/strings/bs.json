@@ -348,7 +348,6 @@
     "Favorite": "Omiljeni",
     "Favorites": "Omiljeni",
     "Features": "Značajke",
-    "FetchingData": "Preuzimanje dodatnih podataka",
     "FFmpegSavePathNotFound": "Ne možemo pronaći FFmpeg koristeći putanju koju ste unijeli. FFprobe je također potreban i mora se nalaziti u istoj mapi. Ove komponente obično dolaze zajedno u istom preuzimanju. Molimo provjerite putanju i pokušajte ponovo.",
     "File": "Datoteka",
     "FileNotFound": "Datoteka nije pronađena.",

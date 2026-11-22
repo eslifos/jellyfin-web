@@ -6,6 +6,7 @@ import itemHelper from '../itemHelper';
 import loading from '../loading/loading';
 import alert from '../alert';
 
+import { openPlayer } from 'apps/modern/components/Player/events';
 import layoutManager from 'components/layoutManager';
 import { getItemQuery } from 'hooks/useItem';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
@@ -359,6 +360,17 @@ class AppRouter {
             return `#/livetv?collectionType=${item.CollectionType}`;
         }
 
+        if (item.Type === 'Genre' && context !== 'livetv') {
+            // New genre page with sections (movies, series, each library)
+            url = '#/genre?genreId=' + item.Id + '&serverId=' + serverId;
+
+            if (options.parentId) {
+                url += '&parentId=' + options.parentId;
+            }
+
+            return url;
+        }
+
         if (item.Type === 'Genre') {
             url = '#/list?genreId=' + item.Id + '&serverId=' + serverId;
 
@@ -516,8 +528,10 @@ class AppRouter {
         return this.show('mypreferencesmenu');
     }
 
+    /** Opens the full player of the app (also the remote control of another device). */
     showNowPlaying() {
-        return this.show('queue');
+        openPlayer();
+        return Promise.resolve();
     }
 
     showGuide() {

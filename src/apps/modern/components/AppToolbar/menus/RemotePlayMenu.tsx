@@ -1,134 +1,225 @@
-import Warning from '@mui/icons-material/Warning';
-import Divider from '@mui/material/Divider';
+/**
+ * "Play on…": every place the content can go, grouped and refreshed while the menu is open.
+ * - this device
+ * - Jellyfin apps signed in on other devices (TVs, phones, other browsers…) that accept remote control
+ * - Google Cast: Chromecast through the Cast SDK (https) or, for the video playing here, through the browser
+ */
+import type { SessionInfoDto } from '@jellyfin/sdk/lib/generated-client/models/session-info-dto';
+import { getSessionApi } from '@jellyfin/sdk/lib/utils/api/session-api';
+import CastRounded from '@mui/icons-material/CastRounded';
+import CheckCircleRounded from '@mui/icons-material/CheckCircleRounded';
+import InfoOutlined from '@mui/icons-material/InfoOutlined';
+import RefreshRounded from '@mui/icons-material/RefreshRounded';
+import Box from '@mui/material/Box';
+import CircularProgress from '@mui/material/CircularProgress';
+import IconButton from '@mui/material/IconButton';
+import List from '@mui/material/List';
+import ListItemButton from '@mui/material/ListItemButton';
 import ListItemIcon from '@mui/material/ListItemIcon';
 import ListItemText from '@mui/material/ListItemText';
-import Menu, { type MenuProps } from '@mui/material/Menu';
-import MenuItem from '@mui/material/MenuItem';
-import React, { FC, useEffect, useState } from 'react';
+import Popover, { type PopoverProps } from '@mui/material/Popover';
+import Tooltip from '@mui/material/Tooltip';
+import Typography from '@mui/material/Typography';
+import React, { type FC, type ReactNode, useCallback, useEffect, useState } from 'react';
 
-import globalize from 'lib/globalize';
+import { CAST_STATUS_TEXT, type CastStatus, getCastStatus } from 'components/playback/castStatus';
 import { playbackManager } from 'components/playback/playbackmanager';
-import { pluginManager } from 'components/pluginManager';
+import { getVideoElement, promptRemotePlayback, type RemoteState, watchRemotePlayback } from 'components/playback/remotePlayback';
+import toast from 'components/toast/toast';
+import { useApi } from 'hooks/useApi';
+import globalize from 'lib/globalize';
 import type { PlayTarget } from 'types/playTarget';
 
 import PlayTargetIcon from '../../PlayTargetIcon';
+import { glassPaperSx, popoverPlacement } from './menuStyles';
 
-interface RemotePlayMenuProps extends MenuProps {
+interface RemotePlayMenuProps extends Omit<PopoverProps, 'open' | 'anchorEl'> {
+    open: boolean
+    anchorEl: HTMLElement | null
     onMenuClose: () => void
 }
 
 export const ID = 'app-remote-play-menu';
 
-const RemotePlayMenu: FC<RemotePlayMenuProps> = ({
-    anchorEl,
-    open,
-    onMenuClose
-}) => {
-    // TODO: Add other checks for support (Android app, secure context, etc)
-    const isChromecastPluginLoaded = !!pluginManager.plugins.find(plugin => plugin.id === 'chromecast');
+const REFRESH_MS = 5000;
+const CAST_PLAYER = 'Google Cast';
 
-    const [ playbackTargets, setPlaybackTargets ] = useState<PlayTarget[]>([]);
+const Section: FC<{ title: string, children: ReactNode }> = ({ title, children }) => (
+    <>
+        <Typography
+            component='div'
+            sx={{ px: 2, pt: 1.5, pb: 0.5, fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}
+        >
+            {title}
+        </Typography>
+        {children}
+    </>
+);
 
-    const onPlayTargetClick = (target: PlayTarget) => {
-        playbackManager.trySetActivePlayer(target.playerName, target);
-        onMenuClose();
-    };
+const Hint: FC<{ text: string }> = ({ text }) => (
+    <Box sx={{ display: 'flex', gap: 1, mx: 2, my: 0.75, color: 'rgba(255,255,255,0.55)', fontSize: '0.78rem', lineHeight: 1.45 }}>
+        <InfoOutlined sx={{ fontSize: 16, mt: '2px', flexShrink: 0 }} />
+        <span>{text}</span>
+    </Box>
+);
 
-    useEffect(() => {
-        const fetchPlaybackTargets = async () => {
-            setPlaybackTargets(
-                await playbackManager.getTargets()
-            );
-        };
-
-        if (open) {
-            fetchPlaybackTargets()
-                .catch(err => {
-                    console.error('[AppRemotePlayMenu] unable to get playback targets', err);
-                });
-        }
-    }, [ open, setPlaybackTargets ]);
-
-    const glassPaperSx = {
-        background: 'rgba(8, 10, 22, 0.90)',
-        backdropFilter: 'blur(24px) saturate(1.5)',
-        WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
-        border: '1px solid rgba(0, 164, 220, 0.2)',
-        borderRadius: '16px',
-        boxShadow: '0 16px 48px rgba(0,0,0,0.6), 0 0 0 1px rgba(255,255,255,0.04) inset',
-        minWidth: 220,
-        overflow: 'hidden',
-        '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0, left: '1.5rem', right: '1.5rem',
-            height: '2px',
-            background: 'linear-gradient(90deg, transparent, #00a4dc 40%, #aa5cc3 60%, transparent)',
-            borderRadius: '0 0 4px 4px', zIndex: 1
-        },
-        '& .MuiMenuItem-root': {
-            borderRadius: '10px', mx: 0.8, mb: 0.3, px: 1.5,
-            color: 'rgba(255,255,255,0.75)', transition: 'all 0.15s',
-            '&:hover': { background: 'rgba(0,164,220,0.12)', color: '#00a4dc',
-                '& .MuiListItemIcon-root': { color: '#00a4dc' } },
-            '& .MuiListItemIcon-root': { color: 'rgba(255,255,255,0.45)', minWidth: 36, transition: 'color 0.15s' },
-            '& .MuiListItemText-primary': { fontSize: '0.9rem', fontWeight: 500 },
-            '& .MuiListItemText-secondary': { fontSize: '0.75rem', color: 'rgba(255,255,255,0.35)' }
-        },
-        '& .MuiDivider-root': { borderColor: 'rgba(0,164,220,0.12)', mx: 1, my: 0.5 }
-    };
+const TargetRow: FC<{ target: PlayTarget, session?: SessionInfoDto, onPick: (target: PlayTarget) => void }> = ({ target, session, onPick }) => {
+    const onClick = useCallback(() => onPick(target), [ onPick, target ]);
+    const details = [ target.appName && target.appName !== target.name ? target.appName : '', target.user?.Name ].filter(Boolean).join(' · ');
+    const playing = session?.NowPlayingItem;
+    const playingName = playing ? [ playing.SeriesName, playing.Name ].filter(Boolean).join(' — ') : '';
 
     return (
-        <Menu
-            anchorEl={anchorEl}
-            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
-            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+        <ListItemButton onClick={onClick}>
+            <ListItemIcon><PlayTargetIcon target={target} /></ListItemIcon>
+            <ListItemText
+                primary={target.deviceName || target.name}
+                secondary={
+                    <>
+                        {details}
+                        {playingName && (
+                            <Box component='span' sx={{ display: 'block', color: '#00a4dc' }}>
+                                {globalize.translate('RpNowPlaying', playingName)}
+                            </Box>
+                        )}
+                    </>
+                }
+            />
+        </ListItemButton>
+    );
+};
+
+const RemotePlayMenu: FC<RemotePlayMenuProps> = ({ anchorEl, open, onMenuClose }) => {
+    const { api, user } = useApi();
+    const [ targets, setTargets ] = useState<PlayTarget[]>([]);
+    const [ sessions, setSessions ] = useState<SessionInfoDto[]>([]);
+    const [ loading, setLoading ] = useState(false);
+    const [ castStatus, setCastStatus ] = useState<CastStatus>(getCastStatus);
+    const [ remoteState, setRemoteState ] = useState<RemoteState>('unsupported');
+    const [ hasVideo, setHasVideo ] = useState(false);
+
+    const refresh = useCallback(async () => {
+        setLoading(true);
+        setCastStatus(getCastStatus());
+        try {
+            const [ found, list ] = await Promise.all([
+                playbackManager.getTargets() as Promise<PlayTarget[]>,
+                api && user?.Id ?
+                    getSessionApi(api).getSessions({ controllableByUserId: user.Id }).then(r => r.data).catch(() => []) :
+                    Promise.resolve([])
+            ]);
+            setTargets(found);
+            setSessions(list);
+        } catch (err) {
+            console.error('[RemotePlayMenu] unable to get playback targets', err);
+        } finally {
+            setLoading(false);
+        }
+    }, [ api, user ]);
+
+    // Keep looking for devices while the menu is open
+    useEffect(() => {
+        if (!open) return;
+        void refresh();
+        const timer = setInterval(() => {
+            refresh().catch(console.error);
+        }, REFRESH_MS);
+        return () => clearInterval(timer);
+    }, [ open, refresh ]);
+
+    // The video playing here can go to a screen through the browser (works over http too)
+    useEffect(() => {
+        if (!open) return;
+        const video = getVideoElement();
+        const isPlaying = !!video && playbackManager.isPlayingVideo();
+        setHasVideo(isPlaying);
+        if (!isPlaying) return;
+        return watchRemotePlayback(video, setRemoteState);
+    }, [ open ]);
+
+    const onPick = useCallback((target: PlayTarget) => {
+        playbackManager.trySetActivePlayer(target.playerName, target);
+        onMenuClose();
+    }, [ onMenuClose ]);
+
+    const onRemotePlayback = useCallback(() => {
+        void promptRemotePlayback().then(ok => {
+            if (!ok) toast({ text: globalize.translate('RpRemotePlaybackFailed') });
+        });
+        onMenuClose();
+    }, [ onMenuClose ]);
+
+    const onRefresh = useCallback(() => {
+        refresh().catch(console.error);
+    }, [ refresh ]);
+
+    const castTargets = targets.filter(t => t.playerName === CAST_PLAYER);
+    const jellyfinTargets = targets.filter(t => t.playerName !== CAST_PLAYER && !t.isLocalPlayer);
+    const sessionById = new Map(sessions.map(s => [ s.Id, s ]));
+    const canRemote = hasVideo && remoteState !== 'unsupported' && remoteState !== 'unavailable';
+    const remoteConnected = remoteState === 'connected' || remoteState === 'connecting';
+
+    return (
+        <Popover
             id={ID}
-            keepMounted
+            anchorEl={anchorEl}
             open={open}
             onClose={onMenuClose}
-            PaperProps={{ sx: glassPaperSx }}
+            {...popoverPlacement(anchorEl)}
+            slotProps={{ paper: { sx: { ...glassPaperSx, width: 360, maxWidth: 'calc(100vw - 24px)', maxHeight: 'min(640px, 80vh)' } } }}
         >
-            {!isChromecastPluginLoaded && (
-                <MenuItem disabled>
-                    <ListItemIcon>
-                        <Warning />
-                    </ListItemIcon>
-                    <ListItemText>
-                        {globalize.translate('GoogleCastUnsupported')}
-                    </ListItemText>
-                </MenuItem>
-            )}
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2, pt: 1.75, pb: 0.5 }}>
+                <CastRounded sx={{ color: '#00a4dc' }} />
+                <Typography sx={{ flex: 1, fontWeight: 700, fontSize: '1.05rem' }}>{globalize.translate('HeaderPlayOn')}</Typography>
+                {loading ? <CircularProgress size={18} sx={{ m: 1 }} /> : (
+                    <Tooltip title={globalize.translate('RpSearchAgain')}>
+                        <IconButton size='small' onClick={onRefresh} aria-label={globalize.translate('RpSearchAgain')}>
+                            <RefreshRounded fontSize='small' />
+                        </IconButton>
+                    </Tooltip>
+                )}
+            </Box>
 
-            {!isChromecastPluginLoaded && playbackTargets.length > 0 && (
-                <Divider />
-            )}
+            <List dense disablePadding sx={{ pb: 1 }}>
+                <Section title={globalize.translate('RpThisDevice')}>
+                    <ListItemButton selected onClick={onMenuClose}>
+                        <ListItemIcon><PlayTargetIcon target={{ id: 'local', name: '', isLocalPlayer: true, playableMediaTypes: [] }} /></ListItemIcon>
+                        <ListItemText primary={globalize.translate('RpThisDevice')} secondary={globalize.translate('RpThisDeviceHint')} />
+                        <CheckCircleRounded sx={{ color: '#00a4dc', fontSize: 20 }} />
+                    </ListItemButton>
+                </Section>
 
-            {playbackTargets.map(target => (
-                <MenuItem
-                    key={target.id}
-                    // Since we are looping over targets there is no good way to avoid creating a new function here
-                    // eslint-disable-next-line react/jsx-no-bind
-                    onClick={() => onPlayTargetClick(target)}
-                >
-                    <ListItemIcon>
-                        <PlayTargetIcon target={target} />
-                    </ListItemIcon>
-                    <ListItemText
-                        primary={ target.appName ? `${target.name} - ${target.appName}` : target.name }
-                        secondary={ target.user?.Name }
-                    />
-                </MenuItem>
-            ))}
+                <Section title={globalize.translate('RpJellyfinDevices')}>
+                    {jellyfinTargets.map(target => (
+                        <TargetRow key={target.id} target={target} session={sessionById.get(target.id)} onPick={onPick} />
+                    ))}
+                    {!jellyfinTargets.length && !loading && <Hint text={globalize.translate('RpNoJellyfinDevices')} />}
+                </Section>
 
-            {isChromecastPluginLoaded && playbackTargets.length === 0 && (
-                <MenuItem disabled>
-                    <ListItemText>
-                        {globalize.translate('NoCastTargets')}
-                    </ListItemText>
-                </MenuItem>
-            )}
-        </Menu>
+                <Section title='Google Cast · Chromecast'>
+                    {castTargets.map(target => (
+                        <TargetRow key={target.id} target={{ ...target, deviceName: target.deviceName || 'Chromecast' }} onPick={onPick} />
+                    ))}
+                    {canRemote && (
+                        <ListItemButton onClick={onRemotePlayback}>
+                            <ListItemIcon><CastRounded sx={{ color: remoteConnected ? '#00a4dc' : undefined }} /></ListItemIcon>
+                            <ListItemText
+                                primary={globalize.translate(remoteConnected ? 'RpRemotePlaybackActive' : 'RpRemotePlayback')}
+                                secondary={globalize.translate('RpRemotePlaybackHint')}
+                            />
+                        </ListItemButton>
+                    )}
+                    {castStatus !== 'ready' && <Hint text={globalize.translate(CAST_STATUS_TEXT[castStatus])} />}
+                    {castStatus === 'insecure' && !hasVideo && <Hint text={globalize.translate('RpCastFromPlayer')} />}
+                </Section>
+
+                <Box sx={{ mx: 2, mt: 1.25, pt: 1.25, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
+                    <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
+                        {globalize.translate('RpMissingDevice')}
+                    </Typography>
+                </Box>
+            </List>
+        </Popover>
     );
 };
 

@@ -35,6 +35,7 @@ import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 
 import { PageHeader, SectionCard } from '../../components/cosmic';
+import { readPref, writePref } from 'utils/syncedPrefs';
 
 const RANGES = [ 7, 30, 90, 365 ];
 const RANGE_KEY = 'dashboardStatsRange';
@@ -42,7 +43,7 @@ const locale = () => globalize.getCurrentDateTimeLocale();
 
 const readRange = () => {
     try {
-        const v = parseInt(localStorage.getItem(RANGE_KEY) || '', 10);
+        const v = parseInt(readPref(RANGE_KEY) || '', 10);
         return RANGES.includes(v) ? v : 30;
     } catch {
         return 30;
@@ -125,7 +126,7 @@ export const Component = () => {
         if (!v) return;
         setDays(v);
         try {
-            localStorage.setItem(RANGE_KEY, String(v));
+            writePref(RANGE_KEY, String(v));
         } catch {
             // storage blocked
         }

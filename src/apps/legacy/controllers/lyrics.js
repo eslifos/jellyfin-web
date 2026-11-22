@@ -197,7 +197,6 @@ export default function (view) {
     }
 
     function onPlaybackStop(_, state) {
-        // TODO: switch to appRouter.back(), with fix to navigation to /#/queue. Which is broken when it has nothing playing
         if (!state.NextMediaType) {
             appRouter.goHome();
         }

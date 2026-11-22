@@ -1057,7 +1057,6 @@
     "LabelAudioChannels": "声道",
     "LabelAudioBitrate": "比特率",
     "LabelAudioBitDepth": "采样位宽",
-    "FetchingData": "获取额外数据",
     "CopyStreamURLSuccess": "已成功复制 URL 地址。",
     "CopyStreamURL": "复制串流 URL 地址",
     "ButtonAddImage": "添加图片",

@@ -2,6 +2,7 @@ import { AsyncRoute } from 'components/router/AsyncRoute';
 import { AppType } from 'constants/appType';
 
 export const ASYNC_USER_ROUTES: AsyncRoute[] = [
+    { path: 'genre', type: AppType.Modern },
     { path: 'home', type: AppType.Modern },
     { path: 'homevideos', type: AppType.Modern },
     { path: 'livetv', type: AppType.Modern },
@@ -17,6 +18,7 @@ export const ASYNC_USER_ROUTES: AsyncRoute[] = [
     { path: 'mypreferencesplayback', page: 'user/playback' },
     { path: 'mypreferencessubtitles', page: 'user/subtitles' },
     { path: 'mypreferencescontrols', page: 'user/controls' },
+    { path: 'mypreferencesdownloads', page: 'user/downloads', type: AppType.Modern },
     { path: 'profiles', page: 'user/profiles' },
     { path: 'mypreferencesmenu', page: 'user/settings' },
     { path: 'quickconnect', page: 'quickConnect' },

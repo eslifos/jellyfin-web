@@ -49,6 +49,7 @@ import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import { getLibraryIcon } from 'utils/image';
+import { queryClient } from 'utils/query/queryClient';
 
 import { invalidateVirtualFolders } from '../api/invalidateVirtualFolders';
 import { useCountries } from '../api/useCountries';
@@ -57,6 +58,7 @@ import { useVirtualFolders } from '../api/useVirtualFolders';
 import getCollectionTypeOptions from '../utils/collectionTypeOptions';
 import { formatSize, getLibraryAccent } from '../utils/libraryUi';
 import ChangeLibraryTypeDialog from './ChangeLibraryTypeDialog';
+import { ManagedFolderType, guessFolderType, setFolderContentTypes } from './FolderContentType';
 import ProvidersTab from './ProvidersTab';
 
 interface LibraryManageDialogProps {
@@ -262,25 +264,39 @@ const LibraryManageDialog: FC<LibraryManageDialogProps> = ({ open, virtualFolder
         (virtualFolder.Locations || []).map(p => ({ Path: p }));
     const libraryStorage = storage?.Libraries?.find(l => l.Id?.replace(/-/g, '') === virtualFolder.ItemId?.replace(/-/g, ''));
 
+    /**
+     * Adds a folder and has the server read it right away (only that folder, not every library). In mixed
+     * libraries the type guessed from the folder name is saved first, so the first read takes movies and series right.
+     */
+    const saveNewFolder = useCallback(async (path: string) => {
+        const name = virtualFolder.Name;
+        if (!path || !name || virtualFolder.Locations?.includes(path)) return;
+        const mixed = (virtualFolder.CollectionType || 'mixed') === 'mixed';
+        try {
+            await getLibraryStructureApi(api!).addMediaPath({ mediaPathDto: { Name: name, PathInfo: { Path: path } }, refreshLibrary: !mixed });
+            if (mixed) await setFolderContentTypes(api!, name, [ { Path: path, ContentType: guessFolderType(path) || null } ]);
+            invalidateVirtualFolders(user, virtualFolder);
+            await queryClient.invalidateQueries({ queryKey: [ 'FolderContentTypes', name ] });
+            toast(globalize.translate('MngFolderAdded'));
+        } catch {
+            toast(globalize.translate('ErrorAddingMediaPathToVirtualFolder'));
+        }
+    }, [ api, user, virtualFolder ]);
+
     const addFolder = useCallback(() => {
         void import('components/directorybrowser/directorybrowser').then(({ default: DirectoryBrowser }) => {
             const picker = new DirectoryBrowser();
             picker.show({
                 callback: (path: string) => {
                     picker.close();
-                    if (!path || !virtualFolder.Name || virtualFolder.Locations?.includes(path)) return;
-                    void getLibraryStructureApi(api!)
-                        .addMediaPath({ mediaPathDto: { Name: virtualFolder.Name, PathInfo: { Path: path } }, refreshLibrary: true })
-                        .then(() => {
-                            invalidateVirtualFolders(user, virtualFolder);
-                            toast(globalize.translate('MngFolderAdded'));
-                        })
-                        .catch(() => toast(globalize.translate('ErrorAddingMediaPathToVirtualFolder')));
+                    saveNewFolder(path).catch(console.error);
                 }
             });
         });
-    }, [ api, user, virtualFolder ]);
+    }, [ saveNewFolder ]);
 
+    const onFolderTypeSaved = useCallback(() => toast(globalize.translate('FctSaved')), []);
+    const onFolderTypeError = useCallback(() => toast(globalize.translate('FctError')), []);
     const cancelRemove = useCallback(() => setRemovePath(null), []);
     const confirmRemove = useCallback(() => {
         const path = removePath;
@@ -428,6 +444,9 @@ const LibraryManageDialog: FC<LibraryManageDialogProps> = ({ open, virtualFolder
 
                     {tab === 'folders' && (
                         <Section title={`${globalize.translate('Folders')} (${pathInfos.length})`}>
+                            {type === 'mixed' && (
+                                <Typography sx={{ px: 2, pt: 1.5, fontSize: '0.8rem', color: 'rgba(255,255,255,0.6)' }}>{globalize.translate('FctHelp')}</Typography>
+                            )}
                             {pathInfos.map(info => {
                                 const folderStorage = libraryStorage?.Folders?.find(f => f.Path === info.Path);
                                 const total = folderStorage && folderStorage.FreeSpace != null && folderStorage.UsedSpace != null ?
@@ -440,6 +459,11 @@ const LibraryManageDialog: FC<LibraryManageDialogProps> = ({ open, virtualFolder
                                             <Tooltip title={info.Path || ''} placement='top'>
                                                 <Typography noWrap sx={{ fontFamily: 'monospace', fontSize: '0.85rem', color: '#fff' }}>{info.Path}</Typography>
                                             </Tooltip>
+                                            {type === 'mixed' && info.Path && virtualFolder.Name && (
+                                                <Box sx={{ mt: 0.75 }}>
+                                                    <ManagedFolderType libraryName={virtualFolder.Name} path={info.Path} onSaved={onFolderTypeSaved} onError={onFolderTypeError} />
+                                                </Box>
+                                            )}
                                             {total > 0 && (
                                                 <>
                                                     <LinearProgress

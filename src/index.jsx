@@ -63,10 +63,10 @@ build: ${__JF_BUILD_VERSION__}`);
 
     // Register handlers to update header classes
     pageClassOn('viewshow', 'standalonePage', function () {
-        document.querySelector('.skinHeader').classList.add('noHeaderRight');
+        document.querySelector('.skinHeader')?.classList.add('noHeaderRight');
     });
     pageClassOn('viewhide', 'standalonePage', function () {
-        document.querySelector('.skinHeader').classList.remove('noHeaderRight');
+        document.querySelector('.skinHeader')?.classList.remove('noHeaderRight');
     });
 
     // Initialize app host
@@ -182,10 +182,6 @@ async function loadPlugins() {
 }
 
 function loadPlatformFeatures() {
-    if (!browser.tv && !browser.xboxOne && !browser.ps4) {
-        import('./components/nowPlayingBar/nowPlayingBar');
-    }
-
     if (appHost.supports(AppFeature.RemoteControl)) {
         import('./components/playback/playerSelectionMenu');
         import('./components/playback/remotecontrolautoplay');

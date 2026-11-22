@@ -23,6 +23,8 @@ export const getMovieRecommendationsQuery = (
 ) => queryOptions({
     queryKey: ['MovieRecommendations', params?.parentId],
     queryFn: ({ signal }) => fetchGetMovieRecommendations(api!, params, { signal }),
+    // Heavy for the server (it goes through the whole watch history): asked again at most every 30 minutes
+    staleTime: 30 * 60 * 1000,
     enabled: !!api && enabled
 });
 

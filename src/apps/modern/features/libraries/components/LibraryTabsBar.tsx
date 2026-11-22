@@ -8,11 +8,21 @@ import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
 import CategoryRoundedIcon from '@mui/icons-material/CategoryRounded';
 import CollectionsBookmarkRoundedIcon from '@mui/icons-material/CollectionsBookmarkRounded';
+import EditNoteRoundedIcon from '@mui/icons-material/EditNoteRounded';
 import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import FolderRoundedIcon from '@mui/icons-material/FolderRounded';
 import GridViewRoundedIcon from '@mui/icons-material/GridViewRounded';
+import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import LiveTvRoundedIcon from '@mui/icons-material/LiveTvRounded';
+import MenuBookRoundedIcon from '@mui/icons-material/MenuBookRounded';
+import EventNoteRoundedIcon from '@mui/icons-material/EventNoteRounded';
+import FiberManualRecordRoundedIcon from '@mui/icons-material/FiberManualRecordRounded';
 import MovieRoundedIcon from '@mui/icons-material/MovieRounded';
+import PhotoLibraryRoundedIcon from '@mui/icons-material/PhotoLibraryRounded';
+import ScheduleRoundedIcon from '@mui/icons-material/ScheduleRounded';
+import SmartDisplayRoundedIcon from '@mui/icons-material/SmartDisplayRounded';
+import ViewListRoundedIcon from '@mui/icons-material/ViewListRounded';
+import DashboardRoundedIcon from '@mui/icons-material/DashboardRounded';
 import MusicNoteRoundedIcon from '@mui/icons-material/MusicNoteRounded';
 import PersonRoundedIcon from '@mui/icons-material/PersonRounded';
 import PhotoRoundedIcon from '@mui/icons-material/PhotoRounded';
@@ -22,7 +32,6 @@ import TvRoundedIcon from '@mui/icons-material/TvRounded';
 import VideoLibraryRoundedIcon from '@mui/icons-material/VideoLibraryRounded';
 import Box from '@mui/material/Box';
 import Tooltip from '@mui/material/Tooltip';
-import { CollectionType } from '@jellyfin/sdk/lib/generated-client/models/collection-type';
 import React, { type FC, type ReactNode, useCallback, useEffect, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
@@ -51,12 +60,22 @@ const ICONS: Partial<Record<LibraryTab, ReactNode>> = {
     [LibraryTab.Songs]: <MusicNoteRoundedIcon />,
     [LibraryTab.Photos]: <PhotoRoundedIcon />,
     [LibraryTab.Folders]: <FolderRoundedIcon />,
+    [LibraryTab.Books]: <MenuBookRoundedIcon />,
+    [LibraryTab.Authors]: <EditNoteRoundedIcon />,
+    [LibraryTab.Guide]: <ViewListRoundedIcon />,
+    [LibraryTab.Recordings]: <FiberManualRecordRoundedIcon />,
+    [LibraryTab.Schedule]: <EventNoteRoundedIcon />,
+    [LibraryTab.SeriesTimers]: <ScheduleRoundedIcon />,
+    [LibraryTab.Videos]: <MovieRoundedIcon />,
+    [LibraryTab.PhotoAlbums]: <PhotoLibraryRoundedIcon />,
+    [LibraryTab.MusicVideos]: <SmartDisplayRoundedIcon />,
+    [LibraryTab.Mixed]: <DashboardRoundedIcon />,
     [LibraryTab.Channels]: <LiveTvRoundedIcon />,
     [LibraryTab.Programs]: <LiveTvRoundedIcon />
 };
 
 /** The start screen tab uses the icon of the library type */
-const homeIcon = (type?: CollectionType) => (type === CollectionType.Tvshows ? <TvRoundedIcon /> : <MovieRoundedIcon />);
+const homeIcon = () => <HomeRoundedIcon />;
 
 interface LibraryTabsBarProps {
     /** Shown when the current route has no tabs */
@@ -151,7 +170,7 @@ const LibraryTabsBar: FC<LibraryTabsBarProps> = ({ fallback = null, floating = f
                                     }
                                 }}
                             >
-                                {tab.view === LibraryTab.Home ? homeIcon(route.type) : ICONS[tab.view]}
+                                {tab.view === LibraryTab.Home ? homeIcon() : ICONS[tab.view]}
                                 <Box component='span' sx={{
                                     fontSize: '0.9rem', fontWeight: active ? 700 : 600,
                                     display: showLabels ? { xs: settings.labels === 'always' ? 'inline' : 'none', sm: 'inline' } : 'none'

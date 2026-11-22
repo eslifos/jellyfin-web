@@ -1,5 +1,6 @@
 import React, { type FC } from 'react';
 
+import LibraryFeed from 'apps/modern/components/HomeFeed/LibraryFeed';
 import type { ParentId } from 'types/library';
 import { LibraryTab } from 'types/libraryTab';
 import type { LibraryTabContent } from 'types/libraryTabContent';
@@ -7,7 +8,6 @@ import type { LibraryTabContent } from 'types/libraryTabContent';
 import GenresView from './GenresView';
 import GuideView from './GuideView';
 import ItemsView from './ItemsView';
-import MoviesHomeView from './MoviesHomeView';
 import ProgramsSectionView from './ProgramsSectionView';
 import SuggestionsSectionView from './SuggestionsSectionView';
 import UpcomingView from './UpcomingView';
@@ -34,7 +34,7 @@ const PageTabContent: FC<PageTabContentProps> = ({ parentId, currentTab }) => {
 
     if (currentTab.viewType === LibraryTab.Home) {
         return (
-            <MoviesHomeView parentId={parentId} />
+            <LibraryFeed key={parentId ?? ''} parentId={parentId} collectionType={currentTab.collectionType} />
         );
     }
 

@@ -41,6 +41,8 @@ import browser from 'scripts/browser';
 import Dashboard from 'utils/dashboard';
 import shell from 'scripts/shell';
 import keyboardNavigation from 'scripts/keyboardNavigation';
+import { downloadsAvailable } from 'apps/modern/features/downloads/support';
+import OfflinePinIcon from '@mui/icons-material/OfflinePin';
 
 interface SettingsItemProps {
     icon: React.ReactNode;
@@ -231,6 +233,9 @@ const UserSettingsPage: FC = () => {
                     <SettingsItem icon={<HomeIcon />} label={globalize.translate('Home')} href={`#/mypreferenceshome?userId=${userId}`} />
                     <SettingsItem icon={<PlayCircleFilledIcon />} label={globalize.translate('TitlePlayback')} href={`#/mypreferencesplayback?userId=${userId}`} />
                     <SettingsItem icon={<ClosedCaptionIcon />} label={globalize.translate('Subtitles')} href={`#/mypreferencessubtitles?userId=${userId}`} />
+                    {isLoggedInUser && downloadsAvailable() && (
+                        <SettingsItem icon={<OfflinePinIcon />} label={globalize.translate('DlPageTitle')} href='#/mypreferencesdownloads' />
+                    )}
                     {appHost.supports(AppFeature.DownloadManagement) && (
                         <SettingsItem icon={<DownloadIcon />} label={globalize.translate('DownloadManager')} onClick={shell.openDownloadManager} />
                     )}

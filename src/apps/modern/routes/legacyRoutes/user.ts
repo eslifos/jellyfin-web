@@ -19,14 +19,5 @@ export const LEGACY_USER_ROUTES: LegacyRoute[] = [
             controller: 'lyrics',
             view: 'lyrics.html'
         }
-    }, {
-        path: 'queue',
-        pageProps: {
-            controller: 'playback/queue/index',
-            view: 'playback/queue/index.html',
-            isFullscreen: true,
-            isNowPlayingBarEnabled: false,
-            isThemeMediaSupported: true
-        }
     }
 ];

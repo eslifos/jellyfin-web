@@ -182,6 +182,21 @@ const ConnectionRequired: FunctionComponent<ConnectionRequiredProps> = ({
         setIsLoading(false);
     }, [bounce, level]);
 
+    /** Server out of reach: a device with downloads opens them instead of the error page. */
+    const openDownloadsIfAny = useCallback(async () => {
+        const { hasOfflineDownloads } = await import('apps/modern/features/downloads/offline');
+        if (!(await hasOfflineDownloads())) return false;
+        navigate('/downloads', { replace: true });
+        return true;
+    }, [ navigate ]);
+
+    useEffect(() => {
+        // No connection at all: straight to the downloads (the server would only time out)
+        if (!navigator.onLine) {
+            openDownloadsIfAny().catch(() => undefined);
+        }
+    }, [ openDownloadsIfAny ]);
+
     useEffect(() => {
         // Check connection status on initial page load
         const apiClient = ServerConnections.currentApiClient();
@@ -191,7 +206,13 @@ const ConnectionRequired: FunctionComponent<ConnectionRequiredProps> = ({
             ServerConnections.firstConnection = true;
 
             if (firstConnection && ERROR_STATES.includes(firstConnection.State)) {
-                setErrorState(firstConnection.State);
+                const state = firstConnection.State;
+                const tryDownloads = state === ConnectionState.Unavailable ? openDownloadsIfAny() : Promise.resolve(false);
+                tryDownloads
+                    .then(opened => {
+                        if (!opened) setErrorState(state);
+                    })
+                    .catch(() => setErrorState(state));
             } else if (level === AccessLevel.Wizard) {
                 handleWizard(firstConnection)
                     .catch(err => {
@@ -213,7 +234,7 @@ const ConnectionRequired: FunctionComponent<ConnectionRequiredProps> = ({
         }).catch(err => {
             console.error('[ConnectionRequired] failed to connect', err);
         });
-    }, [handleIncompleteWizard, handleWizard, level, validateUserAccess]);
+    }, [handleIncompleteWizard, handleWizard, level, validateUserAccess, openDownloadsIfAny]);
 
     if (errorState) {
         return <ConnectionErrorPage state={errorState} />;

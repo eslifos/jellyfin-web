@@ -1,6 +1,7 @@
 import { BaseItemKind } from '@jellyfin/sdk/lib/generated-client/models/base-item-kind';
 import { getLibraryApi } from '@jellyfin/sdk/lib/utils/api/library-api';
 
+import { DOWNLOADABLE_TYPES, canDownloadItem } from 'apps/modern/features/downloads/support';
 import { AppFeature } from 'constants/appFeature';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 
@@ -189,7 +190,17 @@ export async function getCommands(options) {
         });
     }
 
-    if (appHost.supports(AppFeature.FileDownload)) {
+    // Movies, series, music and audiobooks are only downloaded encrypted (playable only inside the app)
+    const isMedia = DOWNLOADABLE_TYPES.has(item.Type) || item.Type === BaseItemKind.BoxSet || item.Type === BaseItemKind.MusicArtist;
+    if (isMedia && user.Policy.EnableContentDownloading && canDownloadItem(item)) {
+        commands.push({
+            name: globalize.translate('Download'),
+            id: 'securedownload',
+            icon: 'download_for_offline'
+        });
+    }
+
+    if (appHost.supports(AppFeature.FileDownload) && !isMedia) {
         // CanDownload should probably be updated to return true for these items?
         if (user.Policy.EnableContentDownloading && DOWNLOAD_ALL_TYPES.includes(item.Type)) {
             commands.push({
@@ -427,6 +438,12 @@ function executeCommand(item, id, options) {
                         items: [itemId],
                         serverId: serverId
                     }).then(getResolveFunction(resolve, id, true), getResolveFunction(resolve, id));
+                });
+                break;
+            case 'securedownload':
+                import('apps/modern/features/downloads/DownloadDialog').then(({ openDownloadDialog }) => {
+                    openDownloadDialog(item);
+                    getResolveFunction(resolve, id)();
                 });
                 break;
             case 'download':

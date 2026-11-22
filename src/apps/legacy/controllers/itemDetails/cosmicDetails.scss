@@ -106,6 +106,17 @@ $glass: rgba(8, 10, 22, 0.62);
         margin-bottom: 0.6em;
         background-position: left bottom !important;
         filter: drop-shadow(0 4px 18px rgba(0, 0, 0, 0.6));
+
+        // The stock style hides the logo on phones and narrow windows, and the title is hidden when
+        // there is a logo: keep it visible everywhere
+        &:not(.hide) {
+            display: block !important;
+        }
+
+        @media (max-width: 50em) {
+            width: min(340px, 82vw) !important;
+            height: clamp(64px, 12vh, 110px) !important;
+        }
     }
 
     &.cosmicHasLogo .nameContainer {

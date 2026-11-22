@@ -9,7 +9,7 @@ import Page from '../../../components/Page';
 import { EventType } from 'constants/eventType';
 import Events from 'utils/events';
 import HomeLibraryNav from '../components/HomeLibraryNav';
-import HomeHero from '../components/HomeHero';
+import QuickHome from '../components/QuickHome';
 
 import '../../../elements/emby-tabs/emby-tabs';
 import '../../../elements/emby-button/emby-button';
@@ -130,7 +130,8 @@ const Home = () => {
         } else if (currentTabController?.onResume) {
             currentTabController.onResume({});
         }
-        (documentRef.current.querySelector('.skinHeader') as HTMLDivElement).classList.add('noHomeButtonHeader');
+        // The old header is not always on the page (the video screen or a dialog may have it out)
+        documentRef.current.querySelector('.skinHeader')?.classList.add('noHomeButtonHeader');
     }, [ initialTabIndex, mainTabsManager ]);
 
     const onPause = useCallback(() => {
@@ -138,7 +139,7 @@ const Home = () => {
         if (currentTabController?.onPause) {
             currentTabController.onPause();
         }
-        (documentRef.current.querySelector('.skinHeader') as HTMLDivElement).classList.remove('noHomeButtonHeader');
+        documentRef.current.querySelector('.skinHeader')?.classList.remove('noHomeButtonHeader');
     }, []);
 
     const renderHome = useCallback(() => {
@@ -178,9 +179,10 @@ const Home = () => {
                 ]}
             >
                 <div className='tabContent pageTabContent' id='homeTab' data-index='0'>
-                    <HomeLibraryNav />
-                    <HomeHero />
-                    <div className='sections'></div>
+                    {/* One request, prepared on the server by a scheduled task; the library buttons go under the banner */}
+                    <QuickHome nav={<HomeLibraryNav />} />
+                    {/* The classic sections are not used: the controller of this tab skips them */}
+                    <div className='sections hide' data-disabled='true'></div>
                 </div>
                 <div className='tabContent pageTabContent' id='favoritesTab' data-index='1'>
                     <div className='sections'></div>

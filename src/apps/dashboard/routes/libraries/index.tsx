@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TaskState } from '@jellyfin/sdk/lib/generated-client/models/task-state';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -18,17 +18,17 @@ import ScheduleIcon from '@mui/icons-material/Schedule';
 import StorageIcon from '@mui/icons-material/Storage';
 import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
 
-import { invalidateVirtualFolders } from 'apps/dashboard/features/libraries/api/invalidateVirtualFolders';
 import { QUERY_KEY as STATS_QUERY_KEY, refreshLibraryStats, useLibraryStats } from 'apps/dashboard/features/libraries/api/useLibraryStats';
 import { useVirtualFolders } from 'apps/dashboard/features/libraries/api/useVirtualFolders';
 import LibraryCard from 'apps/dashboard/features/libraries/components/LibraryCard';
 import LibraryScansPanel from 'apps/dashboard/features/libraries/components/LibraryScansPanel';
-import getCollectionTypeOptions from 'apps/dashboard/features/libraries/utils/collectionTypeOptions';
+import LibraryActivityLog from 'apps/dashboard/features/libraries/components/LibraryActivityLog';
+import { useLibraryScans } from 'apps/dashboard/features/libraries/api/useLibraryScans';
+import AddLibraryDialog from 'apps/dashboard/features/libraries/components/AddLibraryDialog';
 import { formatNumber, formatRelative, formatRuntime, formatSize } from 'apps/dashboard/features/libraries/utils/libraryUi';
 import { useStartTask } from 'apps/dashboard/features/tasks/api/useStartTask';
 import useLiveTasks from 'apps/dashboard/features/tasks/hooks/useLiveTasks';
 import Loading from 'components/loading/LoadingComponent';
-import MediaLibraryCreator from 'components/mediaLibraryCreator/mediaLibraryCreator';
 import Page from 'components/Page';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
@@ -55,8 +55,18 @@ const SummaryTile = ({ icon, label, value, color }: { icon: React.ReactNode; lab
     </Paper>
 );
 
+/** Calls `callback` when the last running library scan finishes (to recompute the statistics). */
+const useOnScansFinished = (callback: () => void) => {
+    const scanCount = useLibraryScans().length;
+    const wasScanning = useRef(false);
+    useEffect(() => {
+        if (wasScanning.current && scanCount === 0) callback();
+        wasScanning.current = scanCount > 0;
+    }, [ scanCount, callback ]);
+};
+
 export const Component = () => {
-    const { api, user } = useApi();
+    const { api } = useApi();
     const startTask = useStartTask();
     const { data: tasks, isPending: isLiveTasksPending } = useLiveTasks({ isHidden: false });
 
@@ -86,16 +96,10 @@ export const Component = () => {
         return t;
     }, [ stats ]);
 
-    const showMediaLibraryCreator = useCallback(() => {
-        const mediaLibraryCreator = new MediaLibraryCreator({
-            collectionTypeOptions: getCollectionTypeOptions(),
-            refresh: true
-        }) as Promise<boolean>;
-
-        void mediaLibraryCreator.then((hasChanges: boolean) => {
-            if (hasChanges) invalidateVirtualFolders(user);
-        });
-    }, [ user ]);
+    // Simplified add library dialog (type, name, folders)
+    const [ isAddOpen, setIsAddOpen ] = useState(false);
+    const showMediaLibraryCreator = useCallback(() => setIsAddOpen(true), []);
+    const closeAddLibrary = useCallback(() => setIsAddOpen(false), []);
 
     const onScanLibraries = useCallback(() => {
         if (librariesTask?.Id) {
@@ -113,6 +117,8 @@ export const Component = () => {
             .catch(err => console.error('[Libraries] failed to refresh stats', err))
             .finally(() => setIsRefreshingStats(false));
     }, [ api ]);
+
+    useOnScansFinished(onRefreshStats);
 
     if (isVirtualFoldersPending || isLiveTasksPending) return <Loading />;
 
@@ -218,6 +224,8 @@ export const Component = () => {
                                 ))}
                             </Box>
                         )}
+                        <Box id='activity' sx={{ mt: 3 }}><LibraryActivityLog /></Box>
+                        <AddLibraryDialog open={isAddOpen} onClose={closeAddLibrary} />
                     </>
                 )}
             </Box>

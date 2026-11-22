@@ -351,7 +351,6 @@
     "HeaderSecondsValue": "{0} Secunde",
     "HeaderSelectCertificatePath": "Selectați ruta certificatului",
     "HeaderSelectMetadataPath": "Selectați ruta metadatelor",
-    "FetchingData": "Obținere date suplimentare",
     "FileNotFound": "Fișierul nu a fost găsit.",
     "FileReadCancelled": "Citirea fișierului a fost anulată.",
     "FormatValue": "Format: {0}",

@@ -3,7 +3,6 @@ import { CollectionType } from '@jellyfin/sdk/lib/generated-client/models/collec
 
 import { LibraryTab } from 'types/libraryTab';
 import type { LibraryTabContent } from 'types/libraryTabContent';
-import { SectionType } from 'types/sections';
 
 const albumArtistsTabContent: LibraryTabContent = {
     viewType: LibraryTab.AlbumArtists,
@@ -42,18 +41,6 @@ const songsTabContent: LibraryTabContent = {
     itemType: [BaseItemKind.Audio]
 };
 
-const suggestionsTabContent: LibraryTabContent = {
-    viewType: LibraryTab.Suggestions,
-    collectionType: CollectionType.Music,
-    sectionsView: {
-        suggestionSections: [
-            SectionType.LatestMusic,
-            SectionType.FrequentlyPlayedMusic,
-            SectionType.RecentlyPlayedMusic
-        ]
-    }
-};
-
 const genresTabContent: LibraryTabContent = {
     viewType: LibraryTab.Genres,
     collectionType: CollectionType.Music,
@@ -68,9 +55,15 @@ const collectionsTabContent: LibraryTabContent = {
     noItemsMessage: 'MessageNoCollectionsAvailable'
 };
 
+/** Start screen of the library, like the home screen: top 10, recently added, genres… */
+const homeTabContent: LibraryTabContent = {
+    viewType: LibraryTab.Home,
+    collectionType: CollectionType.Music
+};
+
 const musicViews: Record<number, LibraryTabContent> = {
     0: albumsTabContent,
-    1: suggestionsTabContent,
+    1: homeTabContent,
     2: albumArtistsTabContent,
     3: artistsTabContent,
     4: playlistsTabContent,

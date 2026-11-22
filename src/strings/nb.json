@@ -928,7 +928,6 @@
     "EnableNextVideoInfoOverlay": "Vis informasjon om neste video under avspilling",
     "ErrorDeletingItem": "Det oppstod en feil under sletting av elementet fra serveren. Vennligst sørg for at Jellyfin har skrivetilgang til mappen og prøv igjen.",
     "ExtraLarge": "Ekstra stor",
-    "FetchingData": "Henter ytterligere data",
     "Folders": "Mapper",
     "FormatValue": "Format: {0}",
     "Genre": "Sjanger",

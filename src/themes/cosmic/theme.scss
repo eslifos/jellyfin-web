@@ -1,7 +1,5 @@
 html,
-.dialog,
-.nowPlayingPlaylist,
-.nowPlayingContextMenu {
+.dialog {
     background-color: #080810;
 }
 
@@ -56,7 +54,6 @@ html {
 .fieldDescription,
 .guide-programNameCaret,
 .listItem .secondary,
-.nowPlayingBarSecondaryText,
 .programSecondaryTitle,
 .secondaryText {
     color: rgba(255, 255, 255, 0.5);

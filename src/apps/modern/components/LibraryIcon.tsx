@@ -13,9 +13,12 @@ import Queue from '@mui/icons-material/Queue';
 import VideoLibrary from '@mui/icons-material/VideoLibrary';
 import Folder from '@mui/icons-material/Folder';
 import OndemandVideo from '@mui/icons-material/OndemandVideo';
+import TempleBuddhistRounded from '@mui/icons-material/TempleBuddhistRounded';
+import Toys from '@mui/icons-material/Toys';
 import React, { FC } from 'react';
 
 import { MetaView } from '../constants/metaView';
+import { themeOf, useLibraryThemes } from './HomeFeed/libraryThemes';
 
 interface LibraryIconProps {
     item: BaseItemDto
@@ -24,9 +27,15 @@ interface LibraryIconProps {
 const LibraryIcon: FC<LibraryIconProps> = ({
     item
 }) => {
+    const themes = useLibraryThemes();
     if (item.Id === MetaView.Favorites.Id) {
         return <Favorite />;
     }
+
+    // Anime and kids libraries (mixed libraries with a theme)
+    const theme = themeOf(item, themes);
+    if (theme === 'anime') return <TempleBuddhistRounded />;
+    if (theme === 'kids') return <Toys />;
 
     switch (item.CollectionType) {
         case CollectionType.Movies:

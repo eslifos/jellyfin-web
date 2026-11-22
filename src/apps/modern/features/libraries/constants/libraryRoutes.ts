@@ -45,11 +45,12 @@ export const LibraryRoutes: LibraryRoute[] = [
     {
         path: '/books',
         type: CollectionType.Books,
+        // No folders tab: the library is browsed by book, author and genre
         views: [
             {
-                index: 0,
-                label: 'Folders',
-                view: LibraryTab.Folders,
+                index: 3,
+                label: 'Home',
+                view: LibraryTab.Home,
                 isDefault: true
             },
             {
@@ -61,11 +62,6 @@ export const LibraryRoutes: LibraryRoute[] = [
                 index: 2,
                 label: 'Authors',
                 view: LibraryTab.Authors
-            },
-            {
-                index: 3,
-                label: 'Suggestions',
-                view: LibraryTab.Suggestions
             },
             {
                 index: 4,
@@ -153,15 +149,15 @@ export const LibraryRoutes: LibraryRoute[] = [
         type: CollectionType.Music,
         views: [
             {
-                index: 0,
-                label: 'Albums',
-                view: LibraryTab.Albums,
+                index: 1,
+                label: 'Home',
+                view: LibraryTab.Home,
                 isDefault: true
             },
             {
-                index: 1,
-                label: 'Suggestions',
-                view: LibraryTab.Suggestions
+                index: 0,
+                label: 'Albums',
+                view: LibraryTab.Albums
             },
             {
                 index: 2,
@@ -200,15 +196,15 @@ export const LibraryRoutes: LibraryRoute[] = [
         type: CollectionType.Tvshows,
         views: [
             {
-                index: 0,
-                label: 'Shows',
-                view: LibraryTab.Series,
+                index: 1,
+                label: 'Home',
+                view: LibraryTab.Home,
                 isDefault: true
             },
             {
-                index: 1,
-                label: 'Suggestions',
-                view: LibraryTab.Suggestions
+                index: 0,
+                label: 'Shows',
+                view: LibraryTab.Series
             },
             {
                 index: 2,
@@ -247,10 +243,15 @@ export const LibraryRoutes: LibraryRoute[] = [
         type: CollectionType.Homevideos,
         views: [
             {
+                index: 4,
+                label: 'Home',
+                view: LibraryTab.Home,
+                isDefault: true
+            },
+            {
                 index: 0,
                 label: 'Folders',
-                view: LibraryTab.Folders,
-                isDefault: true
+                view: LibraryTab.Folders
             },
             {
                 index: 1,
@@ -274,15 +275,15 @@ export const LibraryRoutes: LibraryRoute[] = [
         type: CollectionType.Musicvideos,
         views: [
             {
-                index: 0,
-                label: 'Folders',
-                view: LibraryTab.Folders,
+                index: 1,
+                label: 'Home',
+                view: LibraryTab.Home,
                 isDefault: true
             },
             {
-                index: 1,
-                label: 'Suggestions',
-                view: LibraryTab.Suggestions
+                index: 0,
+                label: 'Folders',
+                view: LibraryTab.Folders
             },
             {
                 index: 2,
@@ -318,15 +319,15 @@ export const LibraryRoutes: LibraryRoute[] = [
         type: CollectionType.Unknown,
         views: [
             {
-                index: 0,
-                label: 'Folders',
-                view: LibraryTab.Folders,
+                index: 1,
+                label: 'Home',
+                view: LibraryTab.Home,
                 isDefault: true
             },
             {
-                index: 1,
-                label: 'Suggestions',
-                view: LibraryTab.Suggestions
+                index: 0,
+                label: 'Folders',
+                view: LibraryTab.Folders
             },
             {
                 index: 2,

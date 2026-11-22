@@ -287,7 +287,6 @@
     "FileReadCancelled": "La lecture du fichier a été annulée.",
     "FileNotFound": "Fichier introuvable.",
     "FFmpegSavePathNotFound": "Nous ne pouvons pas trouver FFmpeg en utilisant le chemin que vous avez saisi. FFprobe est également nécessaire et doit exister dans le même dossier. Ces composants sont généralement regroupés dans le même téléchargement. Veuillez vérifier le chemin puis réessayez.",
-    "FetchingData": "Récupération de données supplémentaires",
     "Features": "Longs métrages",
     "Favorite": "Favori",
     "FastForward": "Avance rapide",

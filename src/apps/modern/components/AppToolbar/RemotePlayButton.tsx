@@ -71,10 +71,25 @@ const RemotePlayButton = () => {
                             color='inherit'
                             // eslint-disable-next-line react/jsx-no-bind
                             sx={(theme) => ({
-                                color: theme.vars.palette.primary.main
+                                color: theme.vars.palette.primary.main,
+                                minWidth: 0,
+                                // On a phone only the icon: the name would make the bar taller and cover the player
+                                '& .MuiButton-startIcon': { [theme.breakpoints.down('sm')]: { margin: 0 } }
                             })}
                         >
-                            {playerInfo.deviceName || playerInfo.name}
+                            {/* One line, cut with "…" when long */}
+                            <Box
+                                component='span'
+                                sx={{
+                                    display: { xs: 'none', sm: 'inline-block' },
+                                    maxWidth: '9em',
+                                    overflow: 'hidden',
+                                    textOverflow: 'ellipsis',
+                                    whiteSpace: 'nowrap'
+                                }}
+                            >
+                                {playerInfo.deviceName || playerInfo.name}
+                            </Box>
                         </Button>
                     </Tooltip>
                 </Box>

@@ -3,29 +3,19 @@ import { CollectionType } from '@jellyfin/sdk/lib/generated-client/models/collec
 
 import { LibraryTab } from 'types/libraryTab';
 import type { LibraryTabContent } from 'types/libraryTabContent';
-import { SectionType } from 'types/sections';
+
+// A book in parts (a folder of numbered files) is a MusicAlbum holding its parts, so it is listed with the books
 
 const foldersTabContent: LibraryTabContent = {
     viewType: LibraryTab.Folders,
     collectionType: CollectionType.Books,
-    itemType: [BaseItemKind.Folder, BaseItemKind.AudioBook, BaseItemKind.Book]
+    itemType: [BaseItemKind.Folder, BaseItemKind.MusicAlbum, BaseItemKind.AudioBook, BaseItemKind.Book]
 };
 
 const booksTabContent: LibraryTabContent = {
     viewType: LibraryTab.Books,
     collectionType: CollectionType.Books,
-    itemType: [BaseItemKind.AudioBook, BaseItemKind.Book]
-};
-
-const suggestionsTabContent: LibraryTabContent = {
-    viewType: LibraryTab.Suggestions,
-    collectionType: CollectionType.Books,
-    sectionsView: {
-        suggestionSections: [
-            SectionType.LatestBooks,
-            SectionType.ContinueReading
-        ]
-    }
+    itemType: [BaseItemKind.MusicAlbum, BaseItemKind.AudioBook, BaseItemKind.Book]
 };
 
 const authorsTabContent: LibraryTabContent = {
@@ -37,7 +27,7 @@ const authorsTabContent: LibraryTabContent = {
 const genresTabContent: LibraryTabContent = {
     viewType: LibraryTab.Genres,
     collectionType: CollectionType.Books,
-    itemType: [BaseItemKind.AudioBook, BaseItemKind.Book]
+    itemType: [BaseItemKind.MusicAlbum, BaseItemKind.AudioBook, BaseItemKind.Book]
 };
 
 const collectionsTabContent: LibraryTabContent = {
@@ -51,14 +41,20 @@ const collectionsTabContent: LibraryTabContent = {
 const favoritesTabContent: LibraryTabContent = {
     viewType: LibraryTab.Favorites,
     collectionType: CollectionType.Books,
-    itemType: [BaseItemKind.AudioBook, BaseItemKind.Book]
+    itemType: [BaseItemKind.MusicAlbum, BaseItemKind.AudioBook, BaseItemKind.Book]
+};
+
+/** Start screen of the library, like the home screen: top 10, recently added, genres… */
+const homeTabContent: LibraryTabContent = {
+    viewType: LibraryTab.Home,
+    collectionType: CollectionType.Books
 };
 
 const booksViews: Record<number, LibraryTabContent> = {
     0: foldersTabContent,
     1: booksTabContent,
     2: authorsTabContent,
-    3: suggestionsTabContent,
+    3: homeTabContent,
     4: genresTabContent,
     5: collectionsTabContent,
     6: favoritesTabContent

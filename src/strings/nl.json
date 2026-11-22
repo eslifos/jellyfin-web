@@ -978,7 +978,6 @@
     "CopyStreamURLSuccess": "URL met succes gekopieerd.",
     "CopyStreamURL": "Stream-URL kopiëren",
     "ValueAlbumCount": "{0} albums",
-    "FetchingData": "Aanvullende gegevens ophalen",
     "LabelUserLoginAttemptsBeforeLockout": "Aantal aanmeldpogingen voordat de gebruiker wordt buitengesloten",
     "OptionMax": "Max",
     "LabelBaseUrl": "Basis-URL",

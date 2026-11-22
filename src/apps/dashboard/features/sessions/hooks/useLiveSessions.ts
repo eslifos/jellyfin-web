@@ -1,46 +1,35 @@
 import type { SessionInfoDto } from '@jellyfin/sdk/lib/generated-client/models/session-info-dto';
-import { useApi } from 'hooks/useApi';
-import { useCallback, useEffect } from 'react';
-import { QUERY_KEY, useSessions } from '../api/useSessions';
-import { queryClient } from 'utils/query/queryClient';
-import filterSessions from '../utils/filterSessions';
 import { OutboundWebSocketMessageType } from '@jellyfin/sdk/lib/websocket';
+import { useEffect } from 'react';
+
+import { useApi } from 'hooks/useApi';
+import { queryClient } from 'utils/query/queryClient';
+
+import { QUERY_KEY, useSessions } from '../api/useSessions';
+import filterSessions from '../utils/filterSessions';
 
 const QUERY_PARAMS = {
     activeWithinSeconds: 960
 };
 
+/** Asked again every few seconds too, in case the live messages of the server do not arrive. */
+const POLL_MS = 3000;
+
+/**
+ * Sessions of the server, live: the server sends the whole list on every change (playback started, changed,
+ * stopped, session ended), and it replaces what the page had, so finished streams go away at once.
+ */
 const useLiveSessions = () => {
     const { api } = useApi();
 
-    const sessionsQuery = useSessions(QUERY_PARAMS);
-
-    const updateSessions = useCallback((sessions: SessionInfoDto[]) => {
-        const newSessions = filterSessions(sessions);
-        const data = queryClient.getQueryData([ QUERY_KEY, QUERY_PARAMS ]) as SessionInfoDto[];
-        if (data) {
-            const currentSessions = [ ...data ];
-
-            for (const session of newSessions) {
-                const sessionIndex = currentSessions.findIndex((value) => value.DeviceId === session.DeviceId);
-                if (sessionIndex == -1) {
-                    currentSessions.push(session);
-                } else {
-                    currentSessions[sessionIndex] = session;
-                }
-            }
-            return currentSessions;
-        } else {
-            return newSessions;
-        }
-    }, []);
+    const sessionsQuery = useSessions(QUERY_PARAMS, POLL_MS);
 
     useEffect(() => {
         // Return function for unsubscribing
-        return api?.subscribe([OutboundWebSocketMessageType.Sessions], ({ Data }) => {
-            queryClient.setQueryData([ QUERY_KEY, QUERY_PARAMS ], updateSessions(Data ?? []));
+        return api?.subscribe([ OutboundWebSocketMessageType.Sessions ], ({ Data }) => {
+            queryClient.setQueryData([ QUERY_KEY, QUERY_PARAMS ], filterSessions((Data ?? []) as SessionInfoDto[]));
         });
-    }, [api, updateSessions]);
+    }, [ api ]);
 
     return sessionsQuery;
 };

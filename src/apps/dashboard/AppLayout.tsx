@@ -7,7 +7,6 @@ import React, { FC, StrictMode, useCallback, useEffect, useState } from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
 
 import AppBody from 'components/AppBody';
-import LibraryScanIndicator from './features/libraries/components/LibraryScanIndicator';
 import ThemeCss from 'components/ThemeCss';
 import { useApi } from 'hooks/useApi';
 import { useLocale } from 'hooks/useLocale';
@@ -95,7 +94,6 @@ export const Component: FC = () => {
                     <AppBody>
                         <Outlet />
                     </AppBody>
-                    <LibraryScanIndicator />
                 </Box>
             </Box>
             <ThemeCss dashboard />

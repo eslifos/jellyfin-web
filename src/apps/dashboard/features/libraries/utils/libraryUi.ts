@@ -8,6 +8,9 @@ import type { LibraryStats } from '../api/useLibraryStats';
 /** Accent color for each library type (Cosmic Dark palette). */
 export const getLibraryAccent = (collectionType?: string | null) => {
     switch (collectionType) {
+        case 'anime': return '#ff4081';
+        case 'kids': return '#ffc107';
+        case 'audiobooks': return '#ff7a59';
         case CollectionType.Movies: return '#00a4dc';
         case CollectionType.Tvshows: return '#aa5cc3';
         case CollectionType.Music: return '#4caf50';

@@ -3,6 +3,7 @@ import { Navigate, RouteObject } from 'react-router-dom';
 
 import ConnectionRequired from 'components/ConnectionRequired';
 import { toAsyncPageRoute } from 'components/router/AsyncRoute';
+import { AppType } from 'constants/appType';
 import { toViewManagerPageRoute } from 'components/router/LegacyRoute';
 import ErrorBoundary from 'components/router/ErrorBoundary';
 import FallbackRoute from 'components/router/FallbackRoute';
@@ -28,6 +29,9 @@ export const APP_ROUTES: RouteObject[] = [
         lazy: () => import('../AppLayout'),
         children: [
             { index: true, element: <Navigate replace to='/home' /> },
+
+            /* Downloads of the device: they also open without connection to the server */
+            { ...toAsyncPageRoute({ path: 'downloads', type: AppType.Modern }), ErrorBoundary },
 
             {
                 /* User routes */

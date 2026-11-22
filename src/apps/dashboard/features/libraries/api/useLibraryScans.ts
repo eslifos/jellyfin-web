@@ -66,8 +66,8 @@ export const useLibraryScans = () => {
             const id = norm(f.ItemId);
             const ws = live.get(id);
             let progress: number | null | undefined;
-            // A websocket update newer than 30 s wins over the (polled) server state
-            if (ws && now - ws.at < 30000) {
+            // A websocket update newer than 10 s wins over the (polled) server state
+            if (ws && now - ws.at < 10000) {
                 progress = ws.progress >= 100 ? undefined : ws.progress;
             } else if (f.RefreshStatus === 'Active' || (f.RefreshProgress != null && f.RefreshProgress < 100)) {
                 progress = f.RefreshProgress ?? 0;
@@ -87,6 +87,14 @@ export const useLibraryScans = () => {
         setPolling(active);
         if (isAdmin) void refetch();
     }, [ active, isAdmin, refetch ]);
+
+    // Re-evaluate while something runs: once the websocket goes quiet its last value expires and the
+    // polled server state takes over (the list did not change, so nothing else would recompute it)
+    useEffect(() => {
+        if (!active) return;
+        const timer = window.setInterval(() => setTick(t => t + 1), 3000);
+        return () => window.clearInterval(timer);
+    }, [ active ]);
 
     return scans;
 };

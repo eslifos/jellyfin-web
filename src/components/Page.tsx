@@ -10,7 +10,6 @@ type CustomPageProps = {
     title?: string,
     isBackButtonEnabled?: boolean,
     isMenuButtonEnabled?: boolean,
-    isNowPlayingBarEnabled?: boolean,
     isThemeMediaSupported?: boolean,
     shouldAutoFocus?: boolean,
     backDropType?: BaseItemKind[]
@@ -29,7 +28,6 @@ const Page: FC<PropsWithChildren<PageProps>> = ({
     title,
     isBackButtonEnabled = true,
     isMenuButtonEnabled = false,
-    isNowPlayingBarEnabled = true,
     isThemeMediaSupported = false,
     shouldAutoFocus = false,
     backDropType
@@ -48,7 +46,6 @@ const Page: FC<PropsWithChildren<PageProps>> = ({
             detail: {
                 isRestored: false,
                 options: {
-                    enableMediaControl: isNowPlayingBarEnabled,
                     supportsThemeMedia: isThemeMediaSupported
                 }
             }
@@ -61,7 +58,7 @@ const Page: FC<PropsWithChildren<PageProps>> = ({
         element.current?.dispatchEvent(new CustomEvent('viewshow', event));
         // pageshow - updates header/navigation in libraryMenu
         element.current?.dispatchEvent(new CustomEvent('pageshow', event));
-    }, [ element, isNowPlayingBarEnabled, isThemeMediaSupported ]);
+    }, [ element, isThemeMediaSupported ]);
 
     useEffect(() => {
         if (shouldAutoFocus) {

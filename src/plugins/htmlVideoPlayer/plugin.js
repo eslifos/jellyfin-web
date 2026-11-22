@@ -45,6 +45,12 @@ import Events from '../../utils/events.ts';
 import { includesAny } from '../../utils/container.ts';
 import { isHls } from '../../utils/mediaSource.ts';
 
+/** Waits before trying a failed subtitle download again */
+const SUBTITLE_RETRY_DELAYS_MS = [ 3000, 8000, 15000 ];
+/** While the server extracts subtitles: first look at the part already extracted, then every so often */
+const SUBTITLE_PARTIAL_FIRST_MS = 500;
+const SUBTITLE_PARTIAL_POLL_MS = 2000;
+
 const NATIVE_UNSUPPORTED_SUBTITLE_CODECS = ['ssa', 'ass', 'pgssub', 'dvdsub', 'vobsub'];
 const ASS_SUBTITLE_CODECS = ['ssa', 'ass'];
 const VOBSUB_SUBTITLE_CODECS = ['dvdsub', 'vobsub'];
@@ -250,13 +256,10 @@ export class HtmlVideoPlayer {
      */
     priority = 1;
     /**
-     * @type {boolean}
-     */
-    isFetching = false;
-    /**
      * @type {HTMLDivElement | null | undefined}
      */
     #videoDialog;
+
     /**
      * @type {number | undefined}
      */
@@ -322,14 +325,6 @@ export class HtmlVideoPlayer {
      */
     #mediaElement;
     /**
-     * @type {number}
-     */
-    #fetchQueue = 0;
-    /**
-     * @type {Map<number, { token: symbol, active: boolean }>}
-     */
-    #pendingSubtitleLoads = new Map();
-    /**
      * @type {string | undefined}
      */
     #currentSrc;
@@ -387,66 +382,8 @@ export class HtmlVideoPlayer {
     /**
      * @private
      */
-    incrementFetchQueue() {
-        if (this.#fetchQueue <= 0) {
-            this.isFetching = true;
-            Events.trigger(this, 'beginFetch');
-        }
-
-        this.#fetchQueue++;
-    }
-
-    /**
-     * @private
-     */
-    decrementFetchQueue() {
-        this.#fetchQueue--;
-
-        if (this.#fetchQueue <= 0) {
-            this.isFetching = false;
-            Events.trigger(this, 'endFetch');
-        }
-    }
-
-    /**
-     * @private
-     */
-    beginPendingSubtitleLoad(targetTextTrackIndex, loadToken) {
-        const pendingLoad = this.#pendingSubtitleLoads.get(targetTextTrackIndex);
-        if (!pendingLoad || pendingLoad.token !== loadToken || pendingLoad.active) {
-            return;
-        }
-
-        pendingLoad.active = true;
-        this.incrementFetchQueue();
-    }
-
-    /**
-     * @private
-     */
-    endPendingSubtitleLoad(targetTextTrackIndex, loadToken) {
-        const pendingLoad = this.#pendingSubtitleLoads.get(targetTextTrackIndex);
-        if (!pendingLoad || (loadToken && pendingLoad.token !== loadToken)) {
-            return;
-        }
-
-        this.#pendingSubtitleLoads.delete(targetTextTrackIndex);
-        if (pendingLoad.active) {
-            this.decrementFetchQueue();
-        }
-    }
-
-    /**
-     * @private
-     */
-    createBitmapSubtitleRendererOptions(videoElement, track, item, targetTextTrackIndex) {
-        const loadToken = Symbol(String(targetTextTrackIndex));
+    createBitmapSubtitleRendererOptions(videoElement, track, item) {
         const displaySettings = getBitmapSubtitleDisplaySettings();
-        this.endPendingSubtitleLoad(targetTextTrackIndex);
-        this.#pendingSubtitleLoads.set(targetTextTrackIndex, {
-            token: loadToken,
-            active: false
-        });
 
         return {
             video: videoElement,
@@ -455,10 +392,7 @@ export class HtmlVideoPlayer {
             streamingLoad: true,
             rangeRequests: true,
             prefetchWindow: { before: 1, after: 2 },
-            ...(displaySettings ? { displaySettings } : {}),
-            onLoading: () => this.beginPendingSubtitleLoad(targetTextTrackIndex, loadToken),
-            onLoaded: () => this.endPendingSubtitleLoad(targetTextTrackIndex, loadToken),
-            onError: () => this.endPendingSubtitleLoad(targetTextTrackIndex, loadToken)
+            ...(displaySettings ? { displaySettings } : {})
         };
     }
 
@@ -1299,13 +1233,6 @@ export class HtmlVideoPlayer {
      * @private
      */
     destroyCustomTrack(videoElement, targetTrackIndex) {
-        if (targetTrackIndex === undefined) {
-            this.endPendingSubtitleLoad(PRIMARY_TEXT_TRACK_INDEX);
-            this.endPendingSubtitleLoad(SECONDARY_TEXT_TRACK_INDEX);
-        } else {
-            this.endPendingSubtitleLoad(targetTrackIndex);
-        }
-
         this.destroyCustomRenderedTrackElements(targetTrackIndex);
         this.destroyNativeTracks(videoElement, targetTrackIndex);
         this.destroyStoredTrackInfo(targetTrackIndex);
@@ -1337,23 +1264,81 @@ export class HtmlVideoPlayer {
     /**
      * @private
      */
-    async fetchSubtitles(track, item) {
+    async fetchSubtitles(track, item, onPartial) {
         if (window.Windows && itemHelper.isLocalItem(item)) {
             return this.fetchSubtitlesUwp(track, item);
         }
 
-        this.incrementFetchQueue();
-        try {
-            const response = await fetch(getTextTrackUrl(track, item, '.js'));
-
-            if (!response.ok) {
-                throw new Error(response);
-            }
-
-            return response.json();
-        } finally {
-            this.decrementFetchQueue();
+        // Subtitles inside the video file are extracted by the server (it starts as soon as play is pressed), which
+        // means reading the whole file. Like Plex, the player does not wait for the end: it shows the lines already
+        // extracted as they come, which runs ahead of the video.
+        const wait = { done: false };
+        if (onPartial && !track.IsExternal && track.DeliveryMethod === 'External') {
+            this.followPartialSubtitles(track, item, wait, onPartial);
         }
+
+        try {
+            return await this.fetchFullSubtitles(track, item);
+        } finally {
+            wait.done = true;
+        }
+    }
+
+    /**
+     * The whole subtitle; a failed request (a dropped connection, a proxy timeout) is tried again.
+     * @private
+     */
+    async fetchFullSubtitles(track, item) {
+        for (let attempt = 0; ; attempt++) {
+            try {
+                const response = await fetch(getTextTrackUrl(track, item, '.js'));
+                if (!response.ok) throw new Error(`subtitles: HTTP ${response.status}`);
+                return await response.json();
+            } catch (error) {
+                if (attempt >= SUBTITLE_RETRY_DELAYS_MS.length || !this.#mediaElement) throw error;
+                console.warn('[htmlVideoPlayer] subtitles not ready, trying again', error);
+                await new Promise(resolve => setTimeout(resolve, SUBTITLE_RETRY_DELAYS_MS[attempt]));
+            }
+        }
+    }
+
+    /**
+     * While the server extracts the subtitle, asks every few seconds for the part already extracted.
+     * @private
+     */
+    async followPartialSubtitles(track, item, wait, onPartial) {
+        const url = getTextTrackUrl(track, item).replace(/\/Subtitles\/(\d+)\/\d+\/Stream\.vtt/i, '/Subtitles/$1/Partial.js');
+        if (!url.includes('/Partial.js')) return;
+        let shown = 0;
+        await new Promise(resolve => setTimeout(resolve, SUBTITLE_PARTIAL_FIRST_MS));
+        while (!wait.done && this.#mediaElement) {
+            try {
+                const response = await fetch(url, { cache: 'no-store' });
+                if (wait.done) return;
+                const complete = response.headers.get('X-Subtitles-Complete') === 'true';
+                if (response.status === 200) {
+                    const data = await response.json();
+                    const events = data?.TrackEvents ?? [];
+                    if (!wait.done && events.length > shown) {
+                        shown = events.length;
+                        onPartial(data);
+                    }
+                }
+                if (complete || !response.ok) return;
+            } catch (error) {
+                console.debug('[htmlVideoPlayer] partial subtitles', error);
+            }
+            await new Promise(resolve => setTimeout(resolve, SUBTITLE_PARTIAL_POLL_MS));
+        }
+    }
+
+    /**
+     * Whether a subtitle track is still the one chosen (a late answer for a track left behind is ignored).
+     * @private
+     */
+    isCurrentTextTrack(track, targetTextTrackIndex) {
+        const current = this.isSecondaryTrack(targetTextTrackIndex) ? this.#customSecondaryTrackIndex : this.#customTrackIndex;
+        return !!this.#mediaElement && current === track.Index;
     }
 
     /**
@@ -1471,20 +1456,16 @@ export class HtmlVideoPlayer {
     /**
      * @private
      */
-    renderPgs(videoElement, track, item, targetTextTrackIndex = PRIMARY_TEXT_TRACK_INDEX) {
-        const options = this.createBitmapSubtitleRendererOptions(videoElement, track, item, targetTextTrackIndex);
-        const onLoaded = options.onLoaded;
-        const onError = options.onError;
+    renderPgs(videoElement, track, item) {
+        const options = this.createBitmapSubtitleRendererOptions(videoElement, track, item);
         options.onLoaded = () => {
             if (this.#currentBitmapSubRenderer) {
                 this.#currentBitmapSubRenderer.timeOffset = getSubtitleTimeOffset(this._currentPlayOptions, this.#currentTrackOffset);
                 this.#currentBitmapSubRenderer.updateCanvasSize?.();
             }
-            onLoaded?.();
         };
         options.onError = (error) => {
             console.error('[libbitsub] pgs error', error);
-            onError?.(error);
         };
         options.onEvent = (event) => {
             if (event?.type === 'error' || event?.type === 'loaded' || event?.type === 'cue-change' || event?.type === 'renderer-change' || event?.type === 'worker-state') {
@@ -1499,7 +1480,6 @@ export class HtmlVideoPlayer {
                 }
             });
         }).catch((error) => {
-            this.endPendingSubtitleLoad(targetTextTrackIndex);
             console.error(error);
         });
     }
@@ -1507,13 +1487,11 @@ export class HtmlVideoPlayer {
     /**
      * @private
      */
-    renderVobSub(videoElement, track, item, targetTextTrackIndex = PRIMARY_TEXT_TRACK_INDEX) {
+    renderVobSub(videoElement, track, item) {
         const options = {
-            ...this.createBitmapSubtitleRendererOptions(videoElement, track, item, targetTextTrackIndex),
+            ...this.createBitmapSubtitleRendererOptions(videoElement, track, item),
             fileName: getSubtitleFileNameHint(track)
         };
-        const onLoaded = options.onLoaded;
-        const onError = options.onError;
         options.onLoaded = () => {
             if (this.#currentBitmapSubRenderer) {
                 this.#currentBitmapSubRenderer.timeOffset = getSubtitleTimeOffset(this._currentPlayOptions, this.#currentTrackOffset);
@@ -1522,11 +1500,9 @@ export class HtmlVideoPlayer {
                 this.#currentBitmapSubRenderer.setDebandRange?.(VOBSUB_DEBAND_RANGE);
                 this.#currentBitmapSubRenderer.updateCanvasSize?.();
             }
-            onLoaded?.();
         };
         options.onError = (error) => {
             console.error('[libbitsub] vobsub error', error);
-            onError?.(error);
         };
         options.onEvent = (event) => {
             if (event?.type === 'error' || event?.type === 'loaded' || event?.type === 'cue-change' || event?.type === 'renderer-change' || event?.type === 'worker-state') {
@@ -1541,7 +1517,6 @@ export class HtmlVideoPlayer {
                 }
             });
         }).catch((error) => {
-            this.endPendingSubtitleLoad(targetTextTrackIndex);
             console.error(error);
         });
     }
@@ -1550,9 +1525,17 @@ export class HtmlVideoPlayer {
      * @private
      */
     renderSubtitlesWithCustomElement(videoElement, track, item, targetTextTrackIndex) {
-        this.fetchSubtitles(track, item).then((subtitleData) => {
-            // Exit if the video element was destroyed while fetching subtitles
-            if (!this.#mediaElement) return;
+        // Called with the part already extracted (while the server reads the file) and again with the whole subtitle
+        const show = (subtitleData) => {
+            // Exit if the video element was destroyed (or the track changed) while fetching subtitles
+            if (!this.isCurrentTextTrack(track, targetTextTrackIndex)) return;
+
+            // Already on screen: only the list of lines grows
+            if (this.isSecondaryTrack(targetTextTrackIndex) ? this.#videoSecondarySubtitlesElem : this.#videoSubtitlesElem) {
+                if (this.isSecondaryTrack(targetTextTrackIndex)) this.#currentSecondaryTrackEvents = subtitleData.TrackEvents;
+                else this.#currentTrackEvents = subtitleData.TrackEvents;
+                return;
+            }
 
             const subtitleAppearance = userSettings.getSubtitleAppearanceSettings();
             const subtitleVerticalPosition = parseInt(subtitleAppearance.verticalPosition, 10);
@@ -1585,7 +1568,8 @@ export class HtmlVideoPlayer {
                 this.setSubtitleAppearance(subtitlesContainer, this.#videoSecondarySubtitlesElem);
                 this.#currentSecondaryTrackEvents = subtitleData.TrackEvents;
             }
-        });
+        };
+        this.fetchSubtitles(track, item, show).then(show).catch(error => console.error('[htmlVideoPlayer] subtitles', error));
     }
 
     /**
@@ -1634,11 +1618,11 @@ export class HtmlVideoPlayer {
                 return;
             }
             if (format === 'pgssub') {
-                this.renderPgs(videoElement, track, item, targetTextTrackIndex);
+                this.renderPgs(videoElement, track, item);
                 return;
             }
             if (VOBSUB_SUBTITLE_CODECS.includes(format)) {
-                this.renderVobSub(videoElement, track, item, targetTextTrackIndex);
+                this.renderVobSub(videoElement, track, item);
                 return;
             }
 
@@ -1671,18 +1655,26 @@ export class HtmlVideoPlayer {
         }
 
         // download the track json
-        this.fetchSubtitles(track, item).then(data => {
-            // Exit if the video element was destroyed while fetching subtitles
-            if (!this.#mediaElement) return;
+        // Lines already given to the track: the part extracted so far arrives first, then the whole subtitle
+        let added = 0;
+        const show = (data, whole = false) => {
+            // Exit if the video element was destroyed (or the track changed) while fetching subtitles
+            if (!this.isCurrentTextTrack(track, targetTextTrackIndex)) return;
 
-            console.debug(`downloaded ${data.TrackEvents.length} track events`);
+            console.debug(`downloaded ${data.TrackEvents.length} track events${whole ? '' : ' (extracted so far)'}`);
+
+            // The whole subtitle replaces the partial lines (same text, checked encoding)
+            if (whole && added) {
+                while (trackElement.cues?.length) trackElement.removeCue(trackElement.cues[0]);
+                added = 0;
+            }
 
             const subtitleAppearance = userSettings.getSubtitleAppearanceSettings();
             const cueLine = parseInt(subtitleAppearance.verticalPosition, 10);
 
             // add some cues to show the text
             // in safari, the cues need to be added before setting the track mode to showing
-            for (const trackEvent of data.TrackEvents) {
+            for (const trackEvent of data.TrackEvents.slice(added)) {
                 const TrackCue = window.VTTCue || window.TextTrackCue;
                 const text = normalizeTrackEventText(trackEvent.Text, false);
                 const cue = new TrackCue(trackEvent.StartPositionTicks / 10000000, trackEvent.EndPositionTicks / 10000000, text);
@@ -1698,9 +1690,13 @@ export class HtmlVideoPlayer {
 
                 trackElement.addCue(cue);
             }
+            added = data.TrackEvents.length;
 
             trackElement.mode = 'showing';
-        });
+        };
+        this.fetchSubtitles(track, item, show)
+            .then(data => show(data, true))
+            .catch(error => console.error('[htmlVideoPlayer] subtitles', error));
     }
 
     /**

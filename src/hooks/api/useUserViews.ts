@@ -21,7 +21,10 @@ export const getUserViewsQuery = (
     params?: UserViewApiGetUserViewsRequest
 ) => queryOptions({
     queryKey: [ 'User', params?.userId, 'Views', params ],
-    queryFn: ({ signal }) => fetchUserViews(api!, params, { signal }),
+    // No abort signal: the menus and the pages share this answer, and a screen that closes must not cancel
+    // it for the others (it made "Uncaught CancelledError" in the console)
+    queryFn: () => fetchUserViews(api!, params),
+    staleTime: 60 * 1000,
     enabled: !!api
 });
 

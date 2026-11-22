@@ -22,6 +22,8 @@ import Folder from '@mui/icons-material/Folder';
 import FolderOpenIcon from '@mui/icons-material/FolderOpen';
 import HistoryIcon from '@mui/icons-material/History';
 import ImageIcon from '@mui/icons-material/Image';
+import ImageSearchIcon from '@mui/icons-material/ImageSearch';
+import ManageSearchIcon from '@mui/icons-material/ManageSearch';
 import MoreVertIcon from '@mui/icons-material/MoreVert';
 import NewReleasesIcon from '@mui/icons-material/NewReleases';
 import RefreshIcon from '@mui/icons-material/Refresh';
@@ -34,6 +36,7 @@ import ConfirmDialog from 'components/ConfirmDialog';
 import InputDialog from 'components/InputDialog';
 import imageeditor from 'components/imageeditor/imageeditor';
 import RefreshDialog from 'components/refreshdialog/refreshdialog';
+import toast from 'components/toast/toast';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
@@ -45,6 +48,7 @@ import type { LibraryStats } from '../api/useLibraryStats';
 import { useRemoveVirtualFolder } from '../api/useRemoveVirtualFolder';
 import { useRenameVirtualFolder } from '../api/useRenameVirtualFolder';
 import getCollectionTypeOptions from '../utils/collectionTypeOptions';
+import { getLibraryKind, getLibraryKinds } from '../utils/libraryKinds';
 import ChangeLibraryTypeDialog from './ChangeLibraryTypeDialog';
 import LibraryManageDialog from './LibraryManageDialog';
 import {
@@ -88,7 +92,8 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
     const renameVirtualFolder = useRenameVirtualFolder();
     const removeVirtualFolder = useRemoveVirtualFolder();
 
-    const accent = getLibraryAccent(virtualFolder.CollectionType);
+    const kind = getLibraryKind(virtualFolder);
+    const accent = getLibraryAccent(kind);
     const options = virtualFolder.LibraryOptions;
     const locations = virtualFolder.Locations || [];
     const visibleLocations = showAllLocations ? locations : locations.slice(0, MAX_LOCATIONS);
@@ -100,7 +105,8 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
         }
     }, [ api, virtualFolder ]);
 
-    const typeName = getCollectionTypeOptions().find(t => t.value == virtualFolder.CollectionType)?.name
+    const typeName = getLibraryKinds().find(k => k.value === kind)?.label
+        || getCollectionTypeOptions().find(t => t.value == virtualFolder.CollectionType)?.name
         || globalize.translate('Other');
 
     const scan = useLibraryScan(virtualFolder.ItemId);
@@ -144,14 +150,41 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
         }
     }, [ renameVirtualFolder, virtualFolder, hideRenameLibraryDialog ]);
 
+    /** The slow options (missing / replace all metadata) stay behind the dialog, in the ⋮ menu. */
     const showRefreshDialog = useCallback(() => {
         setAnchorEl(null);
         void new RefreshDialog({
             itemIds: [ virtualFolder.ItemId ],
             serverId: ServerConnections.currentApiClient()?.serverId(),
-            mode: 'scan'
+            mode: 'missing'
         }).show();
     }, [ virtualFolder ]);
+
+    const startRefresh = useCallback((imageMode: 'Default' | 'FullRefresh', startedKey: string) => {
+        setAnchorEl(null);
+        if (!api || !virtualFolder.ItemId) return;
+        api.axiosInstance.post(`${api.basePath}/Items/${virtualFolder.ItemId}/Refresh`, null, {
+            headers: { Authorization: api.authorizationHeader },
+            params: {
+                Recursive: true,
+                MetadataRefreshMode: 'Default',
+                ImageRefreshMode: imageMode,
+                ReplaceAllMetadata: false,
+                ReplaceAllImages: false
+            }
+        })
+            .then(() => {
+                invalidateVirtualFolders(user, virtualFolder);
+                toast(globalize.translate(startedKey));
+            })
+            .catch(() => toast(globalize.translate('ErrorDefault')));
+    }, [ api, user, virtualFolder ]);
+
+    /** Like Plex: scan right away for new, changed and removed files, no dialog. */
+    const scanNow = useCallback(() => startRefresh('Default', 'LibScanStarted'), [ startRefresh ]);
+
+    /** Downloads only the images an item does not have yet; existing ones are kept. */
+    const refreshMissingImages = useCallback(() => startRefresh('FullRefresh', 'LibMissingImagesStarted'), [ startRefresh ]);
 
     const showMediaLibraryEditor = useCallback(() => {
         setAnchorEl(null);
@@ -246,13 +279,13 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
                     }}
                 >
                     {!imageUrl && (
-                        <Icon sx={{ fontSize: 64, color: `${accent}cc` }}>{getLibraryIcon(virtualFolder.CollectionType)}</Icon>
+                        <Icon sx={{ fontSize: 64, color: `${accent}cc` }}>{getLibraryIcon(kind)}</Icon>
                     )}
                     <Box sx={{ position: 'absolute', inset: 0, background: 'linear-gradient(180deg, rgba(8,8,16,0.15) 30%, rgba(8,8,16,0.92) 100%)' }} />
 
                     <Chip
                         size='small'
-                        icon={<Icon sx={{ fontSize: '0.95rem !important', color: `${accent} !important` }}>{getLibraryIcon(virtualFolder.CollectionType)}</Icon>}
+                        icon={<Icon sx={{ fontSize: '0.95rem !important', color: `${accent} !important` }}>{getLibraryIcon(kind)}</Icon>}
                         label={typeName}
                         sx={{
                             position: 'absolute', top: 12, left: 12, height: 24, fontSize: '0.7rem', fontWeight: 600,
@@ -398,7 +431,8 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
                             variant='text'
                             size='small'
                             startIcon={<RefreshIcon />}
-                            onClick={showRefreshDialog}
+                            onClick={scanNow}
+                            disabled={isScanning}
                             sx={{ borderRadius: '10px', color: 'rgba(255,255,255,0.75)', background: 'rgba(255,255,255,0.04)', '&:hover': { background: 'rgba(255,255,255,0.09)' } }}
                         >
                             {globalize.translate('LibScan')}
@@ -424,9 +458,17 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
                     <ListItemIcon><SwapHorizIcon /></ListItemIcon>
                     <ListItemText>{globalize.translate('LibChangeType')}</ListItemText>
                 </MenuItem>
-                <MenuItem onClick={showRefreshDialog}>
+                <MenuItem onClick={scanNow} disabled={isScanning}>
                     <ListItemIcon><RefreshIcon /></ListItemIcon>
                     <ListItemText>{globalize.translate('ScanLibrary')}</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={refreshMissingImages}>
+                    <ListItemIcon><ImageSearchIcon /></ListItemIcon>
+                    <ListItemText>{globalize.translate('LibRefreshMissingImages')}</ListItemText>
+                </MenuItem>
+                <MenuItem onClick={showRefreshDialog}>
+                    <ListItemIcon><ManageSearchIcon /></ListItemIcon>
+                    <ListItemText>{globalize.translate('LibRefreshMetadataMenu')}</ListItemText>
                 </MenuItem>
                 <MenuItem onClick={showDeleteLibraryDialog} sx={{ color: '#ef5350' }}>
                     <ListItemIcon><DeleteIcon sx={{ color: '#ef5350' }} /></ListItemIcon>

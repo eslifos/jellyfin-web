@@ -36,11 +36,18 @@ const videosTabContent: LibraryTabContent = {
     itemType: [BaseItemKind.Video]
 };
 
+/** Start screen of the library, like the home screen: top 10, recently added, genres… */
+const homeTabContent: LibraryTabContent = {
+    viewType: LibraryTab.Home,
+    collectionType: CollectionType.Homevideos
+};
+
 const homeVideosViews: Record<number, LibraryTabContent> = {
     0: foldersTabContent,
     1: photosTabContent,
     2: photoAlbumsTabContent,
-    3: videosTabContent
+    3: videosTabContent,
+    4: homeTabContent
 };
 
 export default homeVideosViews;

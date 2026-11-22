@@ -54,6 +54,7 @@ import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader } from '../../components/cosmic';
+import { readPref, writePref } from 'utils/syncedPrefs';
 
 type ViewMode = 'cards' | 'table';
 type Scope = 'all' | 'user' | 'system';
@@ -75,7 +76,7 @@ const SCOPE_PARAM = 'useractivity';
 
 const readStorage = (key: string) => {
     try {
-        return localStorage.getItem(key);
+        return readPref(key);
     } catch {
         return null;
     }
@@ -83,7 +84,7 @@ const readStorage = (key: string) => {
 
 const writeStorage = (key: string, value: string) => {
     try {
-        localStorage.setItem(key, value);
+        writePref(key, value);
     } catch {
         // ignore storage errors
     }

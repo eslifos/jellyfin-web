@@ -23,7 +23,6 @@ import { useSearchParams } from 'react-router-dom';
 import layoutManager from 'components/layoutManager';
 import Loading from 'components/loading/LoadingComponent';
 import Page from 'components/Page';
-import { DEFAULT_SECTIONS } from 'constants/homeSectionType';
 import { getUserViewsQuery } from 'hooks/api/useUserViews';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
@@ -31,28 +30,16 @@ import * as userSettings from 'scripts/settings/userSettings';
 import { LibraryTab } from 'types/libraryTab';
 import { queryClient } from 'utils/query/queryClient';
 
+import HomeSectionsEditor from 'apps/modern/components/HomeFeed/HomeSectionsEditor';
+import { loadHomeSections, orderSections, saveHomeSections } from 'apps/modern/components/HomeFeed/homeSections';
+
 import { Card, Check, SaveButton, SavedSnackbar, Sel } from '../components/PreferencesUi';
-
-const NUM_SECTIONS = 10;
-
-const SECTION_OPTIONS: { value: string; label: string }[] = [
-    { value: 'smalllibrarytiles', label: 'HeaderMyMedia' },
-    { value: 'librarybuttons', label: 'HeaderMyMediaSmall' },
-    { value: 'activerecordings', label: 'HeaderActiveRecordings' },
-    { value: 'resume', label: 'HeaderContinueWatching' },
-    { value: 'resumeaudio', label: 'HeaderContinueListening' },
-    { value: 'resumebook', label: 'HeaderContinueReading' },
-    { value: 'latestmedia', label: 'HeaderLatestMedia' },
-    { value: 'nextup', label: 'NextUp' },
-    { value: 'livetv', label: 'LiveTV' },
-    { value: 'none', label: 'None' }
-];
 
 /** Default landing tab is always the first entry. */
 const LANDING_OPTIONS: Record<string, { value: string; label: string }[]> = {
     movies: [
+        { value: LibraryTab.Home, label: 'Home' },
         { value: LibraryTab.Movies, label: 'Movies' },
-        { value: LibraryTab.Suggestions, label: 'Suggestions' },
         { value: LibraryTab.Favorites, label: 'Favorites' },
         { value: LibraryTab.Collections, label: 'Collections' },
         { value: LibraryTab.Genres, label: 'Genres' },
@@ -60,8 +47,8 @@ const LANDING_OPTIONS: Record<string, { value: string; label: string }[]> = {
         { value: LibraryTab.Playlists, label: 'Playlists' }
     ],
     tvshows: [
+        { value: LibraryTab.Home, label: 'Home' },
         { value: LibraryTab.Series, label: 'Shows' },
-        { value: LibraryTab.Suggestions, label: 'Suggestions' },
         { value: LibraryTab.Upcoming, label: 'TabUpcoming' },
         { value: LibraryTab.Genres, label: 'Genres' },
         { value: LibraryTab.Studios, label: 'Studios' },
@@ -70,8 +57,8 @@ const LANDING_OPTIONS: Record<string, { value: string; label: string }[]> = {
         { value: LibraryTab.Playlists, label: 'Playlists' }
     ],
     music: [
+        { value: LibraryTab.Home, label: 'Home' },
         { value: LibraryTab.Albums, label: 'Albums' },
-        { value: LibraryTab.Suggestions, label: 'Suggestions' },
         { value: LibraryTab.AlbumArtists, label: 'HeaderAlbumArtists' },
         { value: LibraryTab.Artists, label: 'Artists' },
         { value: LibraryTab.Playlists, label: 'Playlists' },
@@ -88,29 +75,30 @@ const LANDING_OPTIONS: Record<string, { value: string; label: string }[]> = {
         { value: LibraryTab.SeriesTimers, label: 'Series' }
     ],
     homevideos: [
+        { value: LibraryTab.Home, label: 'Home' },
         { value: LibraryTab.Folders, label: 'Folders' },
         { value: LibraryTab.Photos, label: 'Photos' },
         { value: LibraryTab.PhotoAlbums, label: 'HeaderPhotoAlbums' },
         { value: LibraryTab.Videos, label: 'HeaderVideos' }
     ],
     musicvideos: [
+        { value: LibraryTab.Home, label: 'Home' },
         { value: LibraryTab.Folders, label: 'Folders' },
-        { value: LibraryTab.Suggestions, label: 'Suggestions' },
         { value: LibraryTab.MusicVideos, label: 'HeaderVideos' },
         { value: LibraryTab.Playlists, label: 'Playlists' }
     ],
     mixed: [
+        { value: LibraryTab.Home, label: 'Home' },
         { value: LibraryTab.Folders, label: 'Folders' },
-        { value: LibraryTab.Suggestions, label: 'Suggestions' },
         { value: LibraryTab.Mixed, label: 'HeaderMedia' },
         { value: LibraryTab.Collections, label: 'Collections' },
         { value: LibraryTab.Playlists, label: 'Playlists' }
     ],
     books: [
+        { value: LibraryTab.Home, label: 'Home' },
         { value: LibraryTab.Folders, label: 'Folders' },
         { value: LibraryTab.Books, label: 'Books' },
         { value: LibraryTab.Authors, label: 'Authors' },
-        { value: LibraryTab.Suggestions, label: 'Suggestions' },
         { value: LibraryTab.Genres, label: 'Genres' },
         { value: LibraryTab.Collections, label: 'Collections' },
         { value: LibraryTab.Favorites, label: 'Favorites' }
@@ -164,7 +152,8 @@ const HomePreferencesPage: FC = () => {
 
     const [ tvHome, setTvHome ] = useState('');
     const [ hidePlayed, setHidePlayed ] = useState(false);
-    const [ sections, setSections ] = useState<string[]>([]);
+    const [ homeOrder, setHomeOrder ] = useState<string[]>([]);
+    const [ homeHidden, setHomeHidden ] = useState<string[]>([]);
     const [ latestExcludes, setLatestExcludes ] = useState<string[]>([]);
     const [ myMediaExcludes, setMyMediaExcludes ] = useState<string[]>([]);
     const [ groupedFolders, setGroupedFolders ] = useState<string[]>([]);
@@ -191,9 +180,9 @@ const HomePreferencesPage: FC = () => {
             setMyMediaExcludes(config?.MyMediaExcludes ?? []);
             setGroupedFolders(config?.GroupedFolders ?? []);
             setTvHome(settings.get('tvhome') || '');
-            setSections(Array.from({ length: NUM_SECTIONS }, (_, i) => (
-                settings.get(`homesection${i}`) || DEFAULT_SECTIONS[i] || 'none'
-            )));
+            const homeSections = loadHomeSections(settings);
+            setHomeOrder(orderSections(viewsResult, homeSections));
+            setHomeHidden(homeSections.hidden);
 
             const landingValues: Record<string, string> = {};
             viewsResult.forEach(item => {
@@ -213,10 +202,6 @@ const HomePreferencesPage: FC = () => {
         load().catch(err => console.error('[HomePreferences] failed to load settings', err));
         return () => { cancelled = true; };
     }, [ api, apiClient, userId, settings ]);
-
-    const setSection = useCallback((index: number, value: string) => {
-        setSections(prev => prev.map((v, i) => (i === index ? value : v)));
-    }, []);
 
     const moveView = useCallback((index: number, delta: number) => {
         setViews(prev => {
@@ -247,10 +232,7 @@ const HomePreferencesPage: FC = () => {
             user.Configuration.OrderedViews = views.map(v => v.Id ?? '').filter(Boolean);
 
             settings.set('tvhome', tvHome);
-            sections.forEach((value, i) => {
-                // The default section is stored as an empty value
-                settings.set(`homesection${i}`, value === DEFAULT_SECTIONS[i] ? '' : value);
-            });
+            saveHomeSections({ order: homeOrder, hidden: homeHidden }, settings);
             Object.entries(landings).forEach(([ id, value ]) => {
                 settings.set(`landing-${id}`, value);
             });
@@ -263,7 +245,7 @@ const HomePreferencesPage: FC = () => {
         } finally {
             setSaving(false);
         }
-    }, [ apiClient, userId, settings, hidePlayed, latestExcludes, myMediaExcludes, groupedFolders, views, tvHome, sections, landings ]);
+    }, [ apiClient, userId, settings, hidePlayed, latestExcludes, myMediaExcludes, groupedFolders, views, tvHome, homeOrder, homeHidden, landings ]);
 
     // Libraries that have at least one per-library option
     const perLibraryViews = views.filter(item => (
@@ -290,16 +272,7 @@ const HomePreferencesPage: FC = () => {
                             )}
                             <Check label={globalize.translate('HideWatchedContentFromLatestMedia')} checked={hidePlayed} onChange={setHidePlayed} />
                             <Divider sx={{ borderColor: 'rgba(0,164,220,0.12)', my: 1.5 }} />
-                            {sections.map((value, i) => (
-                                <Sel
-                                    key={`section${i}`}
-                                    label={globalize.translate('LabelHomeScreenSectionValue', i + 1)}
-                                    value={value}
-                                    onChange={v => setSection(i, v)}
-                                >
-                                    {SECTION_OPTIONS.map(o => <MenuItem key={o.value} value={o.value}>{globalize.translate(o.label)}</MenuItem>)}
-                                </Sel>
-                            ))}
+                            <HomeSectionsEditor views={views} order={homeOrder} hidden={homeHidden} onOrderChange={setHomeOrder} onHiddenChange={setHomeHidden} />
                         </Card>
                     </Box>
 

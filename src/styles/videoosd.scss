@@ -185,20 +185,6 @@
     align-items: baseline;
 }
 
-.osdMediaStatus {
-    margin-left: auto;
-    display: flex;
-    align-items: center;
-}
-
-.osdMediaStatus span:first-child {
-    margin-right: 0.125rem;
-}
-
-.osdMediaStatus .animate {
-    animation: spin-clockwise 4s linear infinite;
-}
-
 @media all and (max-width: 30em) {
     .btnUserRating,
     .osdMediaInfo,
@@ -214,8 +200,7 @@
 }
 
 @media all and (max-width: 43em) {
-    .videoOsdBottom .volumeButtons,
-    .osdMediaStatus span {
+    .videoOsdBottom .volumeButtons {
         display: none !important;
     }
 }
@@ -346,11 +331,5 @@
 @keyframes spin-counterclockwise {
     100% {
         transform: rotate(-360deg);
-    }
-}
-
-@keyframes spin-clockwise {
-    100% {
-        transform: rotate(360deg);
     }
 }

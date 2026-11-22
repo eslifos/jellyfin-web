@@ -14,14 +14,18 @@ import Tooltip from '@mui/material/Tooltip';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import CalendarMonthRoundedIcon from '@mui/icons-material/CalendarMonthRounded';
+import DownloadForOfflineRoundedIcon from '@mui/icons-material/DownloadForOfflineRounded';
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
 import { useApi } from 'hooks/useApi';
 import { PUBLIC_PATHS } from 'components/router/appRouter';
 import RemotePlayButton from '../AppToolbar/RemotePlayButton';
+import SyncPlayButton from '../AppToolbar/SyncPlayButton';
 import UserMenuButton from 'components/toolbar/UserMenuButton';
 import SearchDialog from '../SearchDialog';
+import LibraryScanIndicator from 'apps/dashboard/features/libraries/components/LibraryScanIndicator';
+import { downloadsAvailable } from '../../features/downloads/support';
 import { isSettingsSubPath } from './settingsPaths';
 
 interface NavItem {
@@ -47,6 +51,8 @@ const FloatingNav = () => {
         const userId = searchParams.get('userId');
         navigate(userId ? `/mypreferencesmenu?userId=${encodeURIComponent(userId)}` : '/mypreferencesmenu');
     }, [ navigate, searchParams ]);
+
+    const goDownloads = useCallback(() => navigate('/downloads'), [ navigate ]);
 
     if (isPublicPath || location.pathname === '/video' || location.pathname === '/profiles') {
         return null;
@@ -132,6 +138,19 @@ const FloatingNav = () => {
                 </IconButton>
             </Tooltip>
 
+            {/* Downloads (phones and tablets) */}
+            {downloadsAvailable() && (
+                <Tooltip title={globalize.translate('DlPageTitle')} placement='top'>
+                    <IconButton
+                        onClick={goDownloads}
+                        aria-label={globalize.translate('DlPageTitle')}
+                        sx={navBtnSx(isActive('/downloads'))}
+                    >
+                        <DownloadForOfflineRoundedIcon />
+                    </IconButton>
+                </Tooltip>
+            )}
+
             {/* Search */}
             <Tooltip title={globalize.translate('Search')} placement='top'>
                 <IconButton
@@ -151,8 +170,10 @@ const FloatingNav = () => {
             {/* Divisor */}
             <Box sx={{ width: '1px', height: '28px', background: 'rgba(255,255,255,0.1)', mx: 0.5 }} />
 
-            {/* Cast */}
+            {/* Watch together + cast */}
             <Box sx={{
+                display: 'flex',
+                alignItems: 'center',
                 color: 'rgba(255,255,255,0.55)',
                 borderRadius: '14px',
                 padding: '2px',
@@ -164,8 +185,12 @@ const FloatingNav = () => {
                 },
                 '& svg': { fontSize: '1.5rem !important' }
             }}>
+                <SyncPlayButton />
                 <RemotePlayButton />
             </Box>
+
+            {/* Library scans and tasks in progress (administrators): a small ring that opens the detail */}
+            <LibraryScanIndicator />
 
             {/* Profile */}
             {isLoggedIn && (

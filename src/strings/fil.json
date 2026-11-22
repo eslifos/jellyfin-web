@@ -1085,7 +1085,6 @@
     "FileNotFound": "Hindi nahanap ang file.",
     "File": "File",
     "FFmpegSavePathNotFound": "Hindi namin mahanap ang FFmpeg gamit ang path na iyong pinasok. Kinakailangan din ang FFprobe at dapat na umiiral sa parehong folder. Ang mga bahaging ito ay karaniwang pinagsama-sama sa parehong pag-download. Paki-check ang path at subukang muli.",
-    "FetchingData": "Kinukuha ang karagdagang data",
     "Features": "Mga tampok",
     "Favorite": "Paborito",
     "FastForward": "I-fast-forward",

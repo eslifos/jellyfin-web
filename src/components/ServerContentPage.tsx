@@ -24,8 +24,7 @@ const ServerContentPage: FunctionComponent<ServerContentPageProps> = ({ view }) 
                 state: location.state,
                 autoFocus: false,
                 options: {
-                    supportsThemeMedia: false,
-                    enableMediaControl: true
+                    supportsThemeMedia: false
                 }
             };
 

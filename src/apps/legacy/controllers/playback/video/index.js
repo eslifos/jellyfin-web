@@ -33,6 +33,7 @@ import { ServerConnections } from 'lib/jellyfin-apiclient';
 import LibraryMenu from 'scripts/libraryMenu';
 import { setBackdropTransparency, TRANSPARENCY_LEVEL } from 'components/backdrop/backdrop';
 import { pluginManager } from 'components/pluginManager';
+import createCosmicOsd from './cosmicOsd';
 
 function getOpenedDialog() {
     return document.querySelector('.dialogContainer .dialog.opened');
@@ -96,6 +97,7 @@ export default function (view) {
         }
 
         setTitle(displayItem, parentName);
+        cosmicOsd.setItem(displayItem);
 
         const secondaryMediaInfo = view.querySelector('.osdSecondaryMediaInfo');
         const secondaryMediaInfoHtml = mediaInfo.getSecondaryMediaInfoHtml(displayItem, {
@@ -201,6 +203,7 @@ export default function (view) {
             view.querySelector('.btnAudio').classList.add('hide');
             view.querySelector('.osdTitle').innerHTML = '';
             view.querySelector('.osdMediaInfo').innerHTML = '';
+            cosmicOsd.setItem(null);
             return;
         }
 
@@ -232,6 +235,8 @@ export default function (view) {
             view.querySelector('.btnPreviousChapter').classList.add('hide');
             view.querySelector('.btnNextChapter').classList.add('hide');
         }
+
+        cosmicOsd.refresh();
     }
 
     function setTitle(item, parentName) {
@@ -277,6 +282,7 @@ export default function (view) {
     }
 
     function hideOsd() {
+        cosmicOsd.closeAll();
         Events.trigger(document, EventType.SHOW_VIDEO_OSD, [ false ]);
         slideUpToHide(headerElement);
         hideMainOsdControls();
@@ -376,7 +382,7 @@ export default function (view) {
 
     function resetIdle() {
         // Restart hide timer if OSD is currently visible and there is no opened dialog
-        if (currentVisibleMenu && !mouseIsDown && !getOpenedDialog()) {
+        if (currentVisibleMenu && !mouseIsDown && !getOpenedDialog() && !cosmicOsd.isBusy()) {
             startOsdHideTimer();
         } else {
             stopOsdHideTimer();
@@ -464,6 +470,11 @@ export default function (view) {
                 break;
 
             case 'back':
+                if (!getOpenedDialog() && cosmicOsd.closeTop()) {
+                    e.preventDefault();
+                    showOsd();
+                    break;
+                }
                 // Ignore command when some dialog is opened
                 if (currentVisibleMenu === 'osd' && !getOpenedDialog()) {
                     hideOsd();
@@ -570,14 +581,6 @@ export default function (view) {
         }, state);
     }
 
-    function onBeginFetch() {
-        view.querySelector('.osdMediaStatus').classList.remove('hide');
-    }
-
-    function onEndFetch() {
-        view.querySelector('.osdMediaStatus').classList.add('hide');
-    }
-
     function bindToPlayer(player) {
         if (player !== currentPlayer) {
             releaseCurrentPlayer();
@@ -597,13 +600,7 @@ export default function (view) {
         Events.on(player, 'timeupdate', onTimeUpdate);
         Events.on(player, 'fullscreenchange', onFullscreenChanged);
         Events.on(player, 'mediastreamschange', onMediaStreamsChanged);
-        Events.on(player, 'beginFetch', onBeginFetch);
-        Events.on(player, 'endFetch', onEndFetch);
         resetUpNextDialog();
-
-        if (player.isFetching) {
-            onBeginFetch();
-        }
     }
 
     function releaseCurrentPlayer() {
@@ -622,8 +619,6 @@ export default function (view) {
             Events.off(player, 'timeupdate', onTimeUpdate);
             Events.off(player, 'fullscreenchange', onFullscreenChanged);
             Events.off(player, 'mediastreamschange', onMediaStreamsChanged);
-            Events.off(player, 'beginFetch', onBeginFetch);
-            Events.off(player, 'endFetch', onEndFetch);
             currentPlayer = null;
         }
     }
@@ -915,6 +910,7 @@ export default function (view) {
     async function updatePlaylist() {
         try {
             const playlist = await playbackManager.getPlaylist();
+            cosmicOsd.setQueueAvailable(!!playlist && playlist.length > 1);
 
             if (playlist && playlist.length > 1) {
                 const btnPreviousTrack = view.querySelector('.btnPreviousTrack');
@@ -953,45 +949,11 @@ export default function (view) {
         updateTimeDisplay(playState.PositionTicks, nowPlayingItem.RunTimeTicks, playState.PlaybackStartTimeTicks, playState.PlaybackRate, playState.BufferedRanges || []);
     }
 
-    function onSettingsButtonClick() {
-        const btn = this;
-
-        import('components/playback/playersettingsmenu').then((playerSettingsMenu) => {
-            const player = currentPlayer;
-
-            if (player) {
-                const state = playbackManager.getPlayerState(player);
-
-                // show subtitle offset feature only if player and media support it
-                const showSubOffset = playbackManager.supportSubtitleOffset(player)
-                        && playbackManager.canHandleOffsetOnCurrentSubtitle(player);
-
-                playerSettingsMenu.show({
-                    mediaType: 'Video',
-                    player: player,
-                    positionTo: btn,
-                    quality: state.MediaSource?.SupportsTranscoding,
-                    stats: true,
-                    suboffset: showSubOffset,
-                    onOption: onSettingsOption
-                }).finally(() => {
-                    resetIdle();
-                });
-
-                setTimeout(resetIdle, 0);
-            }
-        });
-    }
-
-    function onSettingsOption(selectedOption) {
-        if (selectedOption === 'stats') {
-            toggleStats();
-        } else if (selectedOption === 'suboffset') {
-            const player = currentPlayer;
-            if (player) {
-                playbackManager.enableShowingSubtitleOffset(player);
-                toggleSubtitleSync();
-            }
+    function showSubtitleOffset() {
+        const player = currentPlayer;
+        if (player) {
+            playbackManager.enableShowingSubtitleOffset(player);
+            toggleSubtitleSync();
         }
     }
 
@@ -1224,6 +1186,11 @@ export default function (view) {
 
         const key = keyboardnavigation.getKeyName(e);
 
+        if (cosmicOsd.contains(e.target) && key !== 'Escape' && key !== 'Back' && e.keyCode !== 32) {
+            resetIdle();
+            return;
+        }
+
         const btnPlayPause = osdBottomElement.querySelector('.btnPause');
 
         if (e.keyCode === 32) {
@@ -1280,6 +1247,13 @@ export default function (view) {
                 break;
             case 'Escape':
             case 'Back':
+                // First close our menus / details
+                if (!getOpenedDialog() && cosmicOsd.closeTop()) {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    showOsd();
+                    break;
+                }
                 // Ignore key when some dialog is opened
                 if (currentVisibleMenu === 'osd' && !getOpenedDialog()) {
                     hideOsd();
@@ -1427,7 +1401,7 @@ export default function (view) {
     }
 
     function onWheel(e) {
-        if (getOpenedDialog()) return;
+        if (getOpenedDialog() || cosmicOsd.contains(e.target)) return;
         if (e.deltaY < 0) {
             playbackManager.volumeUp(currentPlayer);
         }
@@ -1651,6 +1625,13 @@ export default function (view) {
     const transitionEndEventName = dom.whichTransitionEvent();
     const headerElement = document.querySelector('.skinHeader');
     const osdBottomElement = view.querySelector('.videoOsdBottom-maincontrols');
+    const cosmicOsd = createCosmicOsd(view, {
+        getPlayer: () => currentPlayer,
+        onChange: () => resetIdle(),
+        toggleStats: () => toggleStats(),
+        toggleSubtitleSync: () => toggleSubtitleSync(),
+        showSubtitleOffset: () => showSubtitleOffset()
+    });
 
     nowPlayingPositionSlider.enableKeyboardDragging();
     nowPlayingVolumeSlider.enableKeyboardDragging();
@@ -1771,7 +1752,9 @@ export default function (view) {
     view.querySelector('.btnAirPlay').addEventListener('click', function () {
         playbackManager.toggleAirPlay(currentPlayer);
     });
-    view.querySelector('.btnVideoOsdSettings').addEventListener('click', onSettingsButtonClick);
+    view.querySelector('.btnVideoOsdSettings').addEventListener('click', function () {
+        cosmicOsd.toggleSettings();
+    });
     view.addEventListener('viewhide', function () {
         clearHideAnimationEventListeners(headerElement);
         headerElement.classList.remove('hide');
@@ -1789,10 +1772,22 @@ export default function (view) {
 
         destroyStats();
         destroySubtitleSync();
+        cosmicOsd.destroy();
     });
     let lastPointerDown = 0;
     /* eslint-disable-next-line compat/compat */
     dom.addEventListener(view, window.PointerEvent ? 'pointerdown' : 'click', function (e) {
+        if (cosmicOsd.inPanel(e.target)) {
+            resetIdle();
+            return;
+        }
+
+        if (cosmicOsd.isPanelOpen()) {
+            cosmicOsd.closeAll();
+            showOsd();
+            return;
+        }
+
         if (dom.parentWithClass(e.target, ['videoOsdBottom', 'upNextContainer'])) {
             showOsd();
             return;

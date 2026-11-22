@@ -47,6 +47,7 @@ import { useUsersDetails } from 'hooks/useUsers';
 import globalize from 'lib/globalize';
 
 import { PageHeader } from '../../components/cosmic';
+import { readPref, writePref } from 'utils/syncedPrefs';
 
 type ViewMode = 'cards' | 'table';
 type Filter = 'all' | 'online' | 'playing' | 'today' | 'inactive';
@@ -56,7 +57,7 @@ const VIEW_KEY = 'dashboardDevicesView';
 
 const readView = (): ViewMode => {
     try {
-        return localStorage.getItem(VIEW_KEY) === 'table' ? 'table' : 'cards';
+        return readPref(VIEW_KEY) === 'table' ? 'table' : 'cards';
     } catch {
         return 'cards';
     }
@@ -177,7 +178,7 @@ export const Component = () => {
         if (!value) return;
         setView(value);
         try {
-            localStorage.setItem(VIEW_KEY, value);
+            writePref(VIEW_KEY, value);
         } catch {
             // ignore storage errors
         }

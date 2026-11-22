@@ -40,6 +40,7 @@ import { deleteProfile, fetchProfileLinks } from 'utils/profiles';
 import globalize from 'lib/globalize';
 
 import { PageHeader } from '../../components/cosmic';
+import { readPref, writePref } from 'utils/syncedPrefs';
 
 type ViewMode = 'cards' | 'table' | 'profiles';
 type Filter = 'all' | 'admins' | 'disabled' | 'hidden' | 'accounts' | 'profiles';
@@ -49,7 +50,7 @@ const DAY_MS = 24 * 60 * 60 * 1000;
 
 const readView = (): ViewMode => {
     try {
-        const value = localStorage.getItem(VIEW_KEY);
+        const value = readPref(VIEW_KEY);
         return value === 'table' || value === 'profiles' ? value : 'cards';
     } catch {
         return 'cards';
@@ -127,7 +128,7 @@ const UserProfiles = () => {
         if (!value) return;
         setView(value);
         try {
-            localStorage.setItem(VIEW_KEY, value);
+            writePref(VIEW_KEY, value);
         } catch {
             // ignore storage errors
         }

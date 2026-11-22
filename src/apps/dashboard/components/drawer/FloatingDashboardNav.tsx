@@ -23,6 +23,7 @@ import { useCustomLogo } from 'utils/customLogo';
 
 import DrawerSections from './DrawerSections';
 import { NavCollapsedContext } from './navContext';
+import { readPref, writePref } from 'utils/syncedPrefs';
 
 export const NAV_GAP = 12;
 export const NAV_COLLAPSED_WIDTH = 72;
@@ -32,7 +33,7 @@ const STORAGE_KEY = 'dashboardNavPinned';
 
 const readPinned = () => {
     try {
-        return localStorage.getItem(STORAGE_KEY) === 'true';
+        return readPref(STORAGE_KEY) === 'true';
     } catch {
         return false;
     }
@@ -47,7 +48,7 @@ export const usePinnedNav = () => {
     const togglePinned = useCallback(() => {
         setPinned(value => {
             try {
-                localStorage.setItem(STORAGE_KEY, String(!value));
+                writePref(STORAGE_KEY, String(!value));
             } catch {
                 // ignore storage errors (private mode, blocked storage)
             }

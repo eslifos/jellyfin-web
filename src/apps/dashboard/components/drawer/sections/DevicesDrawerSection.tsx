@@ -1,6 +1,7 @@
 import Analytics from '@mui/icons-material/Analytics';
 import BarChart from '@mui/icons-material/BarChart';
 import Devices from '@mui/icons-material/Devices';
+import DownloadForOffline from '@mui/icons-material/DownloadForOffline';
 import History from '@mui/icons-material/History';
 import PeopleAlt from '@mui/icons-material/PeopleAlt';
 import List from '@mui/material/List';
@@ -29,6 +30,14 @@ const DevicesDrawerSection = () => {
                         <Devices />
                     </ListItemIcon>
                     <ListItemText primary={globalize.translate('HeaderDevices')} />
+                </ListItemLink>
+            </ListItem>
+            <ListItem disablePadding>
+                <ListItemLink to='/dashboard/downloads'>
+                    <ListItemIcon>
+                        <DownloadForOffline />
+                    </ListItemIcon>
+                    <ListItemText primary={globalize.translate('DmTitle')} />
                 </ListItemLink>
             </ListItem>
             <ListItem disablePadding>

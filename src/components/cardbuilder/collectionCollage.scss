@@ -1,0 +1,39 @@
+// Collage of the first movies of a collection without a poster (collectionCollage.ts)
+
+.jfCollage {
+    position: absolute;
+    inset: 0;
+    z-index: 0;
+    display: grid;
+    gap: 2px;
+    overflow: hidden;
+    border-radius: inherit;
+    background: #0b0d1c;
+    pointer-events: none;
+
+    &.jfCollage-1 {
+        grid-template-rows: 1fr;
+    }
+
+    &.jfCollage-2 {
+        grid-template-rows: 1fr 1fr;
+    }
+
+    &.jfCollage-3 {
+        grid-template-rows: 1fr 1fr 1fr;
+    }
+
+    // A soft gradient so the collection name / badges stay readable
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(180deg, rgba(0, 0, 0, 0) 55%, rgba(0, 0, 0, 0.45) 100%);
+    }
+}
+
+.jfCollage-strip {
+    background-size: cover;
+    background-position: center 30%;
+    background-repeat: no-repeat;
+}

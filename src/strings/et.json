@@ -307,7 +307,6 @@
     "FileNotFound": "Faili ei leitud.",
     "File": "Fail",
     "FFmpegSavePathNotFound": "FFmpeg puudub sisestatud rajal. Nõutav on ka FFprobe ja see peab leiduma samas kaustas. Need komponendid on tavaliselt samasse allalaadimisse koondatud. Palun kontrolli rada ja proovi uuesti.",
-    "FetchingData": "Lisaandmete toomine",
     "Features": "Funktsioonid",
     "Favorite": "Lemmik",
     "FastForward": "Keri edasi",

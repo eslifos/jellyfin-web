@@ -10,8 +10,8 @@ import MenuItem from '@mui/material/MenuItem';
 import dialog from 'components/dialog/dialog';
 import { playbackManager } from 'components/playback/playbackmanager';
 import React, { FC, useCallback, useState } from 'react';
-import { Link } from 'react-router-dom';
 
+import { openPlayer } from 'apps/modern/components/Player/events';
 import { enable, isEnabled } from 'scripts/autocast';
 import globalize from 'lib/globalize';
 
@@ -49,6 +49,12 @@ const RemotePlayActiveMenu: FC<RemotePlayActiveMenuProps> = ({
     }, [ isAutoCastEnabled ]);
 
     const remotePlayerName = playerInfo?.deviceName || playerInfo?.name;
+
+    // The full player of the app is the remote control of that device
+    const openRemoteControl = useCallback(() => {
+        onMenuClose();
+        openPlayer();
+    }, [ onMenuClose ]);
 
     const disconnectRemotePlayer = useCallback(() => {
         if (playbackManager.getSupportedCommands().indexOf('EndSession') !== -1) {
@@ -153,11 +159,7 @@ const RemotePlayActiveMenu: FC<RemotePlayActiveMenuProps> = ({
 
             <Divider />
 
-            <MenuItem
-                component={Link}
-                to='/queue'
-                onClick={onMenuClose}
-            >
+            <MenuItem onClick={openRemoteControl}>
                 <ListItemIcon>
                     <SettingsRemote />
                 </ListItemIcon>

@@ -4,16 +4,18 @@ import { type Theme } from '@mui/material/styles';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import { Outlet, useLocation } from 'react-router-dom';
 
-import LibraryScanIndicator from 'apps/dashboard/features/libraries/components/LibraryScanIndicator';
 import AppBody from 'components/AppBody';
 import { initCardBadges } from 'components/cardbuilder/cardBadges';
+import { initCollectionCollage } from 'components/cardbuilder/collectionCollage';
 import CustomCss from 'components/CustomCss';
 import ThemeCss from 'components/ThemeCss';
 import { useApi } from 'hooks/useApi';
 import { PUBLIC_PATHS } from 'components/router/appRouter';
 
 import AppDrawer, { isDrawerPath } from './components/drawers/AppDrawer';
+import Player from './components/Player';
 import FloatingNav from './components/FloatingNav';
+import SyncPlayInviteHandler from './features/syncPlay/components/SyncPlayInviteHandler';
 import LibraryTopBar from './features/libraries/components/LibraryTopBar';
 import { LibraryProvider } from './features/libraries/hooks/useLibrary';
 import { isLibraryPath } from './features/libraries/utils/path';
@@ -27,7 +29,10 @@ export const Component = () => {
 
     // Poster overlays (resolution, audio, ratings...) on every card
     useEffect(() => {
-        if (user) initCardBadges();
+        if (user) {
+            initCardBadges();
+            initCollectionCollage();
+        }
     }, [ user ]);
 
     const isMediumScreen = useMediaQuery((t: Theme) => t.breakpoints.up('md'));
@@ -75,11 +80,13 @@ export const Component = () => {
                     <AppBody>
                         <Outlet />
                     </AppBody>
-                    <LibraryScanIndicator />
                 </Box>
             </Box>
 
             {/* Floating pill navigation */}
+            {user && <SyncPlayInviteHandler />}
+            {/* The player (small bar and full player) for everything that plays */}
+            {user && <Player />}
             <FloatingNav />
 
             <ThemeCss />

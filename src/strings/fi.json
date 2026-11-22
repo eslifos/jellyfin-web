@@ -892,7 +892,6 @@
     "DeinterlaceMethodHelp": "Valitse lomitetun sisällön transkoodauksessa käytettävä lomituksen poistomenetelmä. Käytettäessä lomituksen poistoa tukevaa laitteistokiihdytystä, ei tätä asetusta huomioida.",
     "FormatValue": "Muoto: {0}",
     "General": "Yleiset",
-    "FetchingData": "Noudetaan lisätietoja",
     "Features": "Ominaisuudet",
     "ErrorStartHourGreaterThanEnd": "Loppumisajan on oltava myöhemmin kuin aloitusaika.",
     "MediaInfoAnamorphic": "Anamorfinen",
