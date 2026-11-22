@@ -457,7 +457,7 @@ export const Component = () => {
                                         <Typography sx={{ fontSize: '0.84rem', fontWeight: 600, mb: 0.5 }}>{globalize.translate('HlthScriptTitle', scriptPaths.length)}</Typography>
                                         <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.65)', mb: 1 }}>{globalize.translate('HlthScriptHelp')}</Typography>
                                         <Box component='pre' sx={{ m: 0, mb: 1, p: 1, borderRadius: '8px', background: 'rgba(0,0,0,0.35)', fontSize: '0.72rem', color: '#9be7ff', whiteSpace: 'pre-wrap', wordBreak: 'break-all' }}>
-                                            {'nano ~/danados.txt   # pega la lista, guarda con Ctrl+O y sal con Ctrl+X\npython3 /mnt/respaldos/jellyfin/scripts/reparar-vobsub.py --lista ~/danados.txt\npython3 /mnt/respaldos/jellyfin/scripts/reparar-vobsub.py --lista ~/danados.txt --aplicar'}
+                                            {'nano ~/danados.txt   # pega la lista, guarda con Ctrl+O y sal con Ctrl+X\npython3 reparar-vobsub.py --lista ~/danados.txt\npython3 reparar-vobsub.py --lista ~/danados.txt --aplicar'}
                                         </Box>
                                         <Button size='small' variant='contained' color='warning' startIcon={<ContentCopyIcon />} onClick={copyList}>
                                             {globalize.translate(listCopied ? 'HlthListCopied' : 'HlthCopyList', scriptPaths.length)}
