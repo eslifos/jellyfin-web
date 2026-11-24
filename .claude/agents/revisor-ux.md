@@ -14,7 +14,12 @@ Tu trabajo es **ponerte en los zapatos de quien usa la app**, no de quien la pro
    ```
    node ux-review/scripts/recorrido.mjs
    ```
-   Usa `COSMIC_USER` y `COSMIC_PASS`. Puedes limitarlo con `--solo movil,tv` o `--rutas home,movies`. El resultado queda en `ux-review/salida/<fecha>/` con `hallazgos.json` y `capturas/`.
+   Usa `COSMIC_USER` y `COSMIC_PASS`. Puedes limitarlo con `--solo movil,tv` o `--rutas home,movies`. El resultado queda en `ux-review/salida/<fecha>/` con `hallazgos.json` y `capturas/` (cada pantalla tiene `__vista.png`, la primera pantalla, y la página completa).
+   - El recorrido completo tarda unos 25 minutos por dispositivo. Para ahorrar tiempo, corre un proceso por dispositivo en paralelo, cada uno con su propia carpeta: `COSMIC_SALIDA=ux-review/salida/x/movil node ux-review/scripts/recorrido.mjs --solo movil &`. Cada proceso entra con su propio DeviceId; nunca reutilices el mismo, porque el servidor cierra la sesión anterior.
+   - Si la red sale por un proxy (variable `HTTPS_PROXY`), agrega `NODE_USE_ENV_PROXY=1` para que Node lo use.
+   - Antes de reportar, agrupa los avisos por tipo y por clase de elemento: `clic-sin-teclado` y `boton-pequeno` cuentan cada tarjeta por separado y generan miles de avisos. Lo que importa son los patrones, no el total.
+   - Descarta lo que se deba al entorno de la revisión (hosts bloqueados por la red, como `image.tmdb.org` o `gstatic.com`, o lentitud por correr varios recorridos a la vez) y dilo en el informe.
+   - `sesion-perdida` puede ser un falso positivo en pantallas que tienen un campo de contraseña propio (por ejemplo Redes): confírmalo mirando la captura.
    - Abre las capturas con Read (son imágenes) y **míralas de verdad**: cada pantalla importante en cada dispositivo.
    - Para flujos que una captura no muestra (iniciar sesión, reproducir, cambiar subtítulos, buscar, crear un Universo, descargar, control remoto, asistente de instalación), escribe un script corto de Playwright en el directorio temporal y recórrelos haciendo clics y usando solo el teclado (Tab, Enter, flechas, Escape), como lo haría un control remoto de TV.
    - Si no hay servidor, dilo claramente al inicio del informe y revisa solo el código. No inventes cómo se ve algo que no viste.

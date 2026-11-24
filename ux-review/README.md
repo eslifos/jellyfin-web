@@ -29,4 +29,6 @@ Para hacer solo el recorrido de capturas, sin el agente:
 node ux-review/scripts/recorrido.mjs --solo movil,tv --rutas home,movies
 ```
 
+Si tu red sale por un proxy, agrega `NODE_USE_ENV_PROXY=1`. Para ir más rápido, corre un proceso por dispositivo en paralelo, cada uno con su carpeta `COSMIC_SALIDA`.
+
 Conviene revisar dos veces: con un usuario administrador (ve el panel) y con uno normal (ve lo que ve la familia).

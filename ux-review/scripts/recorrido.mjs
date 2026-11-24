@@ -60,10 +60,13 @@ const RUTAS_ADMIN = [
 ];
 
 const sello = new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19);
-const SALIDA = path.join('ux-review', 'salida', sello);
+const SALIDA = process.env.COSMIC_SALIDA || path.join('ux-review', 'salida', sello);
 fs.mkdirSync(path.join(SALIDA, 'capturas'), { recursive: true });
 
-const AUTH = 'MediaBrowser Client="Revision UX", Device="Playwright", DeviceId="revision-ux", Version="1.0.0"';
+// Cada recorrido usa su propio dispositivo: si dos recorridos comparten DeviceId,
+// el servidor cierra la sesión del primero al entrar el segundo.
+const DEVICE_ID = `revision-ux-${(opt('solo') || ['todo']).join('-')}-${process.pid}`;
+const AUTH = `MediaBrowser Client="Revision UX", Device="Playwright", DeviceId="${DEVICE_ID}", Version="1.0.0"`;
 
 async function api(p, init = {}, token) {
     const headers = { 'Content-Type': 'application/json', Authorization: AUTH + (token ? `, Token="${token}"` : '') };
@@ -195,10 +198,13 @@ async function main() {
             }
             const ms = Date.now() - t0;
             const archivo = `${disp}__${nombre.replace(/[^a-z0-9_-]/gi, '_').slice(0, 60)}.png`;
+            // Primera pantalla (lo que ve el usuario al entrar) y página completa.
+            await page.screenshot({ path: path.join(SALIDA, 'capturas', archivo.replace('.png', '__vista.png')) }).catch(() => {});
             await page.screenshot({ path: path.join(SALIDA, 'capturas', archivo), fullPage: true }).catch(() => {});
             const hallazgos = cargo ? await page.evaluate(revisarPagina, !!conf.isMobile).catch((e) => [{ tipo: 'error-revision', detalle: e.message }]) : [];
             if (ms > 6000) hallazgos.push({ tipo: 'pantalla-lenta', detalle: `Tardó ${(ms / 1000).toFixed(1)} s en quedar lista` });
-            if (page.url().includes('#/login') && ruta !== 'login') hallazgos.push({ tipo: 'sesion-perdida', detalle: 'Mandó al inicio de sesión' });
+            const enLogin = page.url().includes('login') || await page.locator('input[type=password]:visible').count().catch(() => 0) > 0;
+            if (enLogin && !/login|password|userprofile/.test(ruta)) hallazgos.push({ tipo: 'sesion-perdida', detalle: 'Mandó al inicio de sesión' });
 
             resultado.pantallas.push({ dispositivo: disp, ruta, captura: `capturas/${archivo}`, ms, errores: [...new Set(errores)], fallosRed: [...new Set(fallos)], hallazgos });
             process.stdout.write(`${disp.padEnd(10)} ${nombre.padEnd(40)} ${hallazgos.length} hallazgos, ${errores.length} errores\n`);
