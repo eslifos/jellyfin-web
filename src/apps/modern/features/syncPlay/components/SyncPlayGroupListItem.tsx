@@ -67,6 +67,7 @@ const SyncPlayGroupListItem: FC<SyncPlayGroupListItemProps> = ({
                     title={tooltip}
                 >
                     <IconButton
+                        aria-label={tooltip}
                         onClick={onClick}
                     >
                         <ButtonIcon />

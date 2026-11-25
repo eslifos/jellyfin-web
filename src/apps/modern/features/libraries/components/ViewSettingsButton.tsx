@@ -21,6 +21,7 @@ import Switch from '@mui/material/Switch';
 import globalize from 'lib/globalize';
 import { LibraryViewSettings, ViewMode } from 'types/library';
 import { LibraryTab } from 'types/libraryTab';
+import Tooltip from '@mui/material/Tooltip';
 
 const IMAGE_TYPE_EXCLUDED_VIEWS = [
     LibraryTab.Episodes,
@@ -144,7 +145,8 @@ const ViewSettingsButton: FC<ViewSettingsButtonProps> = ({
                         <ListItemText>
                             {globalize.translate('GridView')}
                         </ListItemText>
-                        <IconButton
+                        <Tooltip title={globalize.translate('Settings')}><IconButton
+                            aria-label={globalize.translate('Settings')}
                             onClick={onSettingsClick}
                             size='small'
                             sx={{
@@ -152,7 +154,7 @@ const ViewSettingsButton: FC<ViewSettingsButtonProps> = ({
                             }}
                         >
                             <Settings fontSize='small' />
-                        </IconButton>
+                        </IconButton></Tooltip>
                     </MenuItem>
 
                     <Collapse
