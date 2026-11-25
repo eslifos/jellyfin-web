@@ -24,6 +24,16 @@ Tu trabajo es **ponerte en los zapatos de quien usa la app**, no de quien la pro
    - Para flujos que una captura no muestra (iniciar sesión, reproducir, cambiar subtítulos, buscar, crear un Universo, descargar, control remoto, asistente de instalación), escribe un script corto de Playwright en el directorio temporal y recórrelos haciendo clics y usando solo el teclado (Tab, Enter, flechas, Escape), como lo haría un control remoto de TV.
    - Si no hay servidor, dilo claramente al inicio del informe y revisa solo el código. No inventes cómo se ve algo que no viste.
 
+   - **Auditoría profunda** (cuando pidan una revisión completa o crítica), con los scripts de `ux-review/scripts/auditoria/` (necesitan `npm i --no-save axe-core lighthouse`; las capturas quedan en `ux-review/salida/auditoria/`):
+     - `node ux-review/scripts/auditoria/conectividad.cjs movil`: wifi que se cae, recarga sin conexión, servidor con 502 o apagado, sesión vencida, red 3G. Mira cada captura: ninguna debe quedar en blanco ni cargando para siempre, y todo debe recuperarse solo.
+     - `node ux-review/scripts/auditoria/lh.mjs home movies "details?id=<id>"`: Lighthouse con caché vacía en móvil y escritorio. Revisa qué pesa más (archivo `lh-*.json`).
+     - `node ux-review/scripts/auditoria/axe.cjs`: accesibilidad en 11 pantallas.
+     - `node ux-review/scripts/auditoria/tv.cjs`: registra el foco en cada pulsación de flecha en modo TV.
+     - `node ux-review/scripts/auditoria/player.cjs`: tiempo de arranque, controles, atajos y errores del reproductor (reproduce unos 30 s).
+     - Comprueba también que el service worker funcione: `dist/serviceworker.js` no debe contener `webpackChunk`, y con la red cortada la app debe abrir y llegar a Descargas.
+     - Abre y cierra cada menú (perfil, Más, filtros, orden, tarjeta, detalle) y mira la captura; no confíes solo en detecciones automáticas.
+     - Nunca guardes, borres ni cambies nada en el servidor que estás revisando.
+
 2. **Revisa el código de lo que se cambió.** El trabajo propio está en la rama actual frente a `0a580ce8df` (la versión 12.4 original). `git diff --stat 0a580ce8df HEAD -- src ':!src/strings'` te da la lista. Mira sobre todo `src/apps/modern`, `src/apps/legacy/routes`, `src/apps/dashboard`, `src/apps/wizard`, `src/themes/cosmic` y los `.scss` nuevos.
 
 3. **Evalúa con esta lista**, siempre desde lo que siente la persona:
@@ -67,7 +77,7 @@ Cosas que no están rotas pero harían la app más agradable, cada una con su pr
 Para no romperlo al corregir lo demás.
 ```
 
-Ordena por lo que más afecta al usuario: primero lo que bloquea (no puede entrar, no puede reproducir, no puede usar la TV), luego lo que molesta, al final los detalles. Agrupa problemas que se arreglan juntos en un solo prompt.
+Sé exigente: compáralo con Netflix, Disney+ y Plex, y califica cada área del 1 al 10. Incluye una sección "Verificado como corregido" con lo que se arregló desde el informe anterior. Ordena por lo que más afecta al usuario: primero lo que bloquea (no puede entrar, no puede reproducir, no puede usar la TV), luego lo que molesta, al final los detalles. Agrupa problemas que se arreglan juntos en un solo prompt.
 
 ### Reglas para cada prompt
 Cada prompt se pegará tal cual en una sesión nueva de Claude Code que no sabe nada de esta revisión, así que debe:
