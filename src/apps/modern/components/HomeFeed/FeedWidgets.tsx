@@ -19,6 +19,7 @@ import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 
 import { hashColor, itemRoute } from './feedUtils';
+import { tmdbImageUrl } from './tmdbImage';
 
 export interface UpcomingRelease {
     Kind: string;
@@ -27,6 +28,7 @@ export interface UpcomingRelease {
     ReleaseDate: string;
     Overview?: string | null;
     ImageUrl?: string | null;
+    ImagePath?: string | null;
     BackdropUrl?: string | null;
     Rating?: number | null;
     SeriesId?: string | null;
@@ -44,7 +46,7 @@ export const dayLabel = (iso: string) => {
     const diff = Math.round((day.getTime() - today.getTime()) / 86400000);
     if (diff === 0) return globalize.translate('HfToday');
     if (diff === 1) return globalize.translate('HfTomorrow');
-    return new Intl.DateTimeFormat(undefined, { weekday: diff > 0 && diff < 7 ? 'short' : undefined, day: 'numeric', month: 'short', year: Math.abs(diff) > 300 ? 'numeric' : undefined }).format(day);
+    return new Intl.DateTimeFormat(globalize.getCurrentDateTimeLocale(), { weekday: diff > 0 && diff < 7 ? 'short' : undefined, day: 'numeric', month: 'short', year: Math.abs(diff) > 300 ? 'numeric' : undefined }).format(day);
 };
 
 /** Image that tries several sources in order (TMDb first, then the library's own images). */
@@ -75,9 +77,11 @@ export const UpcomingCard: FC<{ release: UpcomingRelease }> = ({ release }) => {
     // TMDb still / backdrop first; many future episodes have none, then the series' own art
     const sources = useMemo(() => {
         const local = (id: string | null | undefined, type: ImageType) => (api && id ? getImageApi(api).getItemImageUrlById(id, type, { maxWidth: 560, quality: 90 }) : undefined);
+        // The TMDb picture from the server cache, at the card size; straight from TMDb if this server has no cache
+        const tmdb = [ api ? tmdbImageUrl(api.basePath, release, 'w300') : undefined, release.ImageUrl ];
         return [
-            release.Kind === 'Episode' ? release.ImageUrl : release.BackdropUrl,
-            release.Kind === 'Episode' ? release.BackdropUrl : release.ImageUrl,
+            ...(release.Kind === 'Episode' ? tmdb : [ release.BackdropUrl ]),
+            ...(release.Kind === 'Episode' ? [ release.BackdropUrl ] : tmdb),
             local(release.SeriesId, ImageType.Backdrop),
             local(release.SeriesId, ImageType.Thumb),
             local(release.RelatedItemId, ImageType.Backdrop),

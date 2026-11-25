@@ -14,6 +14,11 @@ html[data-theme='cosmic'] .dashboardDocument {
         #080810;
     background-attachment: fixed;
 
+    // ── Help under the fields: the grey of the descriptions in the cards (errors keep their color) ──
+    .MuiFormHelperText-root:not(.Mui-error) {
+        color: rgba(255, 255, 255, 0.4);
+    }
+
     // ── Top bar ──
     .MuiAppBar-root {
         background: rgba(8, 8, 22, 0.78);

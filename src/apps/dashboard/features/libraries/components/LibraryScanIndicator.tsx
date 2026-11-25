@@ -14,6 +14,7 @@ import Button from '@mui/material/Button';
 import { Link } from 'react-router-dom';
 
 import globalize from 'lib/globalize';
+import { formatNumber } from 'utils/localeNumber';
 
 import { useLibraryScans } from '../api/useLibraryScans';
 import { activityLabelKey, useLibraryActivity } from '../api/useLibraryActivity';
@@ -37,24 +38,41 @@ const LibraryScanIndicator: FC = () => {
     else if (scans.length > 1) scanLabel = globalize.translate('LibScansCount', scans.length);
     const label = current?.Title || scanLabel || globalize.translate('LibScanning');
     const heading = current ? globalize.translate(activityLabelKey(current.Kind)) : globalize.translate('LibScanning');
+    const detail = `${heading}: ${label}`;
+    // "42 %" / "42%", as the language of the app writes it
+    const percent = avg > 0 ? formatNumber(Math.floor(avg) / 100, { style: 'percent', maximumFractionDigits: 0 }) : null;
+    const summary = percent ? globalize.translate('LibScanningPercent', percent) : detail;
 
     return (
         <>
-            <Tooltip title={`${heading}: ${label}`} placement='top'>
+            <Tooltip
+                placement='top'
+                title={percent ? (
+                    <>
+                        <Box component='span' sx={{ display: 'block', fontWeight: 700 }}>{summary}</Box>
+                        <Box component='span' sx={{ display: 'block', opacity: 0.75 }}>{detail}</Box>
+                    </>
+                ) : detail}
+            >
                 <Box
                     component='button'
                     type='button'
                     onClick={onOpen}
-                    aria-label={`${heading}: ${label}`}
+                    aria-label={percent ? `${summary}. ${detail}` : detail}
                     sx={{
-                        display: 'grid', placeItems: 'center', p: '8px 12px', border: 0, borderRadius: '14px',
+                        // 30 px ring + padding: the same height as the other buttons of the bar
+                        display: 'grid', placeItems: 'center', p: '5px 10px', border: 0, borderRadius: '14px',
                         background: 'transparent', color: '#fff', cursor: 'pointer',
                         '&:hover': { background: 'rgba(0,164,220,0.12)' }
                     }}
                 >
                     <Box sx={{ position: 'relative', display: 'grid', placeItems: 'center' }}>
-                        <CircularProgress size={24} thickness={4.5} variant={avg > 0 ? 'determinate' : 'indeterminate'} value={avg} sx={{ color: '#00a4dc' }} />
-                        {avg > 0 && <Typography sx={{ position: 'absolute', fontSize: '0.5rem', fontWeight: 800 }}>{Math.floor(avg)}</Typography>}
+                        <CircularProgress size={30} thickness={4} variant={percent ? 'determinate' : 'indeterminate'} value={avg} sx={{ color: '#00a4dc' }} />
+                        {percent && (
+                            <Typography aria-hidden='true' sx={{ position: 'absolute', fontSize: '0.47rem', fontWeight: 800, letterSpacing: '-0.02em', whiteSpace: 'nowrap', lineHeight: 1 }}>
+                                {percent}
+                            </Typography>
+                        )}
                     </Box>
                 </Box>
             </Tooltip>

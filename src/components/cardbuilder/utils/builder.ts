@@ -52,6 +52,18 @@ export const isResizable = (windowWidth: number): boolean => {
     return false;
 };
 
+/** Items whose covers are square: a tall poster would cut them. */
+const SQUARE_COVER_TYPES = new Set([ 'AudioBook' ]);
+
+/**
+ * Whether a set of cards is mostly audiobooks (half or more), so an automatic shape is square
+ * even when the library mixes them with books.
+ * @param items the items of the cards
+ */
+export const hasMostlySquareCovers = (items: { Type?: string | null }[]) => (
+    items.length > 0 && items.filter(i => i.Type && SQUARE_COVER_TYPES.has(i.Type)).length * 2 >= items.length
+);
+
 /**
  * Resolves mixed shape based on aspect ratio
  * @param primaryImageAspectRatio image aspect ratio that determines mixed shape

@@ -10,6 +10,7 @@ import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import AlbumIcon from '@mui/icons-material/Album';
 import CalendarViewWeekIcon from '@mui/icons-material/CalendarViewWeek';
 import DevicesIcon from '@mui/icons-material/Devices';
 import DoneAllIcon from '@mui/icons-material/DoneAll';
@@ -17,7 +18,12 @@ import EmojiEventsIcon from '@mui/icons-material/EmojiEvents';
 import GroupIcon from '@mui/icons-material/Group';
 import HistoryIcon from '@mui/icons-material/History';
 import MemoryIcon from '@mui/icons-material/Memory';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import MovieIcon from '@mui/icons-material/Movie';
+import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import MusicVideoIcon from '@mui/icons-material/MusicVideo';
+import PersonIcon from '@mui/icons-material/Person';
+import PieChartIcon from '@mui/icons-material/PieChart';
 import PlayArrowIcon from '@mui/icons-material/PlayArrow';
 import ScheduleIcon from '@mui/icons-material/Schedule';
 import ShowChartIcon from '@mui/icons-material/ShowChart';
@@ -26,8 +32,9 @@ import TvIcon from '@mui/icons-material/Tv';
 import { Link } from 'react-router-dom';
 
 import { toggleSx } from 'apps/dashboard/features/plugins/components/PluginCosmic';
-import { KIND_COLORS, type StatsRank, type StatsTotals, formatDuration, useStatsOverview } from 'apps/dashboard/features/stats/api/playbackStats';
+import { KINDS, KIND_COLORS, type StatsRank, type StatsTotals, daySegments, formatDuration, hideBrokenImage, kindLegend, useStatsOverview } from 'apps/dashboard/features/stats/api/playbackStats';
 import BarChart, { type BarDatum } from 'apps/dashboard/features/stats/components/BarChart';
+import KindSplit from 'apps/dashboard/features/stats/components/KindSplit';
 import { relativeTime } from 'apps/dashboard/features/tasks/components/TaskCosmic';
 import Loading from 'components/loading/LoadingComponent';
 import Page from 'components/Page';
@@ -82,7 +89,17 @@ const KpiTile: FC<{ icon: React.ReactNode; color: string; value: string; label: 
     </Paper>
 );
 
-const RankList: FC<{ rows: StatsRank[]; kind: 'user' | 'series' | 'movie' | 'plain'; emptyKey: string }> = ({ rows, kind, emptyKey }) => {
+type RankKind = 'user' | 'series' | 'movie' | 'media' | 'plain';
+
+const isTitleKind = (kind: RankKind) => kind === 'series' || kind === 'movie' || kind === 'media';
+
+const rankLink = (kind: RankKind, row: StatsRank) => {
+    if (!row.Id) return undefined;
+    if (kind === 'user') return `/dashboard/users/${row.Id}/profile`;
+    return isTitleKind(kind) ? `/details?id=${row.Id}` : undefined;
+};
+
+const RankList: FC<{ rows: StatsRank[]; kind: RankKind; emptyKey: string }> = ({ rows, kind, emptyKey }) => {
     const { api } = useApi();
     const max = Math.max(1, ...rows.map(r => r.WatchedSeconds));
     if (!rows.length) return <Typography sx={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.5)' }}>{globalize.translate(emptyKey)}</Typography>;
@@ -90,18 +107,17 @@ const RankList: FC<{ rows: StatsRank[]; kind: 'user' | 'series' | 'movie' | 'pla
     return (
         <Stack spacing={1}>
             {rows.map((r, i) => {
-                const img = (kind === 'series' || kind === 'movie') && r.Id && api
-                    ? getImageApi(api).getItemImageUrlById(r.Id, ImageType.Primary, { maxHeight: 90 })
-                    : undefined;
-                const link = (kind === 'series' || kind === 'movie') && r.Id ? `/details?id=${r.Id}` : (kind === 'user' && r.Id ? `/dashboard/users/${r.Id}/profile` : undefined);
+                const imageId = isTitleKind(kind) ? (r.ImageId || r.Id) : null;
+                const img = imageId && api ? getImageApi(api).getItemImageUrlById(imageId, ImageType.Primary, { maxHeight: 90 }) : undefined;
+                const link = rankLink(kind, r);
                 const content = (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, p: 1, borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', '&:hover': link ? { borderColor: 'rgba(0,164,220,0.4)' } : undefined }}>
                         <Typography sx={{ width: 18, textAlign: 'center', fontSize: '0.8rem', fontWeight: 700, color: i < 3 ? '#ffca28' : 'rgba(255,255,255,0.4)' }}>{i + 1}</Typography>
-                        {img && <Box component='img' src={img} alt='' loading='lazy' sx={{ width: 30, height: 45, objectFit: 'cover', borderRadius: '6px', flexShrink: 0, background: 'rgba(255,255,255,0.05)' }} />}
+                        {img && <Box component='img' src={img} alt='' loading='lazy' onError={hideBrokenImage} sx={{ width: kind === 'media' ? 40 : 30, height: kind === 'media' ? 40 : 45, objectFit: 'cover', borderRadius: '6px', flexShrink: 0, background: 'rgba(255,255,255,0.05)' }} />}
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Typography noWrap sx={{ fontSize: '0.86rem', fontWeight: 600, color: '#fff' }}>{r.Name || '—'}</Typography>
                             <Typography noWrap sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>
-                                {formatDuration(r.WatchedSeconds)} · {globalize.translate('StsPlaysN', r.Plays)}
+                                {r.Subtitle ? `${r.Subtitle} · ` : ''}{formatDuration(r.WatchedSeconds)} · {globalize.translate('StsPlaysN', r.Plays)}
                                 {kind !== 'user' && kind !== 'plain' && r.Users > 1 ? ` · ${globalize.translate('StsUsersN', r.Users)}` : ''}
                                 {r.LastPlayedUtc && kind === 'user' ? ` · ${relativeTime(r.LastPlayedUtc)}` : ''}
                             </Typography>
@@ -142,11 +158,7 @@ export const Component = () => {
                 id: d.Date,
                 label: i % every === 0 || i === n - 1 ? (i === n - 1 ? globalize.translate('StsToday') : date.toLocaleDateString(locale(), { day: 'numeric', month: 'short' })) : '',
                 title: `${date.toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' })} · ${globalize.translate('StsPlaysN', d.Plays)}`,
-                segments: [
-                    { key: 'e', label: globalize.translate('StsEpisodes'), value: d.EpisodeSeconds, color: KIND_COLORS.episode },
-                    { key: 'm', label: globalize.translate('StsMovies'), value: d.MovieSeconds, color: KIND_COLORS.movie },
-                    { key: 'o', label: globalize.translate('StsOther'), value: d.OtherSeconds, color: KIND_COLORS.other }
-                ]
+                segments: daySegments(d)
             };
         });
     }, [ data ]);
@@ -179,6 +191,13 @@ export const Component = () => {
     const busiestHour = data ? data.PlaysByHour.indexOf(Math.max(...data.PlaysByHour)) : -1;
     const busiestDay = data ? data.SecondsByWeekday.indexOf(Math.max(...data.SecondsByWeekday)) : -1;
     const hasData = !!cur && cur.Plays > 0;
+    const mediaTops = [
+        { key: 'artists', titleKey: 'StsTopArtists', icon: <PersonIcon />, color: KIND_COLORS.music, rows: data?.TopArtists },
+        { key: 'albums', titleKey: 'StsTopAlbums', icon: <AlbumIcon />, color: KIND_COLORS.music, rows: data?.TopAlbums },
+        { key: 'songs', titleKey: 'StsTopSongs', icon: <MusicNoteIcon />, color: KIND_COLORS.music, rows: data?.TopSongs },
+        { key: 'videos', titleKey: 'StsTopMusicVideos', icon: <MusicVideoIcon />, color: KIND_COLORS.musicVideo, rows: data?.TopMusicVideos },
+        { key: 'books', titleKey: 'StsTopBooks', icon: <MenuBookIcon />, color: KIND_COLORS.book, rows: data?.TopBooks }
+    ].filter(top => top.rows?.length);
 
     return (
         <Page id='statsPage' title={globalize.translate('StsTitle')} className='mainAnimatedPage type-interior fullWidthContent'>
@@ -219,28 +238,30 @@ export const Component = () => {
                                 <Button size='small' onClick={() => setShowTable(v => !v)}>{globalize.translate(showTable ? 'StsShowChart' : 'StsShowTable')}</Button>
                             </Box>
                             {showTable ? (
-                                <Box component='table' sx={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.78rem', '& th, & td': { textAlign: 'left', py: 0.5, px: 1, borderBottom: '1px solid rgba(255,255,255,0.06)' }, '& th': { color: 'rgba(255,255,255,0.55)', fontWeight: 600 } }}>
-                                    <thead><tr><th>{globalize.translate('StsDate')}</th><th>{globalize.translate('StsEpisodes')}</th><th>{globalize.translate('StsMovies')}</th><th>{globalize.translate('StsOther')}</th><th>{globalize.translate('StsPlays')}</th></tr></thead>
+                                <Box sx={{ overflowX: 'auto' }}><Box component='table' sx={{ width: '100%', minWidth: 560, borderCollapse: 'collapse', fontSize: '0.78rem', '& th, & td': { textAlign: 'left', py: 0.5, px: 1, borderBottom: '1px solid rgba(255,255,255,0.06)' }, '& th': { color: 'rgba(255,255,255,0.55)', fontWeight: 600 } }}>
+                                    <thead><tr><th>{globalize.translate('StsDate')}</th>{KINDS.map(kind => <th key={kind.key}>{globalize.translate(kind.labelKey)}</th>)}<th>{globalize.translate('StsPlays')}</th></tr></thead>
                                     <tbody>
                                         {[ ...data.Daily ].reverse().filter(d => d.Plays > 0).map(d => (
-                                            <tr key={d.Date}><td>{d.Date}</td><td>{formatDuration(d.EpisodeSeconds)}</td><td>{formatDuration(d.MovieSeconds)}</td><td>{formatDuration(d.OtherSeconds)}</td><td>{d.Plays}</td></tr>
+                                            <tr key={d.Date}><td>{d.Date}</td>{KINDS.map(kind => <td key={kind.key}>{formatDuration(kind.seconds(d))}</td>)}<td>{d.Plays}</td></tr>
                                         ))}
                                     </tbody>
-                                </Box>
+                                </Box></Box>
                             ) : (
                                 <BarChart
                                     data={dailyData}
                                     height={220}
                                     formatValue={axisDuration}
                                     ariaLabel={globalize.translate('StsWatchPerDayTitle')}
-                                    legend={[
-                                        { key: 'e', label: globalize.translate('StsEpisodes'), color: KIND_COLORS.episode },
-                                        { key: 'm', label: globalize.translate('StsMovies'), color: KIND_COLORS.movie },
-                                        { key: 'o', label: globalize.translate('StsOther'), color: KIND_COLORS.other }
-                                    ]}
+                                    legend={kindLegend()}
                                 />
                             )}
                         </SectionCard>
+
+                        {!!data.ByCategory?.length && (
+                            <SectionCard title={globalize.translate('StsSplit')} icon={<PieChartIcon />} accentColor='#aa5cc3'>
+                                <KindSplit rows={data.ByCategory} emptyKey='StsEmpty' />
+                            </SectionCard>
+                        )}
 
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2 }}>
                             <SectionCard title={globalize.translate('StsTimeOfDay')} icon={<AccessTimeIcon />} accentColor='#3987e5' description={globalize.translate('StsTimeOfDayHelp')}>
@@ -272,6 +293,16 @@ export const Component = () => {
                                 <RankList rows={data.TopMovies} kind='movie' emptyKey='StsEmpty' />
                             </SectionCard>
                         </Box>
+
+                        {mediaTops.length > 0 && (
+                            <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr 1fr' }, gap: 2 }}>
+                                {mediaTops.map(top => (
+                                    <SectionCard key={top.key} title={globalize.translate(top.titleKey)} icon={top.icon} accentColor={top.color}>
+                                        <RankList rows={top.rows || []} kind='media' emptyKey='StsEmpty' />
+                                    </SectionCard>
+                                ))}
+                            </Box>
+                        )}
 
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2 }}>
                             <SectionCard title={globalize.translate('StsClients')} icon={<DevicesIcon />} accentColor='#26c6da'>

@@ -51,6 +51,7 @@ import { useApi } from 'hooks/useApi';
 import { QUERY_KEY as CONFIG_KEY, useConfiguration } from 'hooks/useConfiguration';
 import { useUsersDetails } from 'hooks/useUsers';
 import globalize from 'lib/globalize';
+import { formatNumber } from 'utils/localeNumber';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader } from '../../components/cosmic';
@@ -492,7 +493,7 @@ export const Component = () => {
 
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5, minHeight: 30 }}>
                             <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)' }}>
-                                {globalize.translate('ActShowing', entries.length.toLocaleString(), matching.toLocaleString())}
+                                {globalize.translate('ActShowing', formatNumber(entries.length), formatNumber(matching))}
                             </Typography>
                             {list.isFetching && <CircularProgress size={14} />}
                             {hasFilters && (

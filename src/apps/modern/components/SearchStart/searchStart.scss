@@ -1,0 +1,88 @@
+// Before typing a search: recent searches as chips, then the rows of the home screen (quickHome.scss)
+.qh-search {
+    padding-top: 14px;
+    padding-bottom: 8px;
+}
+
+.qh-search-recent {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 0;
+    padding: 4px var(--qh-gutter) 14px;
+    list-style: none;
+}
+
+.qh-search-term {
+    display: inline-flex;
+    align-items: center;
+    max-width: 100%;
+    border: 1px solid rgba(0, 164, 220, 0.28);
+    border-radius: 99px;
+    background: rgba(255, 255, 255, 0.05);
+    transition: background 0.15s, border-color 0.15s;
+
+    &:hover,
+    &:focus-within {
+        background: rgba(0, 164, 220, 0.14);
+        border-color: rgba(0, 164, 220, 0.6);
+    }
+
+    button {
+        display: inline-flex;
+        align-items: center;
+        border: 0;
+        background: none;
+        color: inherit;
+        font: inherit;
+        cursor: pointer;
+    }
+
+    svg {
+        font-size: 1.05rem;
+    }
+}
+
+.qh-search-pick {
+    gap: 6px;
+    min-width: 0;
+    padding: 7px 4px 7px 12px;
+    font-size: 0.9rem;
+    font-weight: 600;
+
+    svg {
+        flex-shrink: 0;
+        color: rgba(255, 255, 255, 0.45);
+    }
+
+    span {
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+}
+
+.qh-search-remove {
+    flex-shrink: 0;
+    padding: 7px 10px 7px 4px;
+    color: rgba(255, 255, 255, 0.45) !important;
+
+    &:hover,
+    &:focus-visible {
+        color: #fff !important;
+    }
+}
+
+.qh-search-clear {
+    border: 0;
+    background: none;
+    font: inherit;
+    cursor: pointer;
+}
+
+.qh-search-hint {
+    margin: 8px var(--qh-gutter) 0;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 0.9rem;
+    text-align: center;
+}

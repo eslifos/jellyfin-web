@@ -67,7 +67,7 @@ export const duration = (seconds?: number | null) => {
 
 export const ago = (iso: string) => duration((Date.now() - Date.parse(iso)) / 1000);
 
-export const time = (iso: string) => new Date(iso).toLocaleTimeString(undefined, { hour: '2-digit', minute: '2-digit' });
+export const time = (iso: string) => new Date(iso).toLocaleTimeString(globalize.getCurrentDateTimeLocale(), { hour: '2-digit', minute: '2-digit' });
 
 export const percentOf = (d: Download) => {
     if (d.Status === 'done') return 100;

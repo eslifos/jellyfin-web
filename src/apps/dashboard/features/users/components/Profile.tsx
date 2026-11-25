@@ -205,7 +205,8 @@ const Profile = ({ userDto, isProfileUser = false }: ProfileProps) => {
         (page.querySelector('.chkForceRemoteSourceTranscoding') as HTMLInputElement).checked = !!userDto.Policy?.ForceRemoteSourceTranscoding;
         (page.querySelector('.chkRemoteAccess') as HTMLInputElement).checked = userDto.Policy?.EnableRemoteAccess == null || userDto.Policy?.EnableRemoteAccess;
         (page.querySelector('#txtRemoteClientBitrateLimit') as HTMLInputElement).value = userDto.Policy?.RemoteClientBitrateLimit && userDto.Policy?.RemoteClientBitrateLimit > 0 ?
-            (userDto.Policy?.RemoteClientBitrateLimit / 1e6).toLocaleString(undefined, { maximumFractionDigits: 6 }) : '';
+            // A number field takes "1.5", never a written number like "1,5" (it would show empty)
+            String(Number((userDto.Policy?.RemoteClientBitrateLimit / 1e6).toFixed(6))) : '';
         (page.querySelector('#txtLoginAttemptsBeforeLockout') as HTMLInputElement).value = String(userDto.Policy?.LoginAttemptsBeforeLockout) || '-1';
         (page.querySelector('#txtMaxActiveSessions') as HTMLInputElement).value = String(userDto.Policy?.MaxActiveSessions) || '0';
         (page.querySelector('#selectSyncPlayAccess') as HTMLSelectElement).value = String(userDto.Policy?.SyncPlayAccess);

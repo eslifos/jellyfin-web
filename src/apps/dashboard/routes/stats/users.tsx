@@ -23,7 +23,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { Badge, StatTile, toggleSx } from 'apps/dashboard/features/plugins/components/PluginCosmic';
 import useLiveSessions from 'apps/dashboard/features/sessions/hooks/useLiveSessions';
-import { KIND_COLORS, type UserStats, formatDuration, isLocalAddress, useUserStats } from 'apps/dashboard/features/stats/api/playbackStats';
+import { KIND_COLORS, type UserStats, entryMedia, formatDuration, hideBrokenImage, isLocalAddress, useUserStats } from 'apps/dashboard/features/stats/api/playbackStats';
 import { relativeTime } from 'apps/dashboard/features/tasks/components/TaskCosmic';
 import Loading from 'components/loading/LoadingComponent';
 import Page from 'components/Page';
@@ -43,6 +43,19 @@ interface Row {
     session?: SessionInfoDto;
     lastSeen?: number;
 }
+
+type NowPlaying = NonNullable<SessionInfoDto['NowPlayingItem']>;
+
+/** What is playing right now, described for its kind of item. */
+const nowMedia = (now: NowPlaying) => {
+    if (now.Type === 'Episode') {
+        return { id: now.SeriesId || now.Id, title: now.SeriesName || now.Name, sub: `S${now.ParentIndexNumber ?? 0} · E${now.IndexNumber ?? 0} · ${now.Name}` };
+    }
+    if (now.Type === 'Audio' || now.Type === 'AudioBook') {
+        return { id: now.AlbumId || now.Id, title: now.Name, sub: [ now.AlbumArtist, now.Album ].filter(Boolean).join(' · ') };
+    }
+    return { id: now.Id, title: now.Name, sub: now.ProductionYear ? String(now.ProductionYear) : '' };
+};
 
 /** Tiny 30 day bar chart. */
 const Sparkline: FC<{ values: number[] }> = ({ values }) => {
@@ -73,17 +86,8 @@ const UserCard: FC<{ row: Row; share: number }> = ({ row, share }) => {
     const accent = watching ? '#4caf50' : '#00a4dc';
 
     // What to show in the media box: what is playing now, or the last recorded play.
-    const media = now ? {
-        id: now.Type === 'Episode' && now.SeriesId ? now.SeriesId : now.Id,
-        title: now.SeriesName || now.Name,
-        sub: now.Type === 'Episode' ? `S${now.ParentIndexNumber ?? 0} · E${now.IndexNumber ?? 0} · ${now.Name}` : (now.ProductionYear ? String(now.ProductionYear) : ''),
-        device: `${session?.Client ?? ''} · ${session?.DeviceName ?? ''}`
-    } : last ? {
-        id: last.ItemType === 'Episode' && last.SeriesId ? last.SeriesId : last.ItemId,
-        title: last.SeriesName || last.ItemName,
-        sub: last.ItemType === 'Episode' ? `S${last.ParentIndexNumber ?? 0} · E${last.IndexNumber ?? 0} · ${last.ItemName}` : (last.ProductionYear ? String(last.ProductionYear) : ''),
-        device: `${last.Client ?? ''} · ${last.DeviceName ?? ''}`
-    } : null;
+    const lastMedia = last ? { ...entryMedia(last), device: `${last.Client ?? ''} · ${last.DeviceName ?? ''}` } : null;
+    const media = now ? { ...nowMedia(now), device: `${session?.Client ?? ''} · ${session?.DeviceName ?? ''}` } : lastMedia;
     const img = media?.id && api ? getImageApi(api).getItemImageUrlById(media.id, ImageType.Primary, { maxHeight: 96 }) : undefined;
     const address = session?.RemoteEndPoint || last?.RemoteAddress;
     const local = isLocalAddress(address);
@@ -115,7 +119,7 @@ const UserCard: FC<{ row: Row; share: number }> = ({ row, share }) => {
             <Box sx={{ display: 'flex', gap: 1.25, p: 1, borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', minHeight: 70, alignItems: 'center' }}>
                 {media ? (
                     <>
-                        <Box component='img' src={img} alt='' loading='lazy' sx={{ width: 36, height: 54, objectFit: 'cover', borderRadius: '6px', flexShrink: 0, background: 'rgba(255,255,255,0.05)' }} />
+                        <Box component='img' src={img} alt='' loading='lazy' onError={hideBrokenImage} sx={{ width: 36, height: 54, objectFit: 'cover', borderRadius: '6px', flexShrink: 0, background: 'rgba(255,255,255,0.05)' }} />
                         <Box sx={{ minWidth: 0 }}>
                             <Typography sx={{ fontSize: '0.64rem', letterSpacing: '1px', textTransform: 'uppercase', color: watching ? '#4caf50' : 'rgba(255,255,255,0.45)', fontWeight: 700 }}>
                                 {globalize.translate(watching ? 'PvuNowPlaying' : 'PvuLastPlayed')}

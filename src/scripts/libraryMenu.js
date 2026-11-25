@@ -658,7 +658,8 @@ function getNavDrawerOptions() {
     return {
         target: navDrawerElement,
         onChange: onMainDrawerSelect,
-        width: drawerWidth
+        width: drawerWidth,
+        disableEdgeSwipe: true
     };
 }
 

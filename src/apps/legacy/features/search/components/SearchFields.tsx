@@ -1,4 +1,4 @@
-import React, { type ChangeEvent, type FC, useCallback, useRef } from 'react';
+import React, { type ChangeEvent, type FC, type KeyboardEvent, useCallback, useRef } from 'react';
 import AlphaPicker from 'components/alphaPicker/AlphaPickerComponent';
 import Input from 'elements/emby-input/Input';
 import globalize from 'lib/globalize';
@@ -10,11 +10,14 @@ import './searchfields.scss';
 
 interface SearchFieldsProps {
     query: string,
-    onSearch?: (query: string) => void
+    onSearch?: (query: string) => void,
+    /** Enter was pressed: the search is meant (kept among the recent ones) */
+    onCommit?: (query: string) => void
 }
 
 const SearchFields: FC<SearchFieldsProps> = ({
     onSearch = () => { /* no-op */ },
+    onCommit,
     query
 }) => {
     const inputRef = useRef<HTMLInputElement>(null);
@@ -33,6 +36,10 @@ const SearchFields: FC<SearchFieldsProps> = ({
     const onChange = useCallback((e: ChangeEvent<HTMLInputElement>) => {
         onSearch(e.target.value);
     }, [ onSearch ]);
+
+    const onKeyDown = useCallback((e: KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === 'Enter') onCommit?.(e.currentTarget.value);
+    }, [ onCommit ]);
 
     return (
         <div className='padded-left padded-right searchFields'>
@@ -54,6 +61,7 @@ const SearchFields: FC<SearchFieldsProps> = ({
                         autoFocus
                         value={query}
                         onChange={onChange}
+                        onKeyDown={onKeyDown}
                     />
                 </div>
             </div>

@@ -96,7 +96,7 @@ const LogRow: FC<{ log: LogFile; maxSize: number }> = ({ log, maxSize }) => {
                 <Typography sx={{ fontFamily: 'monospace', fontSize: '0.8rem', color: 'rgba(255,255,255,0.9)', overflowWrap: 'anywhere' }}>{log.Name}</Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: 0.5, flexWrap: 'wrap' }}>
                     <Badge label={globalize.translate(kind.labelKey)} color={kind.color} />
-                    <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)' }} title={log.DateModified ? new Date(log.DateModified).toLocaleString() : ''}>
+                    <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)' }} title={log.DateModified ? new Date(log.DateModified).toLocaleString(globalize.getCurrentDateTimeLocale()) : ''}>
                         {relativeTime(log.DateModified)}
                     </Typography>
                 </Box>

@@ -126,7 +126,7 @@ export const Component = () => {
                                         <Box key={task.Id} sx={{ display: 'flex', alignItems: 'center', gap: 1.25, py: 0.5 }}>
                                             <Box sx={{ width: 8, height: 8, borderRadius: '50%', background: color, boxShadow: `0 0 8px ${color}`, flexShrink: 0 }} />
                                             <Typography noWrap sx={{ flex: 1, minWidth: 0, fontSize: '0.84rem' }}>{task.Name}</Typography>
-                                            <Typography sx={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.55)', flexShrink: 0 }} title={at.toLocaleString()}>
+                                            <Typography sx={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.55)', flexShrink: 0 }} title={at.toLocaleString(globalize.getCurrentDateTimeLocale())}>
                                                 {relativeTime(at)}
                                             </Typography>
                                         </Box>

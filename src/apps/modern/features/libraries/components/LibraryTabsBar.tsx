@@ -2,6 +2,8 @@
  * LibraryTabsBar — the sections of a library (Movies, Library, Favorites, Collections…) as a floating glass bar,
  * identical to the library bar of the home screen: same colors and the same titles / icons setting
  * (labels "auto" shrink to icons once the page has scrolled).
+ * On phones there is no room for every name: the open section shows its name, the others their icon, and each
+ * icon says its name to screen readers and in a tooltip (a long press on touch screens).
  */
 import AlbumRoundedIcon from '@mui/icons-material/AlbumRounded';
 import BusinessRoundedIcon from '@mui/icons-material/BusinessRounded';
@@ -31,7 +33,9 @@ import RecommendRoundedIcon from '@mui/icons-material/RecommendRounded';
 import TvRoundedIcon from '@mui/icons-material/TvRounded';
 import VideoLibraryRoundedIcon from '@mui/icons-material/VideoLibraryRounded';
 import Box from '@mui/material/Box';
+import type { Theme } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import React, { type FC, type ReactNode, useCallback, useEffect, useState } from 'react';
 import { useLocation, useSearchParams } from 'react-router-dom';
 
@@ -90,6 +94,7 @@ const LibraryTabsBar: FC<LibraryTabsBarProps> = ({ fallback = null, floating = f
     const { activeTab } = useCurrentTab();
     const [ settings ] = useState(loadNavSettings);
     const [ compact, setCompact ] = useState(false);
+    const phone = useMediaQuery((t: Theme) => t.breakpoints.down('sm'));
     const accent = settings.accent;
 
     useEffect(() => {
@@ -143,8 +148,10 @@ const LibraryTabsBar: FC<LibraryTabsBarProps> = ({ fallback = null, floating = f
                 {route.views.map(tab => {
                     const active = tab.index === activeTab;
                     const name = globalize.translate(tab.label);
+                    // "Always titles" keeps every name; otherwise on phones only the open section
+                    const named = phone ? settings.labels === 'always' || (active && settings.labels !== 'icons') : showLabels;
                     return (
-                        <Tooltip key={tab.view} title={showLabels ? '' : name} placement='bottom'>
+                        <Tooltip key={tab.view} title={named ? '' : name} placement='bottom' enterTouchDelay={400}>
                             <Box
                                 component='button'
                                 type='button'
@@ -155,7 +162,7 @@ const LibraryTabsBar: FC<LibraryTabsBarProps> = ({ fallback = null, floating = f
                                 onClick={() => select(tab.index)}
                                 sx={{
                                     display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0,
-                                    px: iconsOnly ? 1.5 : { xs: 1.5, sm: 2 }, py: 1, border: 0, borderRadius: '50px', cursor: 'pointer',
+                                    px: iconsOnly || (phone && !named) ? 1.5 : { xs: 1.5, sm: 2 }, py: 1, border: 0, borderRadius: '50px', cursor: 'pointer',
                                     font: 'inherit', whiteSpace: 'nowrap', transition: 'all 0.2s',
                                     color: active ? '#fff' : 'rgba(255,255,255,0.7)',
                                     background: active ? `linear-gradient(135deg, rgba(170,92,195,0.35), ${rgba(accent, 0.3)})` : 'none',
@@ -173,7 +180,7 @@ const LibraryTabsBar: FC<LibraryTabsBarProps> = ({ fallback = null, floating = f
                                 {tab.view === LibraryTab.Home ? homeIcon() : ICONS[tab.view]}
                                 <Box component='span' sx={{
                                     fontSize: '0.9rem', fontWeight: active ? 700 : 600,
-                                    display: showLabels ? { xs: settings.labels === 'always' ? 'inline' : 'none', sm: 'inline' } : 'none'
+                                    display: named ? 'inline' : 'none'
                                 }}>
                                     {name}
                                 </Box>

@@ -83,15 +83,15 @@ export const Card: FC<CardProps> = ({ id, title, icon, accentColor = '#00a4dc', 
         {/* Header — clickable */}
         <Box
             onClick={() => onToggle(id)}
-            sx={{ display: 'flex', alignItems: 'center', gap: 1, px: 2.5, py: 1.5, cursor: 'pointer', userSelect: 'none', '&:hover': { background: 'rgba(255,255,255,0.03)' } }}
+            sx={{ display: 'flex', alignItems: 'center', gap: 1, px: { xs: 1.75, sm: 2.5 }, py: 1.5, cursor: 'pointer', userSelect: 'none', '&:hover': { background: 'rgba(255,255,255,0.03)' } }}
         >
-            <Box sx={{ color: accentColor, display: 'flex', '& svg': { fontSize: '1rem' } }}>{icon}</Box>
-            <Typography variant='overline' sx={{ flex: 1, fontSize: '0.7rem', letterSpacing: '1.5px', color: accentColor, fontWeight: 700 }}>{title}</Typography>
-            <ExpandMoreIcon sx={{ color: accentColor, fontSize: '1.2rem', transition: 'transform 0.25s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }} />
+            <Box sx={{ color: accentColor, display: 'flex', flexShrink: 0, '& svg': { fontSize: '1rem' } }}>{icon}</Box>
+            <Typography variant='overline' sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere', lineHeight: 1.6, fontSize: '0.7rem', letterSpacing: '1.5px', color: accentColor, fontWeight: 700 }}>{title}</Typography>
+            <ExpandMoreIcon sx={{ flexShrink: 0, color: accentColor, fontSize: '1.2rem', transition: 'transform 0.25s', transform: open ? 'rotate(180deg)' : 'rotate(0deg)' }} />
         </Box>
 
-        {/* Content */}
-        <Box sx={{ overflow: 'hidden', maxHeight: open ? '4000px' : 0, transition: 'max-height 0.35s ease', px: 2.5, pb: open ? 2.5 : 0 }}>
+        {/* Content: less room at the sides on phones */}
+        <Box sx={{ overflow: 'hidden', maxHeight: open ? '4000px' : 0, transition: 'max-height 0.35s ease', px: { xs: 1.75, sm: 2.5 }, pb: open ? 2.5 : 0 }}>
             {children}
         </Box>
     </Paper>
@@ -110,9 +110,11 @@ export const Num: FC<{ label: string; value: string; onChange: (v: string) => vo
 export const Check: FC<{ label: string; desc?: string; checked: boolean; onChange: (v: boolean) => void; color?: string }> =
     ({ label, desc, checked, onChange, color = '#00a4dc' }) => (
         <Box sx={{ py: 0.4 }}>
+            {/* The text wraps next to the box instead of pushing the card wider */}
             <FormControlLabel
-                control={<Checkbox checked={checked} onChange={e => onChange(e.target.checked)} sx={{ color: 'rgba(255,255,255,0.3)', '&.Mui-checked': { color } }} />}
-                label={<Box><Typography sx={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.82)' }}>{label}</Typography>{desc && <Typography sx={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>{desc}</Typography>}</Box>}
+                sx={{ mr: 0, maxWidth: '100%' }}
+                control={<Checkbox checked={checked} onChange={e => onChange(e.target.checked)} sx={{ flexShrink: 0, color: 'rgba(255,255,255,0.3)', '&.Mui-checked': { color } }} />}
+                label={<Box sx={{ minWidth: 0, overflowWrap: 'anywhere' }}><Typography sx={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.82)' }}>{label}</Typography>{desc && <Typography sx={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>{desc}</Typography>}</Box>}
             />
         </Box>
     );
@@ -120,7 +122,7 @@ export const Check: FC<{ label: string; desc?: string; checked: boolean; onChang
 export const SaveButton: FC<{ saving: boolean; onClick: () => void; disabled?: boolean }> = ({ saving, onClick, disabled }) => (
     <Button onClick={onClick} variant='contained' disabled={saving || disabled}
         startIcon={saving ? <CircularProgress size={16} color='inherit' /> : <SaveIcon />}
-        sx={{ mt: 1, background: 'linear-gradient(135deg, #00a4dc, #0077b6)', borderRadius: 2, py: 1.4, px: 8, fontWeight: 600, fontSize: '0.95rem', display: 'block', mx: 'auto', '&:hover': { background: 'linear-gradient(135deg, #00b8f0, #0090d0)', transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,164,220,0.45)' } }}>
+        sx={{ mt: 1, background: 'linear-gradient(135deg, #00a4dc, #0077b6)', borderRadius: 2, py: 1.4, px: { xs: 5, sm: 8 }, maxWidth: '100%', fontWeight: 600, fontSize: '0.95rem', display: 'block', mx: 'auto', '&:hover': { background: 'linear-gradient(135deg, #00b8f0, #0090d0)', transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,164,220,0.45)' } }}>
         {globalize.translate('Save')}
     </Button>
 );

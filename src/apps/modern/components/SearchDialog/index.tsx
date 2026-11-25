@@ -7,6 +7,7 @@
  *  - Results grouped by category in horizontally scrollable rows.
  *  - "You might also like" section powered by the /Items/{id}/Similar endpoint.
  *  - Category filter chips for Movies, Shows, Music, Books, People, and Photos.
+ *  - Before typing: the same start as the search page (recent searches, continue watching, latest; see SearchStart).
  * Rendered via `createPortal` on `document.body` to avoid stacking context issues.
  */
 import React, { useCallback, useEffect, useRef, useState } from 'react';
@@ -35,6 +36,9 @@ import globalize from 'lib/globalize';
 import { getLibraryApi } from '@jellyfin/sdk/lib/utils/api/library-api';
 import { BaseItemKind, type BaseItemDto } from '@jellyfin/sdk/lib/generated-client';
 import { useApi } from 'hooks/useApi';
+
+import SearchStart from '../SearchStart';
+import { addRecentSearch } from '../SearchStart/recentSearches';
 
 type SearchResult = BaseItemDto;
 
@@ -137,7 +141,15 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
         return api && item.Id && tag ? `${api.basePath}/Items/${item.Id}/Images/Primary?tag=${tag}&maxWidth=200&quality=90` : null;
     };
 
-    const goTo = (item: SearchResult) => { onClose(); navigate(`/details?id=${item.Id}`); };
+    // A search is kept among the recent ones when it was used: a result opened, or Enter
+    const goTo = (item: SearchResult) => {
+        addRecentSearch(user?.Id, query);
+        onClose();
+        navigate(`/details?id=${item.Id}`);
+    };
+    const onKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.key === 'Enter') addRecentSearch(user?.Id, query);
+    }, [ query, user?.Id ]);
 
     const hasResults = Object.values(results).some(a => a.length > 0);
     const ResultCard = ({ item, color }: { item: SearchResult; color: string }) => (
@@ -243,6 +255,7 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
                             inputRef={inputRef}
                             value={query}
                             onChange={e => setQuery(e.target.value)}
+                            onKeyDown={onKeyDown}
                             placeholder={globalize.translate('SearchPlaceholder')}
                             fullWidth
                             variant='standard'
@@ -298,10 +311,10 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
                         '&::-webkit-scrollbar-track': { background: 'transparent' }
                     }}>
                         {!query ? (
-                            <Box sx={{ py: 2, textAlign: 'center' }}>
-                                <Typography sx={{ color: 'rgba(255,255,255,0.25)', fontSize: '0.85rem' }}>
-                                    Empieza a escribir para buscar
-                                </Typography>
+                            // The same start as the search page: recent searches, continue watching, latest (asked only
+                            // while the window is open: it stays mounted when closed)
+                            <Box sx={{ mx: -2, '& .qh': { '--qh-gutter': '16px', '--qh-card': '112px', '--qh-wide': '220px' } }}>
+                                {open && <SearchStart onPick={setQuery} onNavigate={onClose} />}
                             </Box>
                         ) : !hasResults && !loading ? (
                             <Box sx={{ py: 2, textAlign: 'center' }}>
@@ -319,7 +332,7 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
                                             <AutoAwesomeIcon sx={{ fontSize: '0.85rem', color: '#f9a825' }} />
                                             <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#f9a825' }}>
-                                                También te puede gustar
+                                                {globalize.translate('HeaderMoreLikeThis')}
                                             </Typography>
                                         </Box>
                                         <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 0.5, '&::-webkit-scrollbar': { height: '3px' }, '&::-webkit-scrollbar-thumb': { background: 'rgba(249,168,37,0.4)', borderRadius: '4px' } }}>

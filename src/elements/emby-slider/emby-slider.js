@@ -8,6 +8,7 @@ import './emby-slider.scss';
 import 'webcomponents.js/webcomponents-lite';
 import '../emby-input/emby-input';
 import globalize from '../../lib/globalize';
+import { formatNumber } from '../../utils/localeNumber';
 import { decimalCount } from '../../utils/number';
 
 const EmbySliderPrototype = Object.create(HTMLInputElement.prototype);
@@ -221,7 +222,7 @@ function updateBubble(range, percent, value, bubble) {
             if (range.getBubbleText) {
                 html = range.getBubbleText(percent, value);
             } else {
-                html = value.toLocaleString();
+                html = formatNumber(value);
             }
             html = '<h1 class="sliderBubbleText">' + html + '</h1>';
         }

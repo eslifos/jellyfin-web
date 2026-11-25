@@ -2,11 +2,17 @@
  * HomeLibraryNav — the "My media" libraries as a floating glass pill on top of the
  * home screen (same look as the bottom FloatingNav). It sticks to the top while
  * scrolling and shrinks to icons only once the page has scrolled.
+ * On phones each icon keeps its name below in small text (it scrolls sideways when they do not fit),
+ * unless the user chose icons only.
  * Each user can reorder / hide items and change colors and labels (gear button).
+ * It is the only row under the banner: the libraries, then (after a separator) a small "Universes" title that
+ * opens them all, followed by the main universes (none named like a library). Universes always go last.
  */
-import React, { type FC, type ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { type FC, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 import Box from '@mui/material/Box';
+import type { Theme } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import { Link } from 'react-router-dom';
@@ -17,7 +23,10 @@ import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 
 import LibraryIcon from '../LibraryIcon';
+import { useUniverses } from '../Universes/api';
+import { featuredUniverses } from './featuredUniverses';
 import NavCustomizeDialog, { type NavEntry } from './NavCustomizeDialog';
+import { useFittingCount } from './useFittingCount';
 import { UNIVERSES_KEY, type NavSettings, backgroundCss, loadNavSettings, orderKeys, rgba, saveNavSettings } from './navSettings';
 
 const COMPACT_AFTER = 140;
@@ -32,6 +41,7 @@ const HomeLibraryNav: FC = () => {
     const [ compact, setCompact ] = useState(false);
     const [ saved, setSaved ] = useState<NavSettings>(loadNavSettings);
     const [ draft, setDraft ] = useState<NavSettings | null>(null);
+    const phone = useMediaQuery((t: Theme) => t.breakpoints.down('sm'));
     const settings = draft || saved;
 
     // Display preferences may arrive after the first render (or the user changes)
@@ -67,16 +77,29 @@ const HomeLibraryNav: FC = () => {
         return orderKeys((views || []).map(v => v.Id!), settings).map(k => byKey.get(k)!).filter(Boolean);
     }, [ views, settings ]);
 
+    // Phones: the name goes under the icon in small text, so it still fits once the page has scrolled
+    const stacked = phone && settings.labels !== 'icons';
+    const showLabels = stacked || (!phone && (settings.labels === 'always' || (settings.labels === 'auto' && !compact)));
+    const iconsOnly = !stacked && (settings.labels === 'icons' || (settings.labels === 'auto' && compact));
+
+    const { data: universes } = useUniverses(false);
+    const featured = useMemo(() => featuredUniverses(universes ?? [], (views ?? []).map(v => v.Name ?? '')), [ universes, views ]);
+    // Phones scroll the bar sideways; bigger screens show only the universes that fit next to the libraries
+    const barRef = useRef<HTMLElement>(null);
+    const fitting = useFittingCount(barRef, featured.length, !stacked && !iconsOnly, [ featured, showLabels, entries ]);
+
     if (!views?.length) return null;
 
     const visible = entries.filter(e => !settings.hidden.includes(e.key));
+    const libraries = visible.filter(e => e.key !== UNIVERSES_KEY);
+    const universesEntry = visible.find(e => e.key === UNIVERSES_KEY);
     const accent = settings.accent;
-    const showLabels = settings.labels === 'always' || (settings.labels === 'auto' && !compact);
-    const iconsOnly = settings.labels === 'icons' || (settings.labels === 'auto' && compact);
 
     const itemSx = (special: boolean) => ({
-        display: 'flex', alignItems: 'center', gap: 1, flexShrink: 0,
-        px: iconsOnly ? 1.5 : { xs: 1.5, sm: 2 }, py: 1, borderRadius: '50px',
+        display: 'flex', alignItems: 'center', flexShrink: 0,
+        ...(stacked ?
+            { flexDirection: 'column', gap: 0.25, minWidth: 52, maxWidth: 84, px: 1, py: 0.6, borderRadius: '18px' } :
+            { gap: 1, px: iconsOnly ? 1.5 : { xs: 1.5, sm: 2 }, py: 1, borderRadius: '50px' }),
         color: special ? '#fff' : 'rgba(255,255,255,0.7)', textDecoration: 'none', whiteSpace: 'nowrap',
         transition: 'all 0.2s',
         background: special ? `linear-gradient(135deg, rgba(170,92,195,0.35), ${rgba(accent, 0.3)})` : 'none',
@@ -89,10 +112,13 @@ const HomeLibraryNav: FC = () => {
         }
     });
 
-    const label = (text: ReactNode, bold = false) => (
-        <Box component='span' sx={{
-            fontSize: '0.9rem', fontWeight: bold ? 700 : 600,
-            display: showLabels ? { xs: settings.labels === 'always' ? 'inline' : 'none', sm: 'inline' } : 'none'
+    const label = (text: ReactNode) => (
+        <Box component='span' sx={stacked ? {
+            maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
+            fontSize: '0.66rem', lineHeight: 1.15, fontWeight: 600
+        } : {
+            fontSize: '0.9rem', fontWeight: 600,
+            display: showLabels ? 'inline' : 'none'
         }}>
             {text}
         </Box>
@@ -105,10 +131,11 @@ const HomeLibraryNav: FC = () => {
                 display: 'flex', justifyContent: 'center', px: 2, pt: 1.5, pb: 1, pointerEvents: 'none'
             }}>
                 <Box
+                    ref={barRef}
                     component='nav'
                     aria-label={globalize.translate('HeaderMyMedia')}
                     sx={{
-                        pointerEvents: 'auto', maxWidth: '100%', display: 'flex', alignItems: 'center', gap: 0.5,
+                        position: 'relative', pointerEvents: 'auto', maxWidth: '100%', display: 'flex', alignItems: 'center', gap: 0.5,
                         px: 1, py: 0.75, overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' },
                         background: backgroundCss(settings),
                         backdropFilter: 'blur(24px) saturate(1.5)',
@@ -121,21 +148,60 @@ const HomeLibraryNav: FC = () => {
                         '&:hover .jfNavGear, &:focus-within .jfNavGear': { opacity: 1 }
                     }}
                 >
-                    {visible.map((e, i) => {
-                        const special = e.key === UNIVERSES_KEY;
-                        const divider = special && i > 0 && i === visible.length - 1;
-                        return (
-                            <React.Fragment key={e.key}>
-                                {divider && <Box sx={{ width: '1px', alignSelf: 'stretch', my: 0.8, mx: 0.5, flexShrink: 0, background: 'rgba(255,255,255,0.14)' }} />}
-                                <Tooltip title={showLabels ? '' : e.name} placement='bottom'>
-                                    <Box component={Link} to={e.to} aria-label={e.name} sx={itemSx(special)}>
-                                        {e.icon}
-                                        {label(e.name, special)}
+                    {libraries.map(e => (
+                        <Tooltip key={e.key} title={showLabels ? '' : e.name} placement='bottom'>
+                            <Box component={Link} to={e.to} aria-label={e.name} sx={itemSx(false)}>
+                                {e.icon}
+                                {label(e.name)}
+                            </Box>
+                        </Tooltip>
+                    ))}
+                    {/* Libraries first; after a separator, the small "Universes" title (it opens them all) and the main ones */}
+                    {universesEntry && (
+                        <>
+                            {libraries.length > 0 && <Box aria-hidden='true' sx={{ width: '1px', alignSelf: 'stretch', my: 0.8, mx: 0.5, flexShrink: 0, background: 'rgba(255,255,255,0.14)' }} />}
+                            <Box role='group' aria-label={universesEntry.name} sx={{ display: 'flex', alignItems: 'center', gap: 0.5, flexShrink: 0 }}>
+                                <Tooltip title={showLabels ? '' : globalize.translate('UniAll')} placement='bottom'>
+                                    <Box component={Link} to={universesEntry.to} aria-label={globalize.translate('UniAll')} sx={itemSx(true)}>
+                                        {universesEntry.icon}
+                                        <Box component='span' sx={stacked ? {
+                                            fontSize: '0.62rem', lineHeight: 1.15, fontWeight: 800, letterSpacing: '0.06em', textTransform: 'uppercase'
+                                        } : {
+                                            fontSize: '0.7rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase',
+                                            display: showLabels ? 'inline' : 'none'
+                                        }}>
+                                            {universesEntry.name}
+                                        </Box>
                                     </Box>
                                 </Tooltip>
-                            </React.Fragment>
-                        );
-                    })}
+                                {/* Once scrolled (icons only) the bar stays small: the universes come back at the top */}
+                                {!iconsOnly && featured.map((u, i) => (
+                                    <Box
+                                        key={u.Id}
+                                        component={Link}
+                                        to={`/universe?id=${encodeURIComponent(u.Id)}`}
+                                        title={u.Name}
+                                        className='jfNavUniverse'
+                                        data-fit={i < fitting ? '1' : '0'}
+                                        // Out of room: kept (to measure it again when the window grows) but invisible
+                                        {...(i < fitting ? {} : { 'aria-hidden': true, tabIndex: -1 })}
+                                        sx={{
+                                            ...(i < fitting ? {} : { position: 'absolute', left: 0, top: 0, visibility: 'hidden', pointerEvents: 'none' }),
+                                            flexShrink: 0, maxWidth: stacked ? 150 : 190, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap',
+                                            px: stacked ? 1.25 : 1.5, py: stacked ? 0.75 : 0.8, borderRadius: '50px',
+                                            fontSize: stacked ? '0.72rem' : '0.82rem', fontWeight: 600, lineHeight: 1.2,
+                                            color: 'rgba(255,255,255,0.75)', textDecoration: 'none',
+                                            border: `1px solid ${rgba(accent, 0.22)}`, background: 'rgba(255,255,255,0.04)',
+                                            transition: 'all 0.2s',
+                                            '&:hover, &:focus-visible': { outline: 'none', color: '#fff', borderColor: rgba(accent, 0.6), background: rgba(accent, 0.16) }
+                                        }}
+                                    >
+                                        {u.Name}
+                                    </Box>
+                                ))}
+                            </Box>
+                        </>
+                    )}
                     <Tooltip title={globalize.translate('NavCustomize')} placement='bottom'>
                         <Box
                             component='button'

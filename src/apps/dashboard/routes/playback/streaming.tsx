@@ -24,6 +24,7 @@ import { useUsers } from 'hooks/useUsers';
 import globalize from 'lib/globalize';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import { ActionData } from 'types/actionData';
+import { formatNumber } from 'utils/localeNumber';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard } from '../../components/cosmic';
@@ -70,7 +71,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
     };
 };
 
-const formatMbps = (bits?: number | null) => (bits ? `${(bits / 1e6).toLocaleString(undefined, { maximumFractionDigits: 2 })} Mbps` : '');
+const formatMbps = (bits?: number | null) => (bits ? `${formatNumber(bits / 1e6, { maximumFractionDigits: 2 })} Mbps` : '');
 
 export const Component = () => {
     const navigation = useNavigation();

@@ -42,11 +42,14 @@ self.addEventListener('notificationclick', function (event) {
 /* eslint-disable no-restricted-globals, compat/compat -- self is valid in a serviceworker; service workers only run where caches and Request exist */
 const SHELL_CACHE = 'jf-shell-v1';
 const MAX_FILES = 600;
-const scope = new URL(self.registration.scope).pathname;
+/** This file is also added to index.html (as upstream does); there it runs in the page, which has no registration. */
+const inServiceWorker = typeof ServiceWorkerGlobalScope !== 'undefined' && self instanceof ServiceWorkerGlobalScope;
+/** The folder the app is served from, read when a request arrives. */
+const appScope = () => new URL(self.registration.scope).pathname;
 
 const isAppFile = (request, url) => request.method === 'GET'
     && url.origin === self.location.origin
-    && url.pathname.startsWith(scope)
+    && url.pathname.startsWith(appScope())
     && !url.pathname.endsWith('serviceworker.js');
 
 /** Keeps the cache small: the oldest copies go first. */
@@ -71,20 +74,22 @@ const networkFirst = async (request, key) => {
     }
 };
 
-self.addEventListener('install', () => self.skipWaiting());
+if (inServiceWorker) {
+    self.addEventListener('install', () => self.skipWaiting());
 
-self.addEventListener('activate', event => {
-    event.waitUntil(caches.keys()
-        .then(keys => Promise.all(keys.filter(k => k.startsWith('jf-shell-') && k !== SHELL_CACHE).map(k => caches.delete(k))))
-        .then(() => self.clients.claim()));
-});
+    self.addEventListener('activate', event => {
+        event.waitUntil(caches.keys()
+            .then(keys => Promise.all(keys.filter(k => k.startsWith('jf-shell-') && k !== SHELL_CACHE).map(k => caches.delete(k))))
+            .then(() => self.clients.claim()));
+    });
 
-self.addEventListener('fetch', event => {
-    const request = event.request;
-    const url = new URL(request.url);
-    if (!isAppFile(request, url)) return;
-    // Pages of the app are all the same document (the routes are after the #)
-    const key = request.mode === 'navigate' ? new Request(url.origin + scope) : request;
-    event.respondWith(networkFirst(request, key));
-});
+    self.addEventListener('fetch', event => {
+        const request = event.request;
+        const url = new URL(request.url);
+        if (!isAppFile(request, url)) return;
+        // Pages of the app are all the same document (the routes are after the #)
+        const key = request.mode === 'navigate' ? new Request(url.origin + appScope()) : request;
+        event.respondWith(networkFirst(request, key));
+    });
+}
 /* eslint-enable no-restricted-globals, compat/compat */

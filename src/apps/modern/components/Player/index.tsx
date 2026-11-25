@@ -11,7 +11,7 @@ import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client/models/base
 import type { MediaStream } from '@jellyfin/sdk/lib/generated-client/models/media-stream';
 import type { SessionInfoDto } from '@jellyfin/sdk/lib/generated-client/models/session-info-dto';
 import { getSessionApi } from '@jellyfin/sdk/lib/utils/api/session-api';
-import React, { type FC, type ChangeEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { type FC, type ChangeEvent, useCallback, useEffect, useLayoutEffect, useMemo, useRef, useState, useSyncExternalStore } from 'react';
 
 import { createPortal } from 'react-dom';
 import { useLocation } from 'react-router-dom';
@@ -23,7 +23,12 @@ import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 import Events from 'utils/events';
 
+import { useBottomSpace } from '../FloatingNav/bottomSpace';
+import { djStore, stopTransition } from './audioEngine';
 import { OPEN_PLAYER_EVENT } from './events';
+import { StudioChips, StudioPanel, type StudioTab, VideoSlot, useMusicEngine, useSongInfo } from './MusicStudio';
+import { type SongColors, SongVisualizer, SongWave, centerInside, decodeWave, standInWave, useCoverColors } from './MusicVisual';
+import { songVideoMode } from './songVideoMode';
 import { type Speech, type VoiceMeter, openVoiceMeter, simulateSpeech } from './voiceMeter';
 
 import './player.scss';
@@ -137,10 +142,24 @@ const SAFE_VOLUME = 10;
 const MAX_VOLUME_RISE = 10;
 /** Answers in a row without the other device before leaving it: a short network cut does not disconnect. */
 const GONE_AFTER = 3;
+/** The longest the next song may take to start (from a remote drive) before the player accepts that nothing plays. */
+const NEXT_SONG_WAIT_MS = 30000;
 /** How often the volume goes to another device while its bar is dragged. */
 const VOLUME_SEND_MS = 250;
 
 const isRemote = (player: Engine | null) => (player as { isLocalPlayer?: boolean } | null)?.isLocalPlayer === false;
+
+/** How long a song that was asked to start may look like it plays before the real state of the player is shown. */
+const START_GRACE_MS = 5000;
+
+/** An empty picture, so a video that has not started shows black instead of the gray button of the phone. */
+const BLANK_POSTER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
+/** One song has left the audio element and the next has not entered yet: nothing on the screen should react to it. */
+const isBetweenSongs = (player: Engine) => {
+    const media = player as { currentSrc?: () => string | null | undefined };
+    return pm.currentItem(player)?.MediaType === 'Audio' && typeof media.currentSrc === 'function' && !media.currentSrc();
+};
 
 /**
  * The session of another device (a TV): what it plays and how. The device sends it to this one; until it
@@ -228,13 +247,73 @@ const usePlayback = (api: Api | undefined) => {
         let lowered = false;
         let firstBind = true;
 
+        let shownId: string | null = null;
+        let waitingNext = 0;
+        // The next song was asked for and has not sounded yet: it does not count as a pause
+        let starting = false;
+        let startTimer = 0;
+        const stopWaiting = () => {
+            window.clearTimeout(waitingNext);
+            waitingNext = 0;
+        };
+        const stopStarting = () => {
+            starting = false;
+            window.clearTimeout(startTimer);
+            startTimer = 0;
+        };
+        const nothingPlays = () => {
+            const player = pm.getCurrentPlayer();
+            if (!player) return true;
+            return !(isRemote(player) ? readRemote(player, asked).item : pm.currentItem(player));
+        };
+        const clearIfNothingPlays = () => {
+            if (!nothingPlays()) return;
+            shownId = null;
+            setState(EMPTY);
+        };
         const read = (): Partial<State> => {
             const player = pm.getCurrentPlayer();
             playerRef.current = player;
-            if (!player) return { item: null };
-            return isRemote(player) ? readRemote(player, asked) : readLocal(player);
+            if (!player) {
+                stopWaiting();
+                stopStarting();
+                return { item: null };
+            }
+            if (isRemote(player)) return readRemote(player, asked);
+            const local = readLocal(player);
+            if (local.item && !isBetweenSongs(player)) {
+                stopWaiting();
+                if (!starting) return local;
+                // If the browser never lets it sound, the real state shows after a moment
+                startTimer ||= window.setTimeout(() => {
+                    stopStarting();
+                    setState(prev => ({ ...prev, paused: pm.paused(player) }));
+                }, START_GRACE_MS);
+                return { ...local, paused: false };
+            }
+            // Between two songs the screen stays exactly as it is until the next one is there
+            if (local.item) {
+                starting = true;
+                window.clearTimeout(startTimer);
+                startTimer = 0;
+            }
+            waitingNext ||= window.setTimeout(() => {
+                waitingNext = 0;
+                if (isBetweenSongs(player)) {
+                    shownId = null;
+                    setState(EMPTY);
+                } else {
+                    clearIfNothingPlays();
+                }
+            }, NEXT_SONG_WAIT_MS);
+            return {};
         };
+        const idOf = (next: Partial<State>) => (next.item === undefined ? shownId : next.item?.PlaylistItemId ?? next.item?.Id ?? null);
         const refresh = () => setState(prev => ({ ...prev, ...read() }));
+        const onPlaying = () => {
+            stopStarting();
+            refresh();
+        };
         const loadQueue = () => {
             const player = pm.getCurrentPlayer();
             if (!player) return;
@@ -244,17 +323,16 @@ const usePlayback = (api: Api | undefined) => {
                 setState(prev => ({ ...prev, playlist, index }));
             }).catch(() => undefined);
         };
-        let shownId: string | null = null;
         const onStart = () => {
             const next = read();
-            shownId = next.item?.PlaylistItemId ?? next.item?.Id ?? null;
+            shownId = idOf(next);
             setState(prev => ({ ...prev, ...next }));
             loadQueue();
         };
         // Another device (a TV) only says "something changed": when what plays is another item, the queue is read again
         const onChange = () => {
             const next = read();
-            const id = next.item?.PlaylistItemId ?? next.item?.Id ?? null;
+            const id = idOf(next);
             setState(prev => ({ ...prev, ...next }));
             if (id !== shownId) {
                 shownId = id;
@@ -263,7 +341,7 @@ const usePlayback = (api: Api | undefined) => {
         };
         const onTime = () => {
             const player = playerRef.current;
-            if (!player) return;
+            if (!player || (!isRemote(player) && (!pm.currentItem(player) || isBetweenSongs(player)))) return;
             const positionMs = isRemote(player) ? read().positionMs ?? 0 : pm.currentTime(player) || 0;
             setState(prev => ({ ...prev, positionMs }));
         };
@@ -298,21 +376,21 @@ const usePlayback = (api: Api | undefined) => {
                 watchDevice(asked);
             }).catch(() => undefined);
         };
-        const onStop = () => {
+        const onStop = (_event?: unknown, stopped?: { NextItem?: unknown }) => {
+            // Another song is coming: the screen waits for it
+            if (stopped?.NextItem) return;
             // Between two parts the player stops and starts again: only gone if nothing plays a moment later
-            window.setTimeout(() => {
-                if (!read().item) {
-                    shownId = null;
-                    setState(EMPTY);
-                }
-            }, 600);
+            window.setTimeout(clearIfNothingPlays, 600);
         };
 
-        const events: [string, () => void][] = [
-            [ 'playbackstart', onStart ], [ 'statechange', onChange ], [ 'pause', refresh ], [ 'unpause', refresh ],
-            [ 'timeupdate', onTime ], [ 'playbackstop', onStop ], [ 'playbackratechange', refresh ], [ 'volumechange', refresh ]
+        const events: [string, (event?: unknown, stopped?: { NextItem?: unknown }) => void][] = [
+            [ 'playbackstart', onStart ], [ 'playing', onPlaying ], [ 'statechange', onChange ], [ 'pause', refresh ], [ 'unpause', refresh ],
+            [ 'timeupdate', onTime ], [ 'playbackstop', onStop ], [ 'playbackratechange', refresh ], [ 'volumechange', refresh ],
+            [ 'playlistitemadd', loadQueue ], [ 'playlistitemremove', loadQueue ], [ 'playlistitemmove', loadQueue ]
         ];
         const unbind = () => {
+            stopWaiting();
+            stopStarting();
             window.clearInterval(poll);
             poll = 0;
             asked = null;
@@ -382,6 +460,56 @@ const sceneOf = (basePath: string, item: BaseItemDto, width = 900) => {
     return coverOf(basePath, item, width);
 };
 
+/** A cover that changes by fading over the previous one, once the new picture is ready: never an empty frame. */
+const CoverLayers: FC<{ src: string }> = ({ src }) => {
+    const [ shown, setShown ] = useState(src);
+    const [ under, setUnder ] = useState<string | null>(null);
+    useEffect(() => {
+        if (src === shown) return;
+        let live = true;
+        const next = new Image();
+        const swap = () => {
+            if (!live) return;
+            setUnder(shown);
+            setShown(src);
+        };
+        next.onload = swap;
+        next.onerror = swap;
+        next.src = src;
+        return () => {
+            live = false;
+            next.onload = null;
+            next.onerror = null;
+        };
+    }, [ src, shown ]);
+    const onFaded = useCallback(() => setUnder(null), []);
+    return (
+        <span className='abp-layers'>
+            {under && <img className='abp-layer' src={under} alt='' />}
+            <img key={shown} className={under ? 'abp-layer is-new' : 'abp-layer'} src={shown} alt='' onAnimationEnd={onFaded} />
+        </span>
+    );
+};
+
+/** Keeps a row as tall as it has been, so a button that comes or goes with a song does not move the whole screen. */
+const useSteadyHeight = (change: unknown) => {
+    const box = useRef<HTMLDivElement>(null);
+    useLayoutEffect(() => {
+        const element = box.current;
+        if (!element) return;
+        const height = element.offsetHeight;
+        if (height > (parseFloat(element.style.minHeight) || 0)) element.style.minHeight = `${height}px`;
+    }, [ change ]);
+    useEffect(() => {
+        const release = () => {
+            if (box.current) box.current.style.minHeight = '';
+        };
+        window.addEventListener('resize', release);
+        return () => window.removeEventListener('resize', release);
+    }, []);
+    return box;
+};
+
 const REST = 0.08;
 
 /** Sound waves that follow the voice while it plays and rest when paused. */
@@ -439,6 +567,8 @@ interface MiniProps {
     title: string;
     line: string;
     cover?: string;
+    /** The video of the song, in place of the cover. */
+    videoHost?: HTMLElement | null;
     percent: number;
     playing: boolean;
     canPrev: boolean;
@@ -455,7 +585,7 @@ interface MiniProps {
 const playLabel = (playing: boolean) => globalize.translate(playing ? 'ButtonPause' : 'Play');
 
 /** The small bar: tap it to open the full player (or the video); its buttons work without opening it. */
-const MiniBar: FC<MiniProps> = ({ kind, title, line, cover, percent, playing, canPrev, canNext, onOpen, onBack, onForward, onPrev, onNext, onPlayPause, onStop }) => {
+const MiniBar: FC<MiniProps> = ({ kind, title, line, cover, videoHost, percent, playing, canPrev, canNext, onOpen, onBack, onForward, onPrev, onNext, onPlayPause, onStop }) => {
     const stop = useCallback((e: React.SyntheticEvent) => e.stopPropagation(), []);
     const onKey = useCallback((e: React.KeyboardEvent) => {
         if (e.target === e.currentTarget && (e.key === 'Enter' || e.key === ' ')) {
@@ -463,13 +593,16 @@ const MiniBar: FC<MiniProps> = ({ kind, title, line, cover, percent, playing, ca
             onOpen();
         }
     }, [ onOpen ]);
+    // The pages leave room at their end for it too
+    const barRef = useRef<HTMLDivElement>(null);
+    useBottomSpace('player', barRef, true);
     return (
-        <div className='abp-mini' role='button' tabIndex={0} onClick={onOpen} onKeyDown={onKey} aria-label={title}>
+        <div ref={barRef} className='abp-mini' role='button' tabIndex={0} onClick={onOpen} onKeyDown={onKey} aria-label={title}>
             <span className='abp-mini-progress' style={{ width: `${percent}%` }} />
-            <span className={playing ? 'abp-mini-cover is-playing' : 'abp-mini-cover'}>
-                {cover && <img src={cover} alt='' />}
+            <span className={[ 'abp-mini-cover', playing && 'is-playing', videoHost && 'has-video' ].filter(Boolean).join(' ')}>
+                {videoHost ? <VideoSlot host={videoHost} /> : cover && <CoverLayers src={cover} />}
             </span>
-            <span className='abp-mini-text'>
+            <span key={title} className='abp-mini-text abp-text-in'>
                 <span className='abp-mini-title'>{title}</span>
                 <span className='abp-mini-sub'>{line}</span>
             </span>
@@ -506,27 +639,44 @@ const Controls: FC<Actions & { isBook: boolean, skips: boolean, playing: boolean
     </div>
 );
 
-/** The queue, or the parts of an audiobook: tap one to jump to it. */
-const QueuePanel: FC<{ title: string, playlist: BaseItemDto[], index: number, playing: boolean, onPick: (e: React.MouseEvent<HTMLButtonElement>) => void }> = ({ title, playlist, index, playing, onPick }) => (
-    <aside className='abp-chapters'>
-        <h3>{title}</h3>
-        <ol>
-            {playlist.map((p, i) => (
-                <li key={p.PlaylistItemId ?? p.Id}>
-                    <button type='button' data-id={p.PlaylistItemId ?? ''} className={i === index ? 'is-current' : undefined} onClick={onPick}>
-                        <span className='abp-ch-n'>{i === index && playing ? <span className='abp-eq'><i /><i /><i /></span> : i + 1}</span>
-                        <span className='abp-ch-name'>{p.Name}</span>
-                        {p.RunTimeTicks ? <span className='abp-ch-time'>{clock(p.RunTimeTicks / TICKS_PER_MS)}</span> : null}
-                    </button>
-                </li>
-            ))}
-        </ol>
-    </aside>
-);
+/** The queue, or the parts of an audiobook: tap one to jump to it. It keeps what plays in sight. */
+const QueuePanel: FC<{ title: string, playlist: BaseItemDto[], index: number, playing: boolean, onPick: (e: React.MouseEvent<HTMLButtonElement>) => void }> = ({ title, playlist, index, playing, onPick }) => {
+    const list = useRef<HTMLOListElement>(null);
+    useEffect(() => {
+        centerInside(list.current, list.current?.querySelector('.is-current'));
+    }, [ index, playlist.length ]);
+    return (
+        <aside className='abp-chapters abp-queue'>
+            <h3>{title}</h3>
+            <ol ref={list}>
+                {playlist.map((p, i) => (
+                    <li key={p.PlaylistItemId ?? p.Id}>
+                        <button type='button' data-id={p.PlaylistItemId ?? ''} className={i === index ? 'is-current' : undefined} onClick={onPick}>
+                            <span className='abp-ch-n'>{i === index && playing ? <span className='abp-eq'><i /><i /><i /></span> : i + 1}</span>
+                            <span className='abp-ch-name'>{p.Name}</span>
+                            {p.RunTimeTicks ? <span className='abp-ch-time'>{clock(p.RunTimeTicks / TICKS_PER_MS)}</span> : null}
+                        </button>
+                    </li>
+                ))}
+            </ol>
+        </aside>
+    );
+};
+
+interface SeekProps {
+    positionMs: number;
+    durationMs: number;
+    percent: number;
+    bookLine?: string;
+    /** A song: the line that was played is a wave, which travels while it plays. */
+    wavy: boolean;
+    playing: boolean;
+    onSeek: (e: ChangeEvent<HTMLInputElement>) => void;
+}
 
 /** Where it is in this track (or part), and for audiobooks in the whole book. */
-const SeekBar: FC<{ positionMs: number, durationMs: number, percent: number, bookLine?: string, onSeek: (e: ChangeEvent<HTMLInputElement>) => void }> = ({ positionMs, durationMs, percent, bookLine, onSeek }) => (
-    <div className='abp-seek'>
+const SeekBar: FC<SeekProps> = ({ positionMs, durationMs, percent, bookLine, wavy, playing, onSeek }) => {
+    const slider = (
         <input
             type='range'
             min={0}
@@ -536,13 +686,23 @@ const SeekBar: FC<{ positionMs: number, durationMs: number, percent: number, boo
             aria-label={globalize.translate('ApPosition')}
             style={{ '--abp-fill': `${percent}%` } as React.CSSProperties}
         />
-        <div className='abp-times'>
-            <span>{clock(positionMs)}</span>
-            <span>-{clock(durationMs - positionMs)}</span>
+    );
+    return (
+        <div className={wavy ? 'abp-seek is-wavy' : 'abp-seek'}>
+            {wavy ? (
+                <div className={playing ? 'abp-seek-line is-playing' : 'abp-seek-line'} style={{ '--abp-done': percent / 100 } as React.CSSProperties}>
+                    <span className='abp-squiggle' />
+                    {slider}
+                </div>
+            ) : slider}
+            <div className='abp-times'>
+                <span>{clock(positionMs)}</span>
+                <span>-{clock(durationMs - positionMs)}</span>
+            </div>
+            {bookLine && <p className='abp-book'>{bookLine}</p>}
         </div>
-        {bookLine && <p className='abp-book'>{bookLine}</p>}
-    </div>
-);
+    );
+};
 
 interface View {
     item: BaseItemDto;
@@ -745,6 +905,103 @@ const topLabel = (view: View, state: State) => {
     return globalize.translate(view.isBook ? 'ApListening' : 'ApNowPlaying');
 };
 
+/** Around the cover: the bars that follow a song, or the soft rings of a book or a video. */
+const StageShow: FC<{ isSong: boolean, view: View, state: State, engine: Engine | null, bpm?: number | null, energy?: number | null, wave: number[], colors: SongColors }> = ({ isSong, view, state, engine, bpm, energy, wave, colors }) => (isSong ? (
+    <SongVisualizer player={engine} playing={view.playing} remote={state.remote} bpm={bpm} energy={energy} waveform={wave} positionMs={state.positionMs} durationMs={state.durationMs} colors={colors} />
+) : (
+    <>
+        <span className='abp-ring' />
+        <span className='abp-ring abp-ring-2' />
+        <span className='abp-ring abp-ring-3' />
+    </>
+));
+
+/** The shape of the song, the same bar for every song; the waves that follow the voice are for books. */
+const PlayerWave: FC<{ view: View, isSong: boolean, wave: number[], durationMs: number, onSeekTo: (ms: number) => void }> = ({ view, isSong, wave, durationMs, onSeekTo }) => {
+    if (view.isVideo) return null;
+    if (isSong) return <SongWave waveform={wave} percent={view.percent} playing={view.playing} durationMs={durationMs} onSeekTo={onSeekTo} />;
+    return <Waves playing={view.playing} track={view.item.Id ?? ''} />;
+};
+
+const songStyle = (isSong: boolean, colors: SongColors) => (isSong ? { '--abp-song-a': colors[0], '--abp-song-b': colors[1], '--abp-song-deep': colors[2] } as React.CSSProperties : undefined);
+
+/** What the screen shows of the song: its analysis, its shape and the colors of its album. */
+const useSongShow = (api: Api, isSong: boolean, itemId?: string | null, cover?: string | null) => {
+    const { data: songInfo } = useSongInfo(api, isSong ? itemId : null);
+    const audio = songInfo?.Analysis?.Audio;
+    const songWave = useMemo(() => {
+        const measured = decodeWave(audio?.Waveform);
+        return measured.length || !isSong ? measured : standInWave(itemId ?? '');
+    }, [ audio?.Waveform, isSong, itemId ]);
+    const colors = useCoverColors(isSong ? cover : null);
+    return { songInfo, audio, songWave, colors };
+};
+
+/** Opens the list; it is always there, also with a single song. */
+const QueueButton: FC<{ on: boolean, title: string, onClick: () => void }> = ({ on, title, onClick }) => (
+    <button type='button' className={on ? 'abp-round is-on' : 'abp-round'} onClick={onClick} aria-label={title} title={title} aria-pressed={on}>
+        <svg viewBox='0 0 24 24' aria-hidden='true'><path d='M4 6h16M4 12h16M4 18h10' /></svg>
+    </button>
+);
+
+/** Turning the DJ on opens the list, so the songs it adds can be seen. */
+const useListWithDj = (queue: boolean, onToggleQueue: () => void) => {
+    const djOn = useSyncExternalStore(djStore.subscribe, () => djStore.get().on);
+    const wasOn = useRef(djOn);
+    useEffect(() => {
+        if (djOn && !wasOn.current && !queue) onToggleQueue();
+        wasOn.current = djOn;
+    }, [ djOn, queue, onToggleQueue ]);
+};
+
+/** Behind the player: the colors of the cover for a song, the blurred picture for a book or a video. */
+const PlayerBackdrop: FC<{ isSong: boolean, background?: string }> = ({ isSong, background }) => (isSong ? (
+    <div className='abp-aura' aria-hidden='true'><i /><i /><i /></div>
+) : (
+    <>
+        <div className='abp-bg' style={background ? { backgroundImage: `url("${background}")` } : undefined} />
+        <div className='abp-bg-glow' />
+    </>
+));
+
+/** Next to the player: the list opened with its button and, for a song, the open panel above it. */
+const PlayerSide: FC<{ isSong: boolean, showList: boolean, studio: React.ReactNode, list: React.ReactNode }> = ({ isSong, showList, studio, list }) => (
+    <div className={isSong ? 'abp-side' : 'abp-side-plain'}>{studio}{showList && list}</div>
+);
+
+const panelClassOf = (showSide: boolean, isSong: boolean, hasStudio: boolean) => (
+    [ 'abp-panel', showSide && 'has-chapters', isSong && 'has-side', hasStudio && 'has-studio' ].filter(Boolean).join(' ')
+);
+
+/** The video in place of the cover: touching it pauses, and it can fill the screen. */
+const StageVideo: FC<{ host: HTMLElement, playing: boolean, onPlayPause: () => void, onFullscreen: () => void }> = ({ host, playing, onPlayPause, onFullscreen }) => (
+    <>
+        <VideoSlot host={host} />
+        <button type='button' className='abp-video-tap' onClick={onPlayPause} aria-label={playLabel(playing)}>
+            {!playing && <span className='abp-video-paused' aria-hidden='true'>▶</span>}
+        </button>
+        <button type='button' className='abp-round abp-video-full' onClick={onFullscreen} aria-label={globalize.translate('MhVideoFullscreen')} title={globalize.translate('MhVideoFullscreen')}>⛶</button>
+    </>
+);
+
+interface VideoChipsProps {
+    hasVideo: boolean;
+    videoChecked: boolean;
+    videoMode: boolean;
+    showing: boolean;
+    onWatch: () => void;
+    onSongOnly: () => void;
+    onVideoMode: () => void;
+}
+
+/** Watch the video of this song or go back to its audio, and the choice of always preferring videos. */
+const VideoChips: FC<VideoChipsProps> = ({ hasVideo, videoChecked, videoMode, showing, onWatch, onSongOnly, onVideoMode }) => (
+    <>
+        {hasVideo && <button type='button' className='abp-chip abp-chip-video' onClick={showing ? onSongOnly : onWatch}>{showing ? '🎵' : '🎬'} {globalize.translate(showing ? 'MhSongOnly' : 'MhWatchVideo')}</button>}
+        <button type='button' className={videoMode ? 'abp-chip is-on' : 'abp-chip'} aria-pressed={videoMode} onClick={onVideoMode}>📺 {globalize.translate(videoMode && videoChecked && !hasVideo ? 'MhNoSongVideo' : 'MhPreferVideos')}</button>
+    </>
+);
+
 interface FullProps extends Actions, RemoteActions {
     view: View;
     state: State;
@@ -757,26 +1014,43 @@ interface FullProps extends Actions, RemoteActions {
     onSpeed: () => void;
     onSleep: () => void;
     onPick: (e: React.MouseEvent<HTMLButtonElement>) => void;
+    api: Api;
+    engine: Engine | null;
+    onSeekTo: (ms: number) => void;
+    hasVideo: boolean;
+    /** The server already answered whether this song has a video. */
+    videoChecked: boolean;
+    videoMode: boolean;
+    /** The box of the video while it plays in place of the cover. */
+    videoHost: HTMLElement | null;
+    onWatch: () => void;
+    onSongOnly: () => void;
+    onFullscreen: () => void;
+    onVideoMode: () => void;
 }
 
 /** The full player: cover, waves, position, controls, speed and sleep timer, queue; and the remote control of another device. */
-const FullPlayer: FC<FullProps> = ({ view, state, queue, sleepLabel, sleepOn, onClose, onToggleQueue, onSeek, onSpeed, onSleep, onPick, onVolume, onMute, onAudio, onSubtitle, onDisconnect, ...actions }) => {
+const FullPlayer: FC<FullProps> = ({ view, state, queue, sleepLabel, sleepOn, onClose, onToggleQueue, onSeek, onSpeed, onSleep, onPick, onVolume, onMute, onAudio, onSubtitle, onDisconnect, api, engine, onSeekTo, hasVideo, videoChecked, videoMode, videoHost, onWatch, onSongOnly, onFullscreen, onVideoMode, ...actions }) => {
     const { item, isBook, isVideo, title, subtitle, partLine, cover, background, playing, percent, canPrev, canNext, queueTitle, bookLine } = view;
-    const showQueue = state.playlist.length > 1;
+    useListWithDj(queue, onToggleQueue);
     const icon = iconOf(view);
     const label = topLabel(view, state);
+    const isSong = item.Type === 'Audio';
+    const [ chosenTab, setStudio ] = useState<StudioTab | null>(null);
+    const studio = isSong ? chosenTab : null;
+    const { audio, songWave, colors } = useSongShow(api, isSong, item.Id, cover);
+    const onStudioClose = useCallback(() => setStudio(null), []);
+    const showSide = !!studio || queue;
+    const extras = useSteadyHeight(`${item.Id}-${hasVideo}`);
+    // Another device may not tell its queue: at least what plays is in the list
+    const queuePanel = <QueuePanel title={queueTitle} playlist={state.playlist.length ? state.playlist : [ item ]} index={state.index} playing={playing} onPick={onPick} />;
     return (
-        <div className='abp' role='dialog' aria-modal='true' aria-label={title}>
+        <div className='abp' role='dialog' aria-modal='true' aria-label={title} style={songStyle(isSong, colors)}>
             {/* Background: the cover blurred, larger than the window so its soft edges never show */}
-            <div className='abp-bg' style={background ? { backgroundImage: `url("${background}")` } : undefined} />
-            <div className='abp-bg-glow' />
-            <div className={queue && showQueue ? 'abp-panel has-chapters' : 'abp-panel'}>
+            <PlayerBackdrop isSong={isSong} background={background} />
+            <div className={panelClassOf(showSide, isSong && showSide, !!studio)}>
                 <header className='abp-top'>
-                    {showQueue ? (
-                        <button type='button' className={queue ? 'abp-round is-on' : 'abp-round'} onClick={onToggleQueue} aria-label={queueTitle} title={queueTitle}>
-                            <svg viewBox='0 0 24 24' aria-hidden='true'><path d='M4 6h16M4 12h16M4 18h10' /></svg>
-                        </button>
-                    ) : <span className='abp-round-space' />}
+                    <QueueButton on={queue} title={queueTitle} onClick={onToggleQueue} />
                     <span className='abp-top-label'>{state.remote ? '📡' : icon} {label}</span>
                     {/* Minimize: back to the small bar, playback goes on */}
                     <button type='button' className='abp-round abp-minimize' onClick={onClose} aria-label={globalize.translate('ApClose')} title={globalize.translate('ApClose')}>
@@ -785,32 +1059,45 @@ const FullPlayer: FC<FullProps> = ({ view, state, queue, sleepLabel, sleepOn, on
                 </header>
 
                 <div className='abp-main'>
-                    <div className={[ 'abp-stage', playing && 'is-playing', isVideo && 'is-wide' ].filter(Boolean).join(' ')}>
-                        <span className='abp-ring' />
-                        <span className='abp-ring abp-ring-2' />
-                        <span className='abp-ring abp-ring-3' />
-                        {cover ? <img key={item.AlbumId ?? item.Id} className='abp-cover' src={cover} alt='' /> : <span className='abp-cover abp-cover-empty'>{icon}</span>}
+                    <div className={[ 'abp-stage', playing && 'is-playing', isVideo && 'is-wide', isSong && 'is-song', videoHost && 'has-video' ].filter(Boolean).join(' ')}>
+                        {videoHost ? (
+                            <StageVideo host={videoHost} playing={playing} onPlayPause={actions.onPlayPause} onFullscreen={onFullscreen} />
+                        ) : (
+                            <>
+                                <StageShow isSong={isSong} view={view} state={state} engine={engine} bpm={audio?.Bpm} energy={audio?.Energy} wave={songWave} colors={colors} />
+                                {cover ? <span className='abp-cover'><CoverLayers src={cover} /></span> : <span className='abp-cover abp-cover-empty'>{icon}</span>}
+                            </>
+                        )}
                     </div>
 
-                    <div className='abp-info'>
-                        <h2 className='abp-title'>{title}</h2>
-                        {subtitle && <p className='abp-author'>{subtitle}</p>}
-                        {partLine && <p className='abp-part'>{partLine}</p>}
+                    <div className={isSong ? 'abp-info is-song' : 'abp-info'}>
+                        <div key={item.Id} className='abp-info-text abp-text-in'>
+                            <h2 className='abp-title'>{title}</h2>
+                            {subtitle && <p className='abp-author'>{subtitle}</p>}
+                            {partLine && <p className='abp-part'>{partLine}</p>}
+                        </div>
                     </div>
 
-                    {!isVideo && <Waves playing={playing} track={item.Id ?? ''} />}
-                    <SeekBar positionMs={state.positionMs} durationMs={state.durationMs} percent={percent} bookLine={bookLine} onSeek={onSeek} />
+                    {!videoHost && <PlayerWave view={view} isSong={isSong} wave={songWave} durationMs={state.durationMs} onSeekTo={onSeekTo} />}
+                    <SeekBar positionMs={state.positionMs} durationMs={state.durationMs} percent={percent} bookLine={bookLine} wavy={isSong} playing={playing} onSeek={onSeek} />
                     <Controls isBook={isBook} skips={isBook || isVideo} playing={playing} canPrev={canPrev} canNext={canNext} {...actions} />
 
-                    <div className='abp-extras'>
+                    <div ref={extras} className='abp-extras'>
                         {isBook && !state.remote && <button type='button' className={state.rate === 1 ? 'abp-chip' : 'abp-chip is-on'} onClick={onSpeed}>⚡ {state.rate}×</button>}
+                        {isSong && !state.remote && <VideoChips hasVideo={hasVideo} videoChecked={videoChecked} videoMode={videoMode} showing={!!videoHost} onWatch={onWatch} onSongOnly={onSongOnly} onVideoMode={onVideoMode} />}
+                        {isSong && <StudioChips tab={studio} remote={state.remote} onTab={setStudio} />}
                         <button type='button' className={sleepOn ? 'abp-chip is-on' : 'abp-chip'} onClick={onSleep}>🌙 {sleepLabel}</button>
                     </div>
 
                     {state.remote && <RemotePanel state={state} onVolume={onVolume} onMute={onMute} onAudio={onAudio} onSubtitle={onSubtitle} onDisconnect={onDisconnect} />}
                 </div>
 
-                {queue && showQueue && <QueuePanel title={queueTitle} playlist={state.playlist} index={state.index} playing={playing} onPick={onPick} />}
+                <PlayerSide
+                    isSong={isSong}
+                    showList={queue}
+                    list={queuePanel}
+                    studio={studio && <StudioPanel api={api} item={item} tab={studio} player={engine} positionMs={state.positionMs} durationMs={state.durationMs} percent={percent} playing={playing} onSeekTo={onSeekTo} onClose={onStudioClose} />}
+                />
             </div>
         </div>
     );
@@ -845,6 +1132,235 @@ const useSleepTimer = (state: State, playerRef: React.RefObject<Engine | null>) 
     }, []);
 
     return { sleep, sleepAt, next, clear };
+};
+
+interface VideoNeeds {
+    act: (fn: (player: Engine) => void) => void;
+    stopAll: () => void;
+    sleep: number;
+    sleepAt: number | null;
+    clearSleep: () => void;
+}
+
+/** Whether the app is in the background (old browsers without the property count as always on screen). */
+// eslint-disable-next-line compat/compat -- read only; undefined there, which is "not hidden"
+const appHidden = () => document.visibilityState === 'hidden';
+
+/**
+ * The video of a song in place of its audio. With "prefer videos" on, each song that has one shows it and the next
+ * one follows at its end; the audio waits paused. If the app goes to the background, where a phone stops videos,
+ * the song takes over so the music does not end; back in the app the video comes back where the song is.
+ */
+const useSongVideo = (api: Api | undefined, state: State, { act, stopAll, sleep, sleepAt, clearSleep }: VideoNeeds) => {
+    const { item, remote, paused, playlist, index, durationMs } = state;
+    const on = useSyncExternalStore(songVideoMode.subscribe, songVideoMode.get);
+    const itemId = item?.Id ?? null;
+    const isSong = item?.Type === 'Audio' && !remote;
+    const { data: info } = useSongInfo(api, isSong ? itemId : null);
+    // Known before the next song starts, so its audio does not sound first
+    const upcoming = playlist[index + 1];
+    useSongInfo(api, on && isSong && upcoming?.Type === 'Audio' ? upcoming.Id : null);
+
+    const [ video, setVideo ] = useState<string | null>(null);
+    const [ progress, setProgress ] = useState({ playing: true, positionMs: 0, durationMs: 0 });
+    // One video element for every song: a phone lets it play by itself only after the user touched it once, and that
+    // permission belongs to the element, so a new one for each song would stop at every change
+    const [ host ] = useState(() => {
+        const box = document.createElement('div');
+        box.className = 'abp-video-host';
+        const media = document.createElement('video');
+        media.playsInline = true;
+        media.preload = 'auto';
+        media.poster = BLANK_POSTER;
+        box.appendChild(media);
+        return box;
+    });
+    const element = useRef<HTMLVideoElement | null>(null);
+    element.current ??= host.querySelector('video');
+    const declined = useRef<string | null>(null);
+    if (declined.current && declined.current !== itemId) declined.current = null;
+    // A phone stops videos while the app is in the background: no video starts then, the song plays
+    const [ visible, setVisible ] = useState(() => !appHidden());
+    const hasNext = index < playlist.length - 1;
+    const wanted = on && isSong && visible && !!info?.HasVideo && declined.current !== itemId;
+    /** Where the video starts: where the song is, coming back to the app or after a while of audio. */
+    const startAt = useRef(0);
+
+    const start = useCallback((id: string) => {
+        stopTransition();
+        act(p => {
+            startAt.current = (pm.currentTime(p) || 0) / 1000;
+            pm.pause(p);
+        });
+        setProgress({ playing: true, positionMs: startAt.current * 1000, durationMs: 0 });
+        setVideo(id);
+    }, [ act ]);
+
+    useLayoutEffect(() => {
+        if (video === itemId) return;
+        // A song paused by hand (in the background, from the notification) stays paused: no video starts by itself
+        if (wanted && itemId && !paused) start(itemId);
+        else if (video && !wanted) setVideo(null);
+    }, [ video, itemId, wanted, paused, start ]);
+
+    // A song that was already on its way is held while its video plays
+    useEffect(() => {
+        if (video && video === itemId && !paused) act(p => pm.pause(p));
+    }, [ video, itemId, paused, act ]);
+
+    const resumeSong = useCallback(() => {
+        act(p => {
+            if (pm.paused(p)) pm.playPause(p);
+        });
+    }, [ act ]);
+    const songOnly = useCallback(() => {
+        declined.current = itemId;
+        setVideo(null);
+        resumeSong();
+    }, [ itemId, resumeSong ]);
+    const onError = useCallback(() => {
+        toast(globalize.translate('MhVideoError'));
+        songOnly();
+    }, [ songOnly ]);
+    const onEnded = useCallback(() => {
+        setVideo(null);
+        declined.current = itemId;
+        if (sleep === -1) clearSleep();
+        else if (hasNext) act(p => pm.nextTrack(p));
+        else if (on) stopAll();
+        else resumeSong();
+    }, [ itemId, sleep, clearSleep, hasNext, on, act, stopAll, resumeSong ]);
+
+    // Leaving the app: the song goes on from where the video was. Coming back: the video goes on from where the song
+    // is (the same song, or the one it reached meanwhile)
+    const playing = useRef({ video, durationMs, act });
+    playing.current = { video, durationMs, act };
+    useEffect(() => {
+        const onChange = () => {
+            const hidden = appHidden();
+            const now = playing.current;
+            const media = element.current;
+            if (hidden && now.video && media) {
+                const seconds = media.currentTime;
+                const wasPlaying = !media.paused;
+                now.act(p => {
+                    const limit = now.durationMs > 1000 ? now.durationMs - 1000 : 0;
+                    pm.seek(Math.min(seconds * 1000, limit) * TICKS_PER_MS, p);
+                    if (wasPlaying && pm.paused(p)) pm.playPause(p);
+                });
+            }
+            setVisible(!hidden);
+        };
+        document.addEventListener('visibilitychange', onChange);
+        return () => document.removeEventListener('visibilitychange', onChange);
+    }, []);
+
+    // The sleep timer also ends a video
+    useEffect(() => {
+        if (!video || sleepAt === null) return;
+        const timer = window.setTimeout(() => {
+            element.current?.pause();
+            clearSleep();
+        }, Math.max(0, sleepAt - Date.now()));
+        return () => window.clearTimeout(timer);
+    }, [ video, sleepAt, clearSleep ]);
+
+    const shownVideo = video === itemId ? video : null;
+    const handlers = useRef({ onEnded, onError, songOnly });
+    handlers.current = { onEnded, onError, songOnly };
+
+    const onProgress = useCallback((current: HTMLVideoElement) => {
+        setProgress(prev => ({
+            playing: !current.paused,
+            positionMs: current.currentTime * 1000,
+            // A video converted on the way does not know its length: the song's is used
+            durationMs: Number.isFinite(current.duration) ? current.duration * 1000 : prev.durationMs
+        }));
+    }, []);
+    useEffect(() => {
+        const media = element.current;
+        if (!media) return;
+        const report = () => onProgress(media);
+        const ended = () => handlers.current.onEnded();
+        const failed = () => {
+            if (media.getAttribute('src')) handlers.current.onError();
+        };
+        const onFullscreen = () => {
+            // eslint-disable-next-line compat/compat
+            media.controls = document.fullscreenElement === media;
+        };
+        // The first touch anywhere in the app gives this element the permission to play later by itself
+        const unlock = () => {
+            if (media.getAttribute('src')) return;
+            void media.play().catch(() => undefined);
+            media.pause();
+        };
+        const events: [string, () => void][] = [ [ 'loadedmetadata', report ], [ 'play', report ], [ 'pause', report ], [ 'timeupdate', report ], [ 'ended', ended ], [ 'error', failed ] ];
+        for (const [ name, fn ] of events) media.addEventListener(name, fn);
+        document.addEventListener('fullscreenchange', onFullscreen);
+        document.addEventListener('pointerup', unlock, { once: true, capture: true });
+        document.addEventListener('keydown', unlock, { once: true, capture: true });
+        return () => {
+            for (const [ name, fn ] of events) media.removeEventListener(name, fn);
+            document.removeEventListener('fullscreenchange', onFullscreen);
+            document.removeEventListener('pointerup', unlock, { capture: true });
+            document.removeEventListener('keydown', unlock, { capture: true });
+        };
+    }, [ onProgress ]);
+
+    // The same element changes from one video to the next
+    useEffect(() => {
+        const media = element.current;
+        if (!media || !api) return;
+        if (!shownVideo) {
+            if (media.getAttribute('src')) {
+                media.pause();
+                media.removeAttribute('src');
+                media.load();
+            }
+            return;
+        }
+        media.src = `${api.basePath}/MusicHub/Songs/${shownVideo}/Video?ApiKey=${encodeURIComponent(api.accessToken)}`;
+        const at = startAt.current;
+        startAt.current = 0;
+        // The song had gone on (the app was in the background): the video goes on from there. A video converted on the
+        // way (.mkv) cannot jump ahead: then the song keeps playing, so nothing is heard twice
+        const jump = () => {
+            const range = media.seekable;
+            if (range.length && range.end(range.length - 1) >= at) media.currentTime = at;
+            else handlers.current.songOnly();
+        };
+        if (at > 2) media.addEventListener('loadedmetadata', jump, { once: true });
+        void media.play().catch(() => undefined);
+        return () => media.removeEventListener('loadedmetadata', jump);
+    }, [ api, shownVideo ]);
+
+    const seek = useCallback((ms: number) => {
+        if (element.current) element.current.currentTime = ms / 1000;
+    }, []);
+    const onFullscreen = useCallback(() => {
+        const current = element.current as (HTMLVideoElement & { webkitEnterFullscreen?: () => void }) | null;
+        if (!current) return;
+        if (current.requestFullscreen) void current.requestFullscreen().catch(() => undefined);
+        else current.webkitEnterFullscreen?.();
+    }, []);
+    const toggle = useCallback(() => {
+        const current = element.current;
+        if (!current) return;
+        if (current.paused) void current.play().catch(() => undefined);
+        else current.pause();
+    }, []);
+    const watch = useCallback(() => {
+        if (itemId) start(itemId);
+    }, [ itemId, start ]);
+    const onMode = useCallback(() => {
+        declined.current = null;
+        songVideoMode.set(!on);
+        if (on && video) songOnly();
+    }, [ on, video, songOnly ]);
+    const clearVideo = useCallback(() => setVideo(null), []);
+
+    return { video: shownVideo, on, hasVideo: !!info?.HasVideo, videoChecked: !!info, element, host, progress, songOnly, onEnded, onError, onProgress, seek, onFullscreen, toggle, watch, onMode, clearVideo };
 };
 
 const Player: FC = () => {
@@ -935,15 +1451,21 @@ const Player: FC = () => {
     }, [ playerRef ]);
 
     const { clear } = timer;
+    // Stop: ends the playback; the full player and the small bar go away at once (where you were is kept)
+    const stopAll = useCallback(() => {
+        setOpen(false);
+        clear();
+        act(p => pm.stop(p));
+        reset();
+    }, [ act, reset, clear ]);
+    const songVideo = useSongVideo(api, state, { act, stopAll, sleep: timer.sleep, sleepAt: timer.sleepAt, clearSleep: clear });
+    const { clearVideo, seek: seekVideo, video: playingVideo } = songVideo;
     const actions: Actions = {
         onPlayPause: useCallback(() => act(p => pm.playPause(p)), [ act ]),
-        // Stop: ends the playback; the full player and the small bar go away at once (where you were is kept)
         onStop: useCallback(() => {
-            setOpen(false);
-            clear();
-            act(p => pm.stop(p));
-            reset();
-        }, [ act, reset, clear ]),
+            clearVideo();
+            stopAll();
+        }, [ clearVideo, stopAll ]),
         onBack: useCallback(() => act(p => pm.seek(Math.max(0, positionMs - SKIP_MS) * TICKS_PER_MS, p)), [ act, positionMs ]),
         onForward: useCallback(() => act(p => pm.seek(Math.min(durationMs || Infinity, positionMs + SKIP_MS) * TICKS_PER_MS, p)), [ act, positionMs, durationMs ]),
         onPrev: useCallback(() => act(p => pm.previousTrack(p)), [ act ]),
@@ -951,8 +1473,9 @@ const Player: FC = () => {
     };
     const onSeek = useCallback((e: ChangeEvent<HTMLInputElement>) => {
         const ms = Number(e.target.value);
-        act(p => pm.seek(ms * TICKS_PER_MS, p));
-    }, [ act ]);
+        if (playingVideo) seekVideo(ms);
+        else act(p => pm.seek(ms * TICKS_PER_MS, p));
+    }, [ act, playingVideo, seekVideo ]);
     const onSpeed = useCallback(() => {
         const next = SPEEDS[(SPEEDS.indexOf(rate) + 1) % SPEEDS.length] ?? 1;
         act(p => pm.setPlaybackRate(next, p));
@@ -1012,7 +1535,22 @@ const Player: FC = () => {
         return { total, done, percent: total > 0 ? Math.min(100, Math.round((done / total) * 100)) : 0 };
     }, [ playlist, index, positionMs ]);
 
-    const view = api ? describe(api.basePath, state, book) : null;
+    const onSeekTo = useCallback((ms: number) => {
+        if (playingVideo) seekVideo(ms);
+        else act(p => pm.seek(ms * TICKS_PER_MS, p));
+    }, [ act, playingVideo, seekVideo ]);
+    const onMixNext = useCallback(() => act(p => pm.nextTrack(p)), [ act ]);
+    useMusicEngine(api, playerRef.current, item, { positionMs, durationMs, paused: state.paused, remote, songsAhead: Math.max(0, playlist.length - 1 - index), onNext: onMixNext });
+
+    // While a video plays in place of the song, the whole player follows the video
+    const shown: State = playingVideo ? {
+        ...state,
+        positionMs: songVideo.progress.positionMs,
+        durationMs: songVideo.progress.durationMs || state.durationMs,
+        paused: !songVideo.progress.playing
+    } : state;
+    const shownActions: Actions = playingVideo ? { ...actions, onPlayPause: songVideo.toggle } : actions;
+    const view = api ? describe(api.basePath, shown, book) : null;
     // The video screen has its own controls
     if (!view || !kind || !api || location.pathname === '/video') return null;
 
@@ -1021,7 +1559,7 @@ const Player: FC = () => {
         open ? (
             <FullPlayer
                 view={view}
-                state={state}
+                state={shown}
                 queue={queue}
                 sleepLabel={sleepText(timer.sleep, timer.sleepAt)}
                 sleepOn={timer.sleep !== 0}
@@ -1031,7 +1569,18 @@ const Player: FC = () => {
                 onSpeed={onSpeed}
                 onSleep={timer.next}
                 onPick={onPick}
-                {...actions}
+                api={api}
+                engine={playerRef.current}
+                onSeekTo={onSeekTo}
+                hasVideo={songVideo.hasVideo}
+                videoChecked={songVideo.videoChecked}
+                videoMode={songVideo.on}
+                videoHost={playingVideo ? songVideo.host : null}
+                onWatch={songVideo.watch}
+                onSongOnly={songVideo.songOnly}
+                onFullscreen={songVideo.onFullscreen}
+                onVideoMode={songVideo.onMode}
+                {...shownActions}
                 {...remoteActions}
             />
         ) : (
@@ -1040,12 +1589,13 @@ const Player: FC = () => {
                 title={view.title}
                 line={view.partLine || view.subtitle}
                 cover={coverOf(api.basePath, view.item, 120)}
+                videoHost={playingVideo ? songVideo.host : null}
                 percent={view.percent}
                 playing={view.playing}
                 canPrev={view.canPrev}
                 canNext={view.canNext}
                 onOpen={onOpen}
-                {...actions}
+                {...shownActions}
             />
         ),
         document.body

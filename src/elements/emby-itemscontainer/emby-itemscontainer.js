@@ -247,7 +247,7 @@ function onPlaybackStopped(e, stopInfo) {
             itemsContainer.notifyRefreshNeeded(true);
             return;
         }
-    } else if (state.NowPlayingItem?.MediaType === 'Audio' && eventsToMonitor.indexOf('audioplayback') !== -1) {
+    } else if (state.NowPlayingItem?.MediaType === 'Audio' && !stopInfo.nextItem && eventsToMonitor.indexOf('audioplayback') !== -1) {
         itemsContainer.notifyRefreshNeeded(true);
         return;
     }

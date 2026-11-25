@@ -127,7 +127,7 @@ const QuickLibrary: FC<{ libraryId: string, name?: string, accent?: string, them
     const type = block?.CollectionType ?? undefined;
     const accent = themeAccent ?? accentOf(type, block?.Name ?? name ?? '');
     // Movies alone or with series (anime, kids): what is in theaters and recommendations
-    const hasMovies = !type || type === 'movies';
+    const hasMovies = !!block && (!type || type === 'movies');
     const playedRows = personal?.LibraryRows.find(b => b.LibraryId === libraryId)?.Rows ?? [];
 
     const progressRow = (key: string, cards: ProgressCard[] | undefined, title: string, color: string): ReactNode => (cards?.length ? (

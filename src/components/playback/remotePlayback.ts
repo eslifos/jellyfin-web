@@ -1,5 +1,5 @@
 /**
- * Sends the video playing in this browser to a Chromecast (or other screen) with the browser's own Remote Playback
+ * Sends the video or song playing in this browser to a Chromecast (or other device) with the browser's own Remote Playback
  * API. Unlike the Google Cast SDK, it also works when Jellyfin is opened over plain http on the local network.
  */
 
@@ -9,13 +9,15 @@ export type RemoteState = 'unsupported' | 'unknown' | 'unavailable' | 'available
 export const getVideoElement = () =>
     document.querySelector<HTMLVideoElement>('video.htmlvideoplayer') ?? document.querySelector<HTMLVideoElement>('video');
 
+export const getAudioElement = () => document.querySelector<HTMLAudioElement>('audio.mediaPlayerAudio');
+
 export const isRemotePlaybackSupported = () =>
     typeof HTMLMediaElement !== 'undefined' && 'remote' in HTMLMediaElement.prototype;
 
-/** Watches whether the current video can be sent to a screen; returns the function that stops watching. */
-export function watchRemotePlayback(video: HTMLVideoElement | null, onState: (state: RemoteState) => void): () => void {
-    const remote = video?.remote;
-    if (!video || !remote) {
+/** Watches whether the current video or song can be sent to a device; returns the function that stops watching. */
+export function watchRemotePlayback(media: HTMLMediaElement | null, onState: (state: RemoteState) => void): () => void {
+    const remote = media?.remote;
+    if (!media || !remote) {
         onState('unsupported');
         return () => { /* nothing to stop */ };
     }
@@ -59,10 +61,10 @@ export function watchRemotePlayback(video: HTMLVideoElement | null, onState: (st
 }
 
 /** Opens the browser's device picker (must run from a click). Resolves false when nothing was chosen or it failed. */
-export async function promptRemotePlayback(video: HTMLVideoElement | null = getVideoElement()) {
-    if (!video?.remote) return false;
+export async function promptRemotePlayback(media: HTMLMediaElement | null = getVideoElement()) {
+    if (!media?.remote) return false;
     try {
-        await video.remote.prompt();
+        await media.remote.prompt();
         return true;
     } catch (err) {
         console.warn('[RemotePlayback] prompt failed', err);

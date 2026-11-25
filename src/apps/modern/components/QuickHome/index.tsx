@@ -9,16 +9,17 @@
  * ones chosen in Settings → Home.
  */
 import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client/models/base-item-dto';
-import React, { type FC, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, { type FC, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
+import { formatNumber } from 'utils/localeNumber';
 import { queryClient } from 'utils/query/queryClient';
 
 import { isLibKey, loadHomeSections, orderSections } from '../HomeFeed/homeSections';
 import {
     Card, Hero, Lazy, LibraryBlock, type ProgressCard, Recommendations, Row, Spotlight, UpcomingCard, Wide,
-    accentOf, hashColor, reducedMotion, useHomePage, usePersonal
+    hashColor, useHomePage, usePersonal
 } from './parts';
 
 /* ---------- Page ---------- */
@@ -48,19 +49,9 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
     const blocks = useMemo(() => new Map((page?.Blocks ?? []).map(b => [ `lib:${b.LibraryId}`, b ])), [ page?.Blocks ]);
     const personalRows = useMemo(() => new Map((personal?.LibraryRows ?? []).map(b => [ b.LibraryId, b.Rows ])), [ personal?.LibraryRows ]);
 
-    const onJump = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
-        const target = e.currentTarget.dataset.target;
-        if (target) document.getElementById(target)?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
-    }, []);
-
     if (!api || !page) {
         return <div ref={root} className='qh qh-loading' aria-busy='true'><div className='qh-skeleton-hero' />{nav}<div className='qh-skeleton-row' /><div className='qh-skeleton-row' /></div>;
     }
-
-    const chips = order.flatMap(key => {
-        const block = blocks.get(key);
-        return block ? [ { id: `qh-${block.LibraryId}`, label: block.Name, color: accentOf(block.CollectionType, block.Name) } ] : [];
-    });
 
     const progressRow = (key: string, cards: ProgressCard[] | undefined, title: string, accent: string): ReactNode => (cards?.length ? (
         <Row key={key} id={`qh-${key}`} title={globalize.translate(title)} accent={accent}>
@@ -94,9 +85,9 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
                 <header className='qh-row-head'><h3 className='qh-row-title'>{globalize.translate('QhGenres')}</h3></header>
                 <div className='qh-genre-list'>
                     {page.Genres.map(g => (
-                        <a key={g.Id} className='qh-genre' href={`#/genre?genreId=${g.Id}`} style={{ '--qh-genre': hashColor(g.Name) } as React.CSSProperties}>
+                        <a key={g.Id} className='qh-genre' href={`#/genre?genreId=${g.Id}`} aria-label={globalize.translate('QhGenreLabel', g.Name, formatNumber(g.Count))} style={{ '--qh-genre': hashColor(g.Name) } as React.CSSProperties}>
                             <span>{g.Name}</span>
-                            <small>{g.Count}</small>
+                            <small>{formatNumber(g.Count)}</small>
                         </a>
                     ))}
                 </div>
@@ -124,18 +115,9 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
 
     return (
         <div ref={root} className='qh'>
-            {/* The banner always goes on top, edge to edge, then the library buttons */}
+            {/* The banner always goes on top, edge to edge, then the one row of libraries and universes */}
             {page.Hero.length > 0 && <Hero api={api} items={page.Hero} serverId={serverId} />}
             {nav}
-            {chips.length > 1 && (
-                <nav className='qh-jump' aria-label={globalize.translate('QhJumpTo')}>
-                    {chips.map(c => (
-                        <button key={c.id} type='button' className='qh-chip' data-target={c.id} style={{ '--qh-chip': c.color } as React.CSSProperties} onClick={onJump}>
-                            {c.label}
-                        </button>
-                    ))}
-                </nav>
-            )}
             {!page.Ready && <p className='qh-preparing'>{globalize.translate('QhPreparing')}</p>}
             {order.map(render)}
         </div>

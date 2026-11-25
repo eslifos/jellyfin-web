@@ -3,7 +3,7 @@
  * library, by day, in a month calendar or a list. Uses Jellyfin's own metadata:
  * future episodes exist when the metadata provider (TVDB / TMDb) lists them.
  */
-import React, { type FC, useMemo, useState } from 'react';
+import React, { type FC, useCallback, useMemo, useState } from 'react';
 import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client/models/base-item-dto';
 import { BaseItemKind } from '@jellyfin/sdk/lib/generated-client/models/base-item-kind';
 import { ImageType } from '@jellyfin/sdk/lib/generated-client/models/image-type';
@@ -23,6 +23,8 @@ import Typography from '@mui/material/Typography';
 import CalendarMonthIcon from '@mui/icons-material/CalendarMonth';
 import ChevronLeftIcon from '@mui/icons-material/ChevronLeft';
 import ChevronRightIcon from '@mui/icons-material/ChevronRight';
+import LiveTvRoundedIcon from '@mui/icons-material/LiveTvRounded';
+import MovieRoundedIcon from '@mui/icons-material/MovieRounded';
 import ViewListIcon from '@mui/icons-material/ViewList';
 import { Link } from 'react-router-dom';
 
@@ -31,6 +33,8 @@ import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 import { readPref, writePref } from 'utils/syncedPrefs';
 
+import { type WithTmdbImage, tmdbImageUrl } from '../components/HomeFeed/tmdbImage';
+import { touchGroupSx } from '../components/touchTarget';
 import { useLiveLibraryRefresh } from '../components/HomeFeed/useLiveLibraryRefresh';
 
 type View = 'calendar' | 'list';
@@ -49,6 +53,7 @@ interface UpcomingRelease {
     ReleaseDate: string;
     Overview?: string | null;
     ImageUrl?: string | null;
+    ImagePath?: string | null;
     SeriesId?: string | null;
     SeriesName?: string | null;
     SeasonNumber?: number | null;
@@ -57,8 +62,8 @@ interface UpcomingRelease {
     RelatedItemId?: string | null;
 }
 
-/** Library item, or a TMDb release shown like one. */
-type CalItem = BaseItemDto & { ExternalImage?: string | null; Saga?: string | null; LinkId?: string | null };
+/** Library item, or a TMDb release shown like one (its picture: the TMDb file, asked to the server). */
+type CalItem = BaseItemDto & { Tmdb?: WithTmdbImage | null; Saga?: string | null; LinkId?: string | null };
 
 const normId = (id?: string | null) => (id || '').replace(/-/g, '').toLowerCase();
 
@@ -78,7 +83,7 @@ const fromRelease = (r: UpcomingRelease): CalItem => (r.Kind === 'Episode' ? {
     Name: r.Title,
     PremiereDate: r.ReleaseDate,
     LocationType: 'Virtual',
-    ExternalImage: r.ImageUrl,
+    Tmdb: { ImagePath: r.ImagePath, ImageUrl: r.ImageUrl },
     Saga: r.CollectionName,
     LinkId: r.RelatedItemId
 });
@@ -135,12 +140,59 @@ const entryLine = (e: Entry) => {
     return `${e.count > 1 ? `${globalize.translate('UpcEps', e.count)} ` : ''}S${i.ParentIndexNumber}·${ep}${time}`;
 };
 
-const EntryChip: FC<{ e: Entry; compact?: boolean }> = ({ e, compact }) => {
+/** Two letters of a title (words that start with a letter or a digit), for an entry without a picture. */
+const initials = (name?: string | null) => (name || '?')
+    .split(/\s+/)
+    .filter(w => (w !== '' && w[0].toLowerCase() !== w[0].toUpperCase()) || /^\d/.test(w))
+    .slice(0, 2)
+    .map(w => w[0])
+    .join('')
+    .toUpperCase() || '?';
+
+/** Server cache first (w92, w154 on sharp screens); servers without it still have the TMDb address. */
+const tmdbSources = (basePath: string, tmdb: WithTmdbImage) => {
+    const small = tmdbImageUrl(basePath, tmdb, 'w92');
+    const sharp = tmdbImageUrl(basePath, tmdb, 'w154');
+    const list: { src: string; srcSet?: string }[] = [];
+    if (small) list.push({ src: small, srcSet: small + ' 1x, ' + sharp + ' 2x' });
+    if (tmdb.ImageUrl) list.push({ src: tmdb.ImageUrl });
+    return list;
+};
+
+/**
+ * The small poster of an entry: from the library, or the TMDb one from the server cache (w92, w154 on sharp
+ * screens; never the original size). If no picture loads: the initials, or the icon of the kind when it is tiny.
+ */
+const EntryThumb: FC<{ item: CalItem; compact?: boolean; color: string }> = ({ item, compact, color }) => {
     const { api } = useApi();
+    const sources = useMemo(() => {
+        if (!api) return [];
+        if (item.Tmdb) return tmdbSources(api.basePath, item.Tmdb);
+        const id = item.Type === BaseItemKind.Episode ? item.SeriesId : item.Id;
+        return id && !id.startsWith('tmdb-') ? [ { src: getImageApi(api).getItemImageUrlById(id, ImageType.Primary, { maxHeight: compact ? 60 : 120 }) } ] : [];
+    }, [ api, compact, item ]);
+    const [ failed, setFailed ] = useState(0);
+    const onError = useCallback(() => setFailed(n => n + 1), []);
+    const box = { width: compact ? 20 : 36, height: compact ? 30 : 54, borderRadius: '4px', flexShrink: 0 };
+    const source = sources[failed];
+
+    if (!source) {
+        const Icon = item.Type === BaseItemKind.Episode ? LiveTvRoundedIcon : MovieRoundedIcon;
+        return (
+            <Box aria-hidden='true' className='upcThumbFallback' sx={{ ...box, display: 'grid', placeItems: 'center', color: '#fff', background: `linear-gradient(160deg, ${color}cc, ${color}55)`, fontSize: '0.72rem', fontWeight: 800 }}>
+                {compact ? <Icon sx={{ fontSize: 14 }} /> : initials(item.SeriesName || item.Name)}
+            </Box>
+        );
+    }
+    return (
+        <Box component='img' key={source.src} src={source.src} srcSet={source.srcSet} alt='' loading='lazy' decoding='async' referrerPolicy='no-referrer' onError={onError}
+            sx={{ ...box, objectFit: 'cover', background: 'rgba(255,255,255,0.06)' }} />
+    );
+};
+
+const EntryChip: FC<{ e: Entry; compact?: boolean }> = ({ e, compact }) => {
     const i = e.item;
     const color = i.Type === BaseItemKind.Episode ? EP_COLOR : MOVIE_COLOR;
-    const imgId = i.Type === BaseItemKind.Episode ? i.SeriesId : i.Id;
-    const img = i.ExternalImage || (imgId && api && !imgId.startsWith('tmdb-') ? getImageApi(api).getItemImageUrlById(imgId, ImageType.Primary, { maxHeight: compact ? 60 : 120 }) : undefined);
     const linkId = i.Type === BaseItemKind.Episode ? (i.SeriesId || i.Id) : (i.LinkId || i.Id);
     const isNew = i.Type === BaseItemKind.Episode && i.IndexNumber === 1;
 
@@ -150,7 +202,7 @@ const EntryChip: FC<{ e: Entry; compact?: boolean }> = ({ e, compact }) => {
             background: e.available ? 'rgba(76,175,80,0.1)' : 'rgba(255,255,255,0.04)', borderLeft: `3px solid ${color}`,
             '&:hover': { background: 'rgba(255,255,255,0.08)' }
         }}>
-            <Box component='img' src={img} alt='' loading='lazy' sx={{ width: compact ? 20 : 36, height: compact ? 30 : 54, objectFit: 'cover', borderRadius: '4px', flexShrink: 0, background: 'rgba(255,255,255,0.06)' }} />
+            <EntryThumb item={i} compact={compact} color={color} />
             <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Typography noWrap sx={{ fontSize: compact ? '0.68rem' : '0.86rem', fontWeight: 700, color: '#fff', lineHeight: 1.25 }}>{i.SeriesName || i.Name}</Typography>
                 <Typography noWrap sx={{ fontSize: compact ? '0.6rem' : '0.74rem', color: 'rgba(255,255,255,0.55)' }}>{entryLine(e)}</Typography>
@@ -307,11 +359,11 @@ const UpcomingPage: FC = () => {
                 <Typography sx={{ fontSize: '0.86rem', color: 'rgba(255,255,255,0.55)', mb: 2 }}>{globalize.translate('UpcSubtitle')}</Typography>
 
                 <Box sx={{ display: 'flex', gap: 1.25, flexWrap: 'wrap', alignItems: 'center', mb: 2 }}>
-                    <ToggleButtonGroup size='small' exclusive value={view} onChange={(_, v: View | null) => v && setViewSaved(v)}>
+                    <ToggleButtonGroup size='small' exclusive value={view} onChange={(_, v: View | null) => v && setViewSaved(v)} sx={touchGroupSx}>
                         <ToggleButton value='list' sx={{ gap: 0.75, textTransform: 'none' }}><ViewListIcon fontSize='small' />{globalize.translate('UpcList')}</ToggleButton>
                         <ToggleButton value='calendar' sx={{ gap: 0.75, textTransform: 'none' }}><CalendarMonthIcon fontSize='small' />{globalize.translate('UpcCalendar')}</ToggleButton>
                     </ToggleButtonGroup>
-                    <ToggleButtonGroup size='small' exclusive value={filter} onChange={(_, v: Filter | null) => v && setFilter(v)}>
+                    <ToggleButtonGroup size='small' exclusive value={filter} onChange={(_, v: Filter | null) => v && setFilter(v)} sx={touchGroupSx}>
                         <ToggleButton value='all' sx={{ textTransform: 'none' }}>{globalize.translate('All')}</ToggleButton>
                         <ToggleButton value='shows' sx={{ textTransform: 'none' }}>{globalize.translate('Shows')}</ToggleButton>
                         <ToggleButton value='movies' sx={{ textTransform: 'none' }}>{globalize.translate('Movies')}</ToggleButton>
@@ -320,7 +372,8 @@ const UpcomingPage: FC = () => {
                     <Box sx={{ flex: 1 }} />
                     {chip(globalize.translate('UpcEpisodesN', counts.episodes), EP_COLOR)}
                     {chip(globalize.translate('UpcMoviesN', counts.movies), MOVIE_COLOR)}
-                    {chip(`✓ ${globalize.translate('UpcAvailableN', counts.available)}`, '#4caf50')}
+                    {/* "0 available" says nothing: only shown when something is already in the library */}
+                    {counts.available > 0 && chip(`✓ ${globalize.translate('UpcAvailableN', counts.available)}`, '#4caf50')}
                 </Box>
 
                 {view === 'calendar' ? (

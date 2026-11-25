@@ -14,6 +14,9 @@ import { useItem } from 'hooks/useItem';
 import globalize from 'lib/globalize';
 import type { LibraryViewSettings } from 'types/library';
 import { LibraryTab } from 'types/libraryTab';
+import { formatNumber } from 'utils/localeNumber';
+
+import { touchGroupSx } from 'apps/modern/components/touchTarget';
 
 import FilterButton from './filter/FilterButton';
 import LibraryViewMenu from './LibraryViewMenu';
@@ -77,7 +80,7 @@ const LibraryToolbar: FC = () => {
     const itemCountDisplay = useMemo(() => {
         if (isPending) return '\u2219'; // Bullet "operator" character as a loading indicator
 
-        return totalRecordCount.toLocaleString();
+        return formatNumber(totalRecordCount);
     }, [isPending, totalRecordCount]);
 
     if (!isLibraryPath) return null;
@@ -175,6 +178,7 @@ const LibraryToolbar: FC = () => {
                             <ButtonGroup
                                 variant='contained'
                                 size={isSmallScreen ? undefined : 'small'}
+                                sx={touchGroupSx}
                             >
                                 {isBtnPlayAllEnabled && (
                                     <PlayAllButton
@@ -222,6 +226,7 @@ const LibraryToolbar: FC = () => {
                             color='inherit'
                             variant='text'
                             size={isSmallScreen ? undefined : 'small'}
+                            sx={touchGroupSx}
                         >
                             {isBtnFilterEnabled && (
                                 <FilterButton

@@ -258,11 +258,12 @@ const HomePreferencesPage: FC = () => {
 
     return (
         <Page id='homeScreenPreferencesPage' className='libraryPage userPreferencesPage noSecondaryNavPage mainAnimatedPage' title={globalize.translate('Home')}>
-            <Box sx={{ maxWidth: 1300, mx: 'auto', px: 2, pt: 3, pb: 14 }}>
-                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2.5, alignItems: 'start' }}>
+            <Box sx={{ maxWidth: 1300, mx: 'auto', px: { xs: 1.5, sm: 2 }, pt: 3, pb: 14 }}>
+                {/* minmax(0, …): a column never grows past the screen to fit a long name, the name wraps instead */}
+                <Box sx={{ display: 'grid', gridTemplateColumns: { xs: 'minmax(0, 1fr)', lg: 'repeat(2, minmax(0, 1fr))' }, gap: { xs: 2, sm: 2.5 }, alignItems: 'start' }}>
 
                     {/* ── Columna izquierda ── */}
-                    <Box>
+                    <Box sx={{ minWidth: 0 }}>
                         <Card id='sections' title={globalize.translate('Home')} icon={<DashboardCustomizeIcon />} open={expanded.sections} onToggle={toggle}>
                             {layoutManager.tv && (
                                 <Sel label={globalize.translate('LabelTVHomeScreen')} value={tvHome || 'horizontal'} onChange={setTvHome} helper={globalize.translate('LabelPleaseRestart')}>
@@ -277,15 +278,16 @@ const HomePreferencesPage: FC = () => {
                     </Box>
 
                     {/* ── Columna derecha ── */}
-                    <Box>
+                    <Box sx={{ minWidth: 0 }}>
                         <Card id='order' title={globalize.translate('HeaderLibraryOrder')} icon={<SwapVertIcon />} accentColor='#aa5cc3' open={expanded.order} onToggle={toggle}>
                             {views.map((view, i) => (
                                 <Box key={view.Id} sx={{
-                                    display: 'flex', alignItems: 'center', gap: 1.5, px: 1.5, py: 0.75, mb: 0.75, borderRadius: '12px',
-                                    background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(170,92,195,0.15)'
+                                    display: 'flex', alignItems: 'center', gap: { xs: 1, sm: 1.5 }, px: { xs: 1, sm: 1.5 }, py: 0.75, mb: 0.75, borderRadius: '12px',
+                                    minWidth: 0, background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(170,92,195,0.15)',
+                                    '& > button': { flexShrink: 0 }
                                 }}>
-                                    <FolderOpenIcon sx={{ color: '#aa5cc3', fontSize: '1.1rem' }} />
-                                    <Typography sx={{ flex: 1, fontSize: '0.88rem', color: 'rgba(255,255,255,0.82)' }}>{view.Name}</Typography>
+                                    <FolderOpenIcon sx={{ color: '#aa5cc3', fontSize: '1.1rem', flexShrink: 0 }} />
+                                    <Typography sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere', lineHeight: 1.3, fontSize: '0.88rem', color: 'rgba(255,255,255,0.82)' }}>{view.Name}</Typography>
                                     <IconButton size='small' title={globalize.translate('Up')} disabled={i === 0} onClick={() => moveView(i, -1)}
                                         sx={{ color: 'rgba(255,255,255,0.5)', '&:hover': { color: '#aa5cc3' } }}>
                                         <KeyboardArrowUpIcon fontSize='small' />

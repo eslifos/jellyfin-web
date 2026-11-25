@@ -162,7 +162,7 @@ export const Component = () => {
                 <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: 2, mb: 2.5 }}>
                     <InfoTile icon={<HistoryIcon />} label={globalize.translate('TskLastRun')} value={last?.EndTimeUtc ? relativeTime(last.EndTimeUtc) : globalize.translate('TskNeverRan')} color='#00a4dc' />
                     <InfoTile icon={<TimerIcon />} label={globalize.translate('TskDuration')} value={duration(last?.StartTimeUtc, last?.EndTimeUtc) || '—'} color='#aa5cc3' />
-                    <InfoTile icon={<UpcomingIcon />} label={globalize.translate('TskNextRun')} value={next ? relativeTime(next) : '—'} color='#4caf50' secondary={next ? next.toLocaleString() : undefined} />
+                    <InfoTile icon={<UpcomingIcon />} label={globalize.translate('TskNextRun')} value={next ? relativeTime(next) : '—'} color='#4caf50' secondary={next ? next.toLocaleString(globalize.getCurrentDateTimeLocale()) : undefined} />
                     <InfoTile icon={<EventIcon />} label={globalize.translate('TskTriggers')} value={triggers.length} color='#ff9800' />
                 </Box>
 

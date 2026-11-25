@@ -102,7 +102,7 @@ class CastPlayer {
         }
 
         // Chrome only exposes the Cast SDK on secure pages (https or localhost): don't poll forever on http
-        if (!window.isSecureContext && window.appMode !== 'cordova' && window.appMode !== 'android') {
+        if (!window.isSecureContext && !window.NativeShell && window.appMode !== 'cordova' && window.appMode !== 'android') {
             console.warn('Not initializing chromecast: the page is not a secure context (https)');
             return;
         }
@@ -614,6 +614,10 @@ class ChromecastPlayer {
         this.id = 'chromecast';
         this.isLocalPlayer = false;
         this.lastPlayerData = {};
+        // The TV does not tell its queue: this device keeps it with what it sends
+        this._queue = [];
+        this._queueIndex = 0;
+        this._queueIds = 0;
 
         new CastSenderApi().load().then(() => {
             Events.on(ServerConnections, 'localusersignedin', () => {
@@ -648,7 +652,9 @@ class ChromecastPlayer {
     getTargets() {
         const targets = [];
 
-        if (this._castPlayer?.hasReceivers) {
+        // The Android app can report no devices until its own picker searches for them, so there it is always offered
+        const castPlayer = this._castPlayer;
+        if (castPlayer?.hasReceivers || (window.NativeShell && castPlayer?.isInitialized)) {
             targets.push(this.getCurrentTargetInfo());
         }
 
@@ -725,7 +731,35 @@ class ChromecastPlayer {
             });
         }
 
+        this.rememberQueue(options.items, command, options.startIndex);
         return this._castPlayer.loadMedia(options, command);
+    }
+
+    rememberQueue(items, command, startIndex) {
+        const entries = items.map(item => ({ ...item, PlaylistItemId: 'cast' + (++this._queueIds) }));
+        if (command === 'PlayNow') {
+            this._queue = entries;
+            this._queueIndex = startIndex || 0;
+        } else if (command === 'PlayNext') {
+            this._queue.splice(this._queueIndex + 1, 0, ...entries);
+        } else if (command === 'PlayLast') {
+            this._queue.push(...entries);
+        } else {
+            // The TV builds this list by itself: only what plays will be known
+            this._queue = [];
+            this._queueIndex = 0;
+        }
+        Events.trigger(this, 'playlistitemadd');
+    }
+
+    /** Where what plays now is in the queue, looking first from the last known place. */
+    findQueueIndex() {
+        const id = this.getPlayerStateInternal()?.NowPlayingItem?.Id;
+        if (!id) return -1;
+        const ahead = this._queue.findIndex((item, i) => i >= this._queueIndex && item.Id === id);
+        const found = ahead >= 0 ? ahead : this._queue.findIndex(item => item.Id === id);
+        if (found >= 0) this._queueIndex = found;
+        return found;
     }
 
     seek(position) {
@@ -1030,10 +1064,14 @@ class ChromecastPlayer {
 
         const instance = this;
 
-        apiClient.getItem(userId, item.Id).then(function (fetchedItem) {
-            instance.playWithCommand({
-                items: [fetchedItem]
-            }, 'InstantMix');
+        // The mix is made here and sent whole, so this device knows what comes next
+        apiClient.getInstantMixFromItem(item.Id, { UserId: userId, Limit: 200 }).then(function (result) {
+            if (!result?.Items?.length) throw new Error('empty mix');
+            return instance.playWithCommand({ items: result.Items }, 'PlayNow');
+        }).catch(function () {
+            return apiClient.getItem(userId, item.Id).then(function (fetchedItem) {
+                return instance.playWithCommand({ items: [fetchedItem] }, 'InstantMix');
+            });
         });
     }
 
@@ -1091,15 +1129,23 @@ class ChromecastPlayer {
     }
 
     getPlaylist() {
-        return Promise.resolve([]);
+        if (!this._queue.length) {
+            const now = this.getPlayerStateInternal()?.NowPlayingItem;
+            return Promise.resolve(now ? [ now ] : []);
+        }
+        return Promise.resolve(this._queue);
     }
 
     getCurrentPlaylistItemId() {
-        // not supported?
+        const index = this.findQueueIndex();
+        return index >= 0 ? this._queue[index].PlaylistItemId : null;
     }
 
-    setCurrentPlaylistItem() {
-        return Promise.resolve();
+    setCurrentPlaylistItem(playlistItemId) {
+        const index = this._queue.findIndex(item => item.PlaylistItemId === playlistItemId);
+        if (index < 0) return Promise.resolve();
+        // The queue is sent again starting at the chosen song, so what follows stays the same
+        return this.playWithCommand({ items: this._queue.slice(), startIndex: index }, 'PlayNow');
     }
 
     removeFromPlaylist() {
@@ -1111,8 +1157,7 @@ class ChromecastPlayer {
     }
 
     getCurrentPlaylistIndex() {
-        // tbd: update to support playlists and not only album with tracks
-        return this.getPlayerStateInternal()?.NowPlayingItem?.IndexNumber;
+        return Math.max(0, this.findQueueIndex());
     }
 
     // eslint-disable-next-line @typescript-eslint/no-unused-vars

@@ -33,6 +33,7 @@ import {
     getDesiredAspect,
     getPostersPerRow,
     isResizable,
+    hasMostlySquareCovers,
     isUsingLiveTvNaming,
     resolveAction,
     resolveCardBoxCssClasses,
@@ -86,7 +87,10 @@ export function setCardData(items, options) {
         const requestedShape = options.shape;
         options.shape = null;
 
-        if (primaryImageAspectRatio) {
+        if (hasMostlySquareCovers(items)) {
+            // Audiobook covers are square: never cut into a tall poster (squareCard)
+            options.shape = getSquareShape(requestedShape === 'autooverflow');
+        } else if (primaryImageAspectRatio) {
             if (primaryImageAspectRatio >= 3) {
                 options.shape = 'banner';
                 options.coverImage = true;

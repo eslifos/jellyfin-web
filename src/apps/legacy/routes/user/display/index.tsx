@@ -25,13 +25,11 @@ import globalize from 'lib/globalize';
 import * as userSettings from 'scripts/settings/userSettings';
 import { getThemes } from 'scripts/settings/webSettings';
 import { SETTING_KEY as LAYOUT_SETTING_KEY } from 'components/layoutManager';
-import { pluginManager } from 'components/pluginManager';
-import { PluginType } from 'constants/pluginType';
 import { useLocalizationOptions, useLocalizationCountries } from 'apps/wizard/api/useLocalizationOptions';
+import { useScreensavers } from 'apps/modern/features/preferences/hooks/useScreensavers';
 import { Card, Check, Num, SavedSnackbar, Sel, fieldSx } from '../components/PreferencesUi';
 
 interface Theme { id: string; name: string; }
-interface Screensaver { id: string; name: string; }
 
 const DisplayPreferencesPage: FC = () => {
     const [ searchParams ] = useSearchParams();
@@ -43,7 +41,7 @@ const DisplayPreferencesPage: FC = () => {
     const toggle = useCallback((id: string) => setExpanded(prev => ({ ...prev, [id]: !prev[id as keyof typeof prev] })), []);
 
     const [ themes, setThemes ] = useState<Theme[]>([]);
-    const [ screensavers, setScreensavers ] = useState<Screensaver[]>([]);
+    const { screensavers } = useScreensavers();
     const [ saving, setSaving ] = useState(false);
     const [ saved, setSaved ] = useState(false);
 
@@ -62,6 +60,7 @@ const DisplayPreferencesPage: FC = () => {
     const [ backdrops, setBackdrops ] = useState(true);
     const [ fastFade, setFastFade ] = useState(false);
     const [ blurhash, setBlurhash ] = useState(true);
+    const [ cardBadges, setCardBadges ] = useState('all');
     const [ themeSongs, setThemeSongs ] = useState(true);
     const [ themeVideos, setThemeVideos ] = useState(true);
     const [ missingEpisodes, setMissingEpisodes ] = useState(false);
@@ -72,14 +71,12 @@ const DisplayPreferencesPage: FC = () => {
 
     useEffect(() => {
         getThemes().then(t => setThemes(t ?? [])).catch(() => {});
-        const ss = pluginManager.ofType(PluginType.Screensaver) as Screensaver[];
-        setScreensavers(ss ?? []);
         setLang(userSettings.language() ?? '');
         setDateLocale(userSettings.dateTimeLocale() ?? '');
         setLayout(localStorage.getItem(LAYOUT_SETTING_KEY) ?? '');
         setTheme(userSettings.theme() ?? 'dark');
         setDashboardTheme(userSettings.dashboardTheme() ?? 'dark');
-        setScreensaver(userSettings.screensaver() ?? '');
+        setScreensaver(userSettings.screensaver() || 'none');
         setScreensaverTime(String(userSettings.screensaverTime() ?? 5));
         setBackdropInterval(String(userSettings.backdropScreensaverInterval() ?? 5));
         setSlideshowInterval(String(userSettings.slideshowInterval() ?? 5));
@@ -89,6 +86,7 @@ const DisplayPreferencesPage: FC = () => {
         setBackdrops(Boolean(userSettings.enableBackdrops()));
         setFastFade(Boolean(userSettings.enableFastFadein()));
         setBlurhash(Boolean(userSettings.enableBlurhash()));
+        setCardBadges(userSettings.cardBadges());
         setThemeSongs(Boolean(userSettings.enableThemeSongs()));
         setThemeVideos(Boolean(userSettings.enableThemeVideos()));
         setMaxNextUpDays(String(userSettings.maxDaysForNextUp() ?? 30));
@@ -116,6 +114,7 @@ const DisplayPreferencesPage: FC = () => {
             userSettings.enableBackdrops(backdrops);
             userSettings.enableFastFadein(fastFade);
             userSettings.enableBlurhash(blurhash);
+            userSettings.cardBadges(cardBadges);
             userSettings.enableThemeSongs(themeSongs);
             userSettings.enableThemeVideos(themeVideos);
             userSettings.maxDaysForNextUp(Number(maxNextUpDays));
@@ -126,7 +125,7 @@ const DisplayPreferencesPage: FC = () => {
         } finally {
             setSaving(false);
         }
-    }, [ lang, dateLocale, layout, theme, dashboardTheme, screensaver, screensaverTime, backdropInterval, slideshowInterval, customCss, disableCss, pageSize, backdrops, fastFade, blurhash, themeSongs, themeVideos, maxNextUpDays, rewatchNextUp, episodeImages, detailsBanner ]);
+    }, [ lang, dateLocale, layout, theme, dashboardTheme, screensaver, screensaverTime, backdropInterval, slideshowInterval, customCss, disableCss, pageSize, backdrops, fastFade, blurhash, cardBadges, themeSongs, themeVideos, maxNextUpDays, rewatchNextUp, episodeImages, detailsBanner ]);
 
     return (
         <Page id='displayPreferencesPage' className='libraryPage userPreferencesPage noSecondaryNavPage mainAnimatedPage' title={globalize.translate('Display')}>
@@ -158,17 +157,20 @@ const DisplayPreferencesPage: FC = () => {
                             <Sel label={globalize.translate('LabelDashboardTheme')} value={dashboardTheme} onChange={setDashboardTheme}>
                                 {themes.map(t => <MenuItem key={t.id} value={t.id}>{t.name}</MenuItem>)}
                             </Sel>
-                            {screensavers.length > 0 && (
-                                <Sel label={globalize.translate('LabelScreensaver')} value={screensaver} onChange={setScreensaver}>
-                                    {screensavers.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
-                                </Sel>
-                            )}
+                            <Sel label={globalize.translate('LabelScreensaver')} value={screensaver} onChange={setScreensaver}>
+                                {screensavers.map(s => <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>)}
+                            </Sel>
                             <Num label={globalize.translate('LabelScreensaverTime')} value={screensaverTime} onChange={setScreensaverTime} helper={globalize.translate('LabelScreensaverTimeHelp')} min={5} max={86400} />
                             <Num label={globalize.translate('LabelBackdropScreensaverInterval')} value={backdropInterval} onChange={setBackdropInterval} helper={globalize.translate('LabelBackdropScreensaverIntervalHelp')} min={1} max={3600} />
                             <Num label={globalize.translate('LabelSlideshowInterval')} value={slideshowInterval} onChange={setSlideshowInterval} helper={globalize.translate('LabelSlideshowIntervalHelp')} min={1} max={3600} />
                             <Divider sx={{ borderColor: 'rgba(170,92,195,0.15)', my: 1 }} />
                             <Check label={globalize.translate('EnableFasterAnimations')} desc={globalize.translate('EnableFasterAnimationsHelp')} checked={fastFade} onChange={setFastFade} color='#aa5cc3' />
                             <Check label={globalize.translate('EnableBlurHash')} desc={globalize.translate('EnableBlurHashHelp')} checked={blurhash} onChange={setBlurhash} color='#aa5cc3' />
+                            <Sel label={globalize.translate('LabelCardBadges')} value={cardBadges} onChange={setCardBadges} helper={globalize.translate('LabelCardBadgesHelp')}>
+                                <MenuItem value='all'>{globalize.translate('CardBadgesAll')}</MenuItem>
+                                <MenuItem value='quality'>{globalize.translate('CardBadgesQuality')}</MenuItem>
+                                <MenuItem value='none'>{globalize.translate('CardBadgesNone')}</MenuItem>
+                            </Sel>
                         </Card>
 
                         <Card id='css' title={globalize.translate('LabelCustomCss')} icon={<CodeIcon />} accentColor='#607d8b' open={expanded.css} onToggle={toggle}>

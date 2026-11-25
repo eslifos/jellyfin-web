@@ -26,7 +26,8 @@ const FILTERS: { id: Filter, label: string, kinds?: LibraryActivityKind[] }[] = 
 /** "Checking" and "Reading folder" fill the log quickly; they are only shown when asked for. */
 const NOISY = new Set<LibraryActivityKind>([ 'Checking', 'Scanning' ]);
 
-const timeFormat = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+// Read when drawn: the language can change after the page was loaded
+const clockTime = (date: Date) => date.toLocaleTimeString(globalize.getCurrentDateTimeLocale(), { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
 const fileName = (path?: string | null) => (path ? path.split(/[\\/]/).pop() : undefined);
 
@@ -36,7 +37,7 @@ const LogRow: FC<{ line: LibraryActivityItem }> = ({ line }) => {
     return (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '72px 168px 1fr' }, gap: { xs: 0.25, sm: 1.5 }, alignItems: 'baseline', py: 0.75, px: 1, borderBottom: '1px solid rgba(255,255,255,0.05)', minWidth: 0 }}>
             <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace' }}>
-                {timeFormat.format(new Date(line.StartedUtc))}
+                {clockTime(new Date(line.StartedUtc))}
             </Typography>
             <Box>
                 <Box component='span' sx={{ display: 'inline-block', px: 0.9, py: 0.15, borderRadius: '6px', fontSize: '0.66rem', fontWeight: 800, letterSpacing: '0.04em', textTransform: 'uppercase', color, background: `${color}1f`, border: `1px solid ${color}55` }}>

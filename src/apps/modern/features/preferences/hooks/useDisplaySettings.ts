@@ -84,6 +84,7 @@ async function loadDisplaySettings({
     await settings.setUserInfo(userId, api);
 
     const displaySettings = {
+        cardBadges: settings.cardBadges(),
         customCss: settings.customCss() || '',
         dashboardTheme: settings.dashboardTheme() || defaultTheme?.id || FALLBACK_THEME_ID,
         dateTimeLocale: settings.dateTimeLocale() || 'auto',
@@ -132,6 +133,7 @@ async function saveDisplaySettings({
     if (appHost.supports(AppFeature.DisplayLanguage)) {
         userSettings.language(normalizeValue(newDisplaySettings.language));
     }
+    userSettings.cardBadges(newDisplaySettings.cardBadges);
     userSettings.customCss(normalizeValue(newDisplaySettings.customCss));
     userSettings.dashboardTheme(newDisplaySettings.dashboardTheme);
     userSettings.dateTimeLocale(normalizeValue(newDisplaySettings.dateTimeLocale));

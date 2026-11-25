@@ -54,18 +54,36 @@ const SectionRow: FC<RowProps> = ({ sectionKey, label, icon, color, index, count
 
     return (
         <Box sx={{
-            display: 'flex', alignItems: 'center', gap: 1.25, px: 1.25, py: 0.6, mb: 0.75, borderRadius: '12px',
+            display: 'flex', alignItems: 'center', gap: { xs: 0.5, sm: 1.25 }, px: { xs: 0.75, sm: 1.25 }, py: 0.6, mb: 0.75, borderRadius: '12px',
+            minWidth: 0, '& > :not(.jfSectionName)': { flexShrink: 0 },
             background: visible ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.015)', border: '1px solid ' + (visible ? color + '33' : 'rgba(255,255,255,0.05)'),
             opacity: visible ? 1 : 0.55, transition: 'all 0.2s'
         }}>
-            <Typography sx={{ width: 20, textAlign: 'center', fontSize: '0.75rem', fontWeight: 800, color: 'rgba(255,255,255,0.35)' }}>{index + 1}</Typography>
+            <Typography sx={{ width: { xs: 16, sm: 20 }, textAlign: 'center', fontSize: '0.75rem', fontWeight: 800, color: 'rgba(255,255,255,0.35)' }}>{index + 1}</Typography>
             <Box sx={{ display: 'flex', color, '& svg': { fontSize: '1.2rem' } }}>{icon}</Box>
-            <Typography sx={{ flex: 1, minWidth: 0, fontSize: '0.88rem', fontWeight: 600, color: 'rgba(255,255,255,0.88)' }} noWrap>{label}</Typography>
-            <Switch size='small' checked={visible} onChange={toggle} />
+            {/* A long name wraps instead of pushing the switch and arrows off the screen */}
+            <Typography className='jfSectionName' sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere', lineHeight: 1.25, fontSize: '0.88rem', fontWeight: 600, color: 'rgba(255,255,255,0.88)' }}>{label}</Typography>
+            <Switch size='small' checked={visible} onChange={toggle} inputProps={{ 'aria-label': label }} />
             <IconButton size='small' title={globalize.translate('Up')} disabled={index === 0} onClick={up}><KeyboardArrowUpIcon fontSize='small' /></IconButton>
             <IconButton size='small' title={globalize.translate('Down')} disabled={index === count - 1} onClick={down}><KeyboardArrowDownIcon fontSize='small' /></IconButton>
         </Box>
     );
+};
+
+/**
+ * Name, icon and color of a section. A library ("lib:<id>") takes its own name and is never looked up in the
+ * translations; null when that library is no longer there.
+ */
+const describeSection = (key: string, views: BaseItemDto[]): { label: string; icon: ReactNode; color: string } | null => {
+    if (isLibKey(key)) {
+        const view = views.find(v => `lib:${v.Id}` === key);
+        return view ? { label: view.Name ?? '', icon: <LibraryIcon item={view} />, color: libraryAccent(view) } : null;
+    }
+    return {
+        label: globalize.translate(SECTION_LABELS[key] ?? key),
+        icon: ICONS[key]?.[0],
+        color: ICONS[key]?.[1] ?? '#00a4dc'
+    };
 };
 
 interface HomeSectionsEditorProps {
@@ -93,16 +111,9 @@ const HomeSectionsEditor: FC<HomeSectionsEditorProps> = ({ views, order, hidden,
         <Box>
             <Typography sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.55)', mb: 1.25 }}>{globalize.translate('HfSectionsHelp')}</Typography>
             {order.map((key, i) => {
-                let label = globalize.translate(SECTION_LABELS[key] ?? key);
-                let icon: ReactNode = ICONS[key]?.[0];
-                let color = ICONS[key]?.[1] ?? '#00a4dc';
-                if (isLibKey(key)) {
-                    const view = views.find(v => `lib:${v.Id}` === key);
-                    if (!view) return null;
-                    label = view.Name ?? '';
-                    icon = <LibraryIcon item={view} />;
-                    color = libraryAccent(view);
-                }
+                const section = describeSection(key, views);
+                if (!section) return null;
+                const { label, icon, color } = section;
                 return (
                     <SectionRow
                         key={key}

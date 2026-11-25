@@ -31,6 +31,7 @@ import globalize from 'lib/globalize';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import { ActionData } from 'types/actionData';
 import { getLibraryIcon } from 'utils/image';
+import { formatNumber } from 'utils/localeNumber';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard, ToggleRow } from '../../components/cosmic';
@@ -299,8 +300,8 @@ export const Component = () => {
                                 <SectionCard title={globalize.translate('PbEstimate')} icon={<CalculateIcon />} accentColor={COLORS.calc} description={globalize.translate('PbEstimateHelp')}>
                                     <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1 }}>
                                         {[
-                                            { label: globalize.translate('PbThumbnails'), value: images.toLocaleString() },
-                                            { label: globalize.translate('PbSheets'), value: (sheets * Math.max(widths.length, 1)).toLocaleString() },
+                                            { label: globalize.translate('PbThumbnails'), value: formatNumber(images) },
+                                            { label: globalize.translate('PbSheets'), value: formatNumber(sheets * Math.max(widths.length, 1)) },
                                             { label: globalize.translate('PbApproxSize'), value: `≈ ${formatBytes(estimate)}` }
                                         ].map(s => (
                                             <Box key={s.label} sx={{ p: 1.25, borderRadius: '12px', textAlign: 'center', background: `${COLORS.calc}10`, border: `1px solid ${COLORS.calc}26` }}>

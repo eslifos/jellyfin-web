@@ -383,6 +383,20 @@ export class UserSettings {
     }
 
     /**
+     * Get or set which badges are drawn over the posters.
+     * @param {string|undefined} [val] - 'all', 'quality' (only the resolution) or 'none'.
+     * @return {string} Which badges are drawn.
+     */
+    cardBadges(val) {
+        if (val !== undefined) {
+            return this.set('cardBadges', val, false);
+        }
+
+        const saved = this.get('cardBadges', false);
+        return saved === 'quality' || saved === 'none' ? saved : 'all';
+    }
+
+    /**
      * Get or set 'Backdrops' state.
      * @param {boolean|undefined} [val] - Flag to enable 'Backdrops' or undefined.
      * @return {boolean} 'Backdrops' state.
@@ -817,6 +831,7 @@ export const enableThemeSongs = currentSettings.enableThemeSongs.bind(currentSet
 export const enableThemeVideos = currentSettings.enableThemeVideos.bind(currentSettings);
 export const enableFastFadein = currentSettings.enableFastFadein.bind(currentSettings);
 export const enableBlurhash = currentSettings.enableBlurhash.bind(currentSettings);
+export const cardBadges = currentSettings.cardBadges.bind(currentSettings);
 export const enableBackdrops = currentSettings.enableBackdrops.bind(currentSettings);
 export const detailsBanner = currentSettings.detailsBanner.bind(currentSettings);
 export const useEpisodeImagesInNextUpAndResume = currentSettings.useEpisodeImagesInNextUpAndResume.bind(currentSettings);

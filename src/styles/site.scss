@@ -125,6 +125,9 @@ div[data-role="page"] {
     /* provides room for the music controls */
     padding-bottom: 5em !important;
     padding-bottom: calc(env(safe-area-inset-bottom) + 5em) !important;
+
+    /* Cosmic: exactly the room the floating bars take (their height, distance from the bottom and safe area) plus a margin */
+    padding-bottom: var(--jf-bottom-bar-space, calc(env(safe-area-inset-bottom) + 5em)) !important;
 }
 
 .readOnlyContent {

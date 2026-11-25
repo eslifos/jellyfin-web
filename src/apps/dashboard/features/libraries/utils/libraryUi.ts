@@ -79,7 +79,7 @@ export const getMainStats = (collectionType: string | null | undefined, stats?: 
     }
 };
 
-export const formatNumber = (value: number) => value.toLocaleString(globalize.getCurrentDateTimeLocale());
+export { formatNumber } from 'utils/localeNumber';
 
 /** Bytes to a short readable size (1.2 TB, 340 GB...). */
 export const formatSize = (bytes: number) => {

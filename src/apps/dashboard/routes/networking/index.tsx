@@ -45,6 +45,7 @@ import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard, ToggleRow } from '../../components/cosmic';
+import LimitedHtmlText from '../../components/LimitedHtmlText';
 
 const CONFIG_KEY = 'network';
 /** Settings that only apply after a restart. */
@@ -201,7 +202,8 @@ export const Component = () => {
                                             <TextField type='number' label={globalize.translate('LabelHttpsPort')} helperText={globalize.translate('NetHttpsPortHelp')}
                                                 value={config.InternalHttpsPort ?? ''} onChange={e => update({ InternalHttpsPort: toInt(e.target.value) })} slotProps={{ htmlInput: { min: 1, max: 65535 }, ...fieldSlot }} />
                                         </Box>
-                                        <TextField label={globalize.translate('LabelBaseUrl')} helperText={globalize.translate('LabelBaseUrlHelp')} placeholder='/jellyfin'
+                                        {/* Some translations show the example with <code> and <b> */}
+                                        <TextField label={globalize.translate('LabelBaseUrl')} helperText={<LimitedHtmlText text={globalize.translate('LabelBaseUrlHelp')} />} placeholder='/jellyfin'
                                             value={config.BaseUrl || ''} onChange={e => update({ BaseUrl: e.target.value })} fullWidth slotProps={{ input: { sx: { fontFamily: 'monospace' } }, ...fieldSlot }} />
                                     </Stack>
                                 </SectionCard>

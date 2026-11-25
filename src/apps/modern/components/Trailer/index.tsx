@@ -161,7 +161,7 @@ export const ExternalMovieDialog: FC<{ movie: ExternalMovie | null; parentId?: s
         onClose();
     };
 
-    const date = movie ? new Date(movie.ReleaseDate).toLocaleDateString(undefined, { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : '';
+    const date = movie ? new Date(movie.ReleaseDate).toLocaleDateString(globalize.getCurrentDateTimeLocale(), { day: 'numeric', month: 'long', year: 'numeric', timeZone: 'UTC' }) : '';
     const released = movie ? new Date(movie.ReleaseDate).getTime() <= Date.now() : false;
 
     return (

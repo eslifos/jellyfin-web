@@ -10,6 +10,7 @@ import LibraryTabsBar from 'apps/modern/features/libraries/components/LibraryTab
 import { useUserViews } from 'hooks/api/useUserViews';
 import { useApi } from 'hooks/useApi';
 
+import MusicHub from '../MusicHub';
 import QuickAudiobooks from '../QuickHome/QuickAudiobooks';
 import QuickLibrary from '../QuickHome/QuickLibrary';
 import { THEME_ACCENT, themeOf, useLibraryThemes } from './libraryThemes';
@@ -32,9 +33,10 @@ const LibraryFeed: FC<{ parentId?: string | null, collectionType?: string | null
     return (
         <Box className='padded-bottom-page'>
             <LibraryTabsBar floating />
-            {audiobooks ?
+            {kind === 'music' && <MusicHub key={parentId} parentId={parentId} name={view?.Name ?? ''} />}
+            {kind !== 'music' && (audiobooks ?
                 <QuickAudiobooks key={parentId} libraryId={parentId} name={view?.Name ?? ''} /> :
-                <QuickLibrary key={parentId} libraryId={parentId} name={view?.Name ?? ''} accent={theme ? THEME_ACCENT[theme] : undefined} theme={theme} />}
+                <QuickLibrary key={parentId} libraryId={parentId} name={view?.Name ?? ''} accent={theme ? THEME_ACCENT[theme] : undefined} theme={theme} />)}
         </Box>
     );
 };

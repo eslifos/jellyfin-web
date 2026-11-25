@@ -1,7 +1,5 @@
-import React, { StrictMode, useCallback, useEffect, useState } from 'react';
+import React, { StrictMode, useEffect } from 'react';
 import Box from '@mui/material/Box';
-import { type Theme } from '@mui/material/styles';
-import useMediaQuery from '@mui/material/useMediaQuery';
 import { Outlet, useLocation } from 'react-router-dom';
 
 import AppBody from 'components/AppBody';
@@ -10,9 +8,7 @@ import { initCollectionCollage } from 'components/cardbuilder/collectionCollage'
 import CustomCss from 'components/CustomCss';
 import ThemeCss from 'components/ThemeCss';
 import { useApi } from 'hooks/useApi';
-import { PUBLIC_PATHS } from 'components/router/appRouter';
 
-import AppDrawer, { isDrawerPath } from './components/drawers/AppDrawer';
 import Player from './components/Player';
 import FloatingNav from './components/FloatingNav';
 import SyncPlayInviteHandler from './features/syncPlay/components/SyncPlayInviteHandler';
@@ -23,7 +19,6 @@ import { isLibraryPath } from './features/libraries/utils/path';
 import './AppOverrides.scss';
 
 export const Component = () => {
-    const [ isDrawerActive, setIsDrawerActive ] = useState(false);
     const { user } = useApi();
     const location = useLocation();
 
@@ -34,16 +29,6 @@ export const Component = () => {
             initCollectionCollage();
         }
     }, [ user ]);
-
-    const isMediumScreen = useMediaQuery((t: Theme) => t.breakpoints.up('md'));
-    const isDrawerAvailable = isDrawerPath(location.pathname) && Boolean(user) && !isMediumScreen;
-    const isDrawerOpen = isDrawerActive && isDrawerAvailable;
-    const isPublicPath = PUBLIC_PATHS.includes(location.pathname);
-    const isVideoPage = location.pathname === '/video';
-
-    const onToggleDrawer = useCallback(() => {
-        setIsDrawerActive(!isDrawerActive);
-    }, [ isDrawerActive, setIsDrawerActive ]);
 
     return (
         <LibraryProvider>
@@ -58,23 +43,15 @@ export const Component = () => {
                 <StrictMode>
                     {/* Library filters/sort toolbar (v12.4), only on library pages */}
                     {isLibraryPath(location.pathname) && <LibraryTopBar />}
-
-                    {isDrawerAvailable && (
-                        <AppDrawer
-                            open={isDrawerOpen}
-                            onClose={onToggleDrawer}
-                            onOpen={onToggleDrawer}
-                        />
-                    )}
                 </StrictMode>
 
+                {/* The room for the floating bars is left by each page (site.scss, --jf-bottom-bar-space) */}
                 <Box
                     component='main'
                     sx={{
                         position: 'relative',
                         width: '100%',
-                        flexGrow: 1,
-                        pb: (!isPublicPath && !isVideoPage) ? '80px' : 0
+                        flexGrow: 1
                     }}
                 >
                     <AppBody>

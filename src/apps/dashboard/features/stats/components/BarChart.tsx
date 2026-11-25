@@ -4,6 +4,7 @@
  * one y-axis, per-bar hover tooltip and a legend when there are 2+ series.
  */
 import React, { type FC, useCallback, useMemo, useState } from 'react';
+import { createPortal } from 'react-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
 
@@ -34,6 +35,8 @@ interface BarChartProps {
 }
 
 const GRID = 'rgba(255,255,255,0.07)';
+/** Half the width of the tooltip: it never goes past the edges of the window. */
+const TIP_HALF = 90;
 const AXIS_TEXT = 'rgba(255,255,255,0.45)';
 
 /** Rounds the max up to a "nice" number so gridlines land on round values. */
@@ -121,10 +124,10 @@ const BarChart: FC<BarChartProps> = ({ data, height = 200, formatValue, legend, 
                 </Box>
             )}
 
-            {/* Tooltip */}
-            {hover && hovered && (
+            {/* Tooltip: drawn over the whole page, because a card with a blurred glass background would trap it under the next card */}
+            {hover && hovered && createPortal(
                 <Box sx={{
-                    position: 'fixed', left: hover.x, top: hover.y - 8, transform: 'translate(-50%, -100%)', zIndex: 1500, pointerEvents: 'none',
+                    position: 'fixed', left: Math.min(Math.max(hover.x, TIP_HALF), window.innerWidth - TIP_HALF), top: hover.y - 8, transform: 'translate(-50%, -100%)', zIndex: 1500, pointerEvents: 'none',
                     px: 1.25, py: 0.9, borderRadius: '10px', background: 'rgba(8,10,22,0.96)', border: '1px solid rgba(255,255,255,0.12)',
                     boxShadow: '0 8px 24px rgba(0,0,0,0.5)', minWidth: 140
                 }}>
@@ -136,7 +139,8 @@ const BarChart: FC<BarChartProps> = ({ data, height = 200, formatValue, legend, 
                             <Typography sx={{ fontSize: '0.72rem', color: '#fff', fontWeight: 600 }}>{formatValue(s.value)}</Typography>
                         </Box>
                     ))}
-                </Box>
+                </Box>,
+                document.body
             )}
         </Box>
     );

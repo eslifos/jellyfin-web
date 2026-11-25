@@ -325,6 +325,19 @@ button::-moz-focus-inner {
     padding-top: 0.24em;
 }
 
+// Phones: the title under the poster may take two lines before it is cut
+@media (max-width: 599.98px) {
+    .cardBox > .cardText-first,
+    .cardFooter:not(.innerCardFooter) .cardText-first {
+        display: -webkit-box;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        white-space: normal;
+        overflow-wrap: anywhere;
+    }
+}
+
 .textActionButton {
     border: 0 !important;
     background: transparent;

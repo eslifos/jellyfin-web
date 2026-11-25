@@ -63,6 +63,8 @@
 
     .jfB-dv {
         background: linear-gradient(90deg, #7f5af0, #2cb1ff);
+        // Safari still needs the prefix to clip a background to the text
+        // stylelint-disable-next-line property-no-vendor-prefix
         -webkit-background-clip: text;
         background-clip: text;
         color: transparent;
@@ -122,7 +124,6 @@
     }
 }
 
-.jfB-rt.fresh i { filter: saturate(1.2); }
 .jfB-star i { color: #ffca28; }
 
 .jfB-imdb i {
@@ -134,6 +135,8 @@
     color: #000;
     background: #f5c518;
 }
+
+.jfB-rt.fresh i { filter: saturate(1.2); }
 
 .jfB-bottom {
     position: absolute;
@@ -222,4 +225,49 @@
 .card:focus-within .jfBadges {
     opacity: 0.25;
     transition: opacity 0.2s;
+}
+
+// Phones: the poster comes first. At most the quality badge on top and one rating at the bottom,
+// smaller and see-through; audio, multi audio, Rotten Tomatoes, network and the rest stay for tablets and desktops.
+@media (max-width: 599.98px) {
+    .jfBadges {
+        font-size: clamp(10px, 3.3cqw, 11px);
+        opacity: 0.85;
+    }
+
+    .jfB {
+        padding: 0.2em 0.4em;
+        border-radius: 0.4em;
+        background: rgba(8, 10, 22, 0.5);
+        box-shadow: none;
+    }
+
+    .jfB-audio,
+    .jfB-edition,
+    .jfB-left,
+    .jfB-rt,
+    .jfB-bottom,
+    .jfB-ribbon {
+        display: none;
+    }
+
+    .jfB-right {
+        top: auto;
+        bottom: 4%;
+        transform: none;
+    }
+
+    .jfB-rate {
+        flex-direction: row;
+        min-width: 0;
+        gap: 0.3em;
+
+        i {
+            font-size: 1em;
+        }
+    }
+
+    .jfB-imdb i {
+        font-size: 0.75em;
+    }
 }

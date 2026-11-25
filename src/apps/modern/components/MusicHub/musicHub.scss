@@ -1,0 +1,977 @@
+// The start screen of the music libraries.
+/* stylelint-disable no-descending-specificity */
+.mh {
+    --mh-pink: #ff5c8a;
+    --mh-plum: #9b6bff;
+    --mh-soft: rgba(255, 255, 255, 0.62);
+    --mh-card: rgba(255, 255, 255, 0.055);
+
+    padding: 8px clamp(16px, 2.4vw, 32px) 150px;
+    color: #fff;
+
+    a {
+        color: inherit;
+        text-decoration: none;
+    }
+}
+
+.mh-hero {
+    position: relative;
+    margin: 0 calc(clamp(16px, 2.4vw, 32px) * -1) 18px;
+    padding: clamp(28px, 5vw, 56px) clamp(16px, 2.4vw, 32px) 28px;
+    background:
+        radial-gradient(circle at 15% 10%, rgba(255, 92, 138, 0.42), transparent 48%),
+        radial-gradient(circle at 70% 0%, rgba(155, 107, 255, 0.42), transparent 52%),
+        linear-gradient(180deg, rgba(0, 164, 220, 0.14), transparent);
+
+    p {
+        margin: 0 0 4px;
+        color: var(--mh-soft);
+        font-size: 0.82rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    h1 {
+        margin: 0 0 18px;
+        font-size: clamp(1.9rem, 4.6vw, 3.4rem);
+        font-weight: 900;
+        line-height: 1.05;
+    }
+}
+
+.mh-shuffle {
+    padding: 12px 24px;
+    border: 0;
+    border-radius: 999px;
+    color: #fff;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--mh-pink), var(--mh-plum));
+    box-shadow: 0 10px 28px rgba(255, 92, 138, 0.32);
+    transition: transform 0.15s ease;
+
+    &:hover {
+        transform: scale(1.04);
+    }
+
+    &:disabled {
+        opacity: 0.6;
+        cursor: progress;
+    }
+}
+
+.mh-tiles {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 10px;
+    margin-bottom: 30px;
+}
+
+.mh-tile {
+    position: relative;
+    overflow: hidden;
+    border-radius: 10px;
+    background: var(--mh-card);
+    transition: background 0.15s ease;
+
+    > a {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        min-height: 64px;
+        padding-right: 58px;
+    }
+
+    img,
+    .mh-empty {
+        flex: none;
+        width: 64px;
+        height: 64px;
+        object-fit: cover;
+    }
+
+    span:not(.mh-empty) {
+        overflow: hidden;
+        font-size: 0.9rem;
+        font-weight: 800;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    .mh-play {
+        right: 10px;
+        bottom: 12px;
+        width: 40px;
+        height: 40px;
+    }
+
+    &:hover {
+        background: rgba(255, 255, 255, 0.13);
+    }
+}
+
+.mh-section {
+    margin-bottom: 30px;
+
+    h2 {
+        margin: 0 0 14px;
+        font-size: clamp(1.15rem, 2vw, 1.5rem);
+        font-weight: 900;
+    }
+}
+
+.mh-row {
+    display: grid;
+    grid-auto-flow: column;
+    grid-auto-columns: clamp(136px, 15vw, 188px);
+    gap: 14px;
+    overflow-x: auto;
+    padding-bottom: 8px;
+    scrollbar-width: thin;
+    scrollbar-color: rgba(255, 255, 255, 0.2) transparent;
+    scroll-snap-type: x proximity;
+
+    > * {
+        scroll-snap-align: start;
+    }
+}
+
+.mh-card {
+    min-width: 0;
+    padding: 10px;
+    border-radius: 12px;
+    transition: background 0.15s ease;
+
+    &:hover {
+        background: var(--mh-card);
+    }
+}
+
+.mh-cover {
+    position: relative;
+    aspect-ratio: 1;
+    margin-bottom: 9px;
+    overflow: hidden;
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.07);
+    box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+
+    a,
+    img,
+    .mh-empty {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+}
+
+.mh-empty {
+    align-items: center;
+    justify-content: center;
+    color: rgba(255, 255, 255, 0.45);
+    font-size: 1.7rem;
+    background: linear-gradient(135deg, rgba(255, 92, 138, 0.3), rgba(155, 107, 255, 0.3));
+}
+
+.mh-play {
+    position: absolute;
+    right: 8px;
+    bottom: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 44px;
+    height: 44px;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    color: #fff;
+    cursor: pointer;
+    opacity: 0;
+    transform: translateY(6px);
+    background: linear-gradient(135deg, var(--mh-pink), var(--mh-plum));
+    box-shadow: 0 8px 18px rgba(0, 0, 0, 0.45);
+    transition: opacity 0.15s ease, transform 0.15s ease;
+
+    svg {
+        width: 24px;
+        height: 24px;
+        fill: currentcolor;
+    }
+
+    &:focus-visible {
+        opacity: 1;
+        transform: none;
+        outline: 2px solid #fff;
+    }
+}
+
+.mh-card:hover .mh-play,
+.mh-tile:hover .mh-play {
+    opacity: 1;
+    transform: none;
+}
+
+// Without a mouse the play button is always there
+@media (hover: none) {
+    .mh-play {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.mh-card-title,
+.mh-card-line {
+    display: block;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.mh-card-title {
+    font-size: 0.9rem;
+    font-weight: 800;
+}
+
+.mh-card-line {
+    margin-top: 2px;
+    color: var(--mh-soft);
+    font-size: 0.78rem;
+}
+
+.mh-moods {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+}
+
+.mh-mood {
+    position: relative;
+    min-height: 104px;
+    padding: 14px;
+    overflow: hidden;
+    border: 0;
+    border-radius: 12px;
+    color: #fff;
+    font: inherit;
+    text-align: left;
+    cursor: pointer;
+    transition: transform 0.15s ease, filter 0.15s ease;
+
+    &:hover {
+        transform: translateY(-2px);
+        filter: brightness(1.1);
+    }
+
+    &:disabled {
+        cursor: progress;
+        opacity: 0.7;
+    }
+}
+
+.mh-mood-name {
+    display: block;
+    font-size: 1.05rem;
+    font-weight: 900;
+}
+
+.mh-mood-count {
+    display: block;
+    margin-top: 2px;
+    color: rgba(255, 255, 255, 0.78);
+    font-size: 0.74rem;
+}
+
+.mh-mood-icon {
+    position: absolute;
+    right: 6px;
+    bottom: -2px;
+    font-size: 2.7rem;
+    transform: rotate(14deg);
+}
+
+.mh-songs {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-auto-flow: row;
+    gap: 2px 18px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+
+    button {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        width: 100%;
+        padding: 6px 8px;
+        border: 0;
+        border-radius: 8px;
+        color: #fff;
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+        background: transparent;
+
+        &:hover {
+            background: var(--mh-card);
+        }
+    }
+
+    img,
+    .mh-empty {
+        flex: none;
+        width: 44px;
+        height: 44px;
+        border-radius: 5px;
+        object-fit: cover;
+    }
+}
+
+.mh-song-n {
+    flex: none;
+    width: 22px;
+    color: var(--mh-soft);
+    font-weight: 800;
+    text-align: right;
+}
+
+.mh-song-text {
+    min-width: 0;
+
+    b,
+    small {
+        display: block;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    small {
+        color: var(--mh-soft);
+    }
+}
+
+.mh-artist {
+    min-width: 0;
+    padding: 10px;
+    border-radius: 12px;
+    text-align: center;
+
+    > span {
+        display: block;
+        aspect-ratio: 1;
+        margin-bottom: 9px;
+        overflow: hidden;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.07);
+        box-shadow: 0 8px 22px rgba(0, 0, 0, 0.4);
+    }
+
+    img,
+    .mh-empty {
+        display: flex;
+        width: 100%;
+        height: 100%;
+        object-fit: cover;
+    }
+
+    b {
+        display: block;
+        overflow: hidden;
+        font-size: 0.86rem;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+    }
+
+    &:hover {
+        background: var(--mh-card);
+    }
+}
+
+.mh-genres {
+    grid-auto-columns: clamp(150px, 17vw, 210px);
+}
+
+@media (max-width: 900px) {
+    .mh-tiles {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .mh-moods {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+
+    .mh-songs {
+        grid-template-columns: minmax(0, 1fr);
+    }
+}
+
+@media (max-width: 520px) {
+    .mh-tile {
+        > a {
+            gap: 8px;
+            min-height: 52px;
+            padding-right: 6px;
+        }
+
+        img,
+        .mh-empty {
+            width: 52px;
+            height: 52px;
+        }
+
+        span:not(.mh-empty) {
+            font-size: 0.78rem;
+        }
+
+        .mh-play {
+            display: none;
+        }
+    }
+}
+
+/* ---------- The show: moving covers, aurora, spotlight and playful details ---------- */
+/* stylelint-disable no-duplicate-selectors */
+
+.mh-hero {
+    overflow: hidden;
+    min-height: clamp(230px, 34vw, 360px);
+    display: flex;
+    align-items: flex-end;
+    background: linear-gradient(180deg, #1c1030, transparent);
+}
+
+.mh-hero-text {
+    position: relative;
+    z-index: 3;
+
+    h1 {
+        color: transparent;
+        background: linear-gradient(90deg, #fff, #ffc1d4, #cdb6ff, #fff);
+        background-size: 240% 100%;
+        background-clip: text;
+        animation: mhShimmer 7s linear infinite;
+    }
+}
+
+.mh-hero-actions {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+}
+
+.mh-wall {
+    position: absolute;
+    inset: -12% -8%;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    opacity: 0.34;
+    transform: rotate(-5deg);
+    mask-image: linear-gradient(180deg, #000 20%, transparent 96%);
+}
+
+.mh-lane {
+    display: flex;
+    gap: 10px;
+    width: max-content;
+    animation: mhLane 70s linear infinite;
+
+    img {
+        width: clamp(92px, 12vw, 158px);
+        aspect-ratio: 1;
+        border-radius: 10px;
+        object-fit: cover;
+    }
+
+    &.is-back {
+        animation-direction: reverse;
+        animation-duration: 86s;
+    }
+}
+
+.mh-aurora {
+    position: absolute;
+    top: -30%;
+    left: -10%;
+    z-index: 1;
+    width: 56%;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    opacity: 0.55;
+    filter: blur(58px);
+    background: var(--mh-pink);
+    mix-blend-mode: screen;
+    animation: mhFloat 13s ease-in-out infinite alternate;
+
+    &.is-two {
+        left: 44%;
+        background: var(--mh-plum);
+        animation-duration: 17s;
+        animation-direction: alternate-reverse;
+    }
+
+    &.is-three {
+        top: 25%;
+        left: 18%;
+        width: 40%;
+        background: #00a4dc;
+        animation-duration: 21s;
+    }
+}
+
+.mh-floating {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+
+    i {
+        position: absolute;
+        bottom: -30px;
+        color: rgba(255, 255, 255, 0.5);
+        font-size: 1.5rem;
+        font-style: normal;
+        animation: mhNote 9s linear infinite;
+    }
+
+    i:nth-child(1) {
+
+        left: 54%;
+    }
+
+    i:nth-child(2) {
+        left: 64%;
+        font-size: 2rem;
+        animation-delay: -2s;
+    }
+
+    i:nth-child(3) {
+        left: 73%;
+        animation-delay: -4.4s;
+    }
+
+    i:nth-child(4) {
+        left: 82%;
+        font-size: 2.3rem;
+        animation-delay: -1s;
+    }
+
+    i:nth-child(5) {
+        left: 90%;
+        animation-delay: -6.2s;
+    }
+
+    i:nth-child(6) {
+        left: 46%;
+        font-size: 1.2rem;
+        animation-delay: -7.5s;
+    }
+}
+
+.mh-bars {
+    display: inline-flex;
+    align-items: flex-end;
+    gap: 3px;
+    height: 26px;
+
+    i {
+        width: 4px;
+        height: 100%;
+        border-radius: 2px;
+        transform-origin: bottom;
+        background: linear-gradient(180deg, var(--mh-pink), var(--mh-plum));
+        animation: mhBar 0.9s ease-in-out infinite alternate;
+    }
+
+    i:nth-child(2) {
+
+        animation-delay: -0.3s;
+    }
+
+    i:nth-child(3) {
+        animation-delay: -0.6s;
+    }
+
+    i:nth-child(4) {
+        animation-delay: -0.15s;
+    }
+
+    i:nth-child(5) {
+        animation-delay: -0.75s;
+    }
+
+    i:nth-child(6) {
+        animation-delay: -0.45s;
+    }
+}
+
+.mh-spot {
+    position: relative;
+    display: flex;
+    align-items: center;
+    gap: clamp(22px, 5vw, 64px);
+    min-height: 260px;
+    margin-bottom: 30px;
+    padding: clamp(20px, 3.4vw, 38px);
+    overflow: hidden;
+    border-radius: 22px;
+    background: #1c1030;
+    box-shadow: 0 18px 40px rgba(0, 0, 0, 0.42);
+}
+
+.mh-spot-bg {
+    position: absolute;
+    inset: -30px;
+    background-position: center;
+    background-size: cover;
+    filter: blur(30px) saturate(1.5) brightness(0.48);
+    animation: mhZoom 7s ease-out both;
+}
+
+.mh-spot-art {
+    position: relative;
+    z-index: 1;
+    flex: none;
+    width: clamp(132px, 19vw, 212px);
+    aspect-ratio: 1;
+    margin-right: clamp(36px, 6vw, 82px);
+    animation: mhArtIn 0.6s cubic-bezier(0.2, 0.9, 0.3, 1.2) both;
+
+    img {
+        position: relative;
+        display: block;
+        width: 100%;
+        height: 100%;
+        border-radius: 10px;
+        object-fit: cover;
+        box-shadow: 0 16px 30px rgba(0, 0, 0, 0.55);
+    }
+}
+
+.mh-spot-record,
+.mh-disc {
+    position: absolute;
+    border-radius: 50%;
+    background:
+        radial-gradient(circle, #eee 0 3%, transparent 3.5%),
+        repeating-radial-gradient(circle, #111 0 2px, #272727 2px 4px);
+}
+
+.mh-spot-record {
+    inset: 4%;
+    left: 40%;
+    right: -32%;
+    background:
+        radial-gradient(circle, #eee 0 3%, transparent 3.5%),
+        radial-gradient(circle, transparent 0 18%, rgba(0, 0, 0, 0) 18.5%),
+        repeating-radial-gradient(circle, #111 0 2px, #272727 2px 4px);
+    box-shadow: 0 10px 24px rgba(0, 0, 0, 0.5);
+    animation: mhSpin 3.2s linear infinite;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 32%;
+        border-radius: 50%;
+        background: var(--mh-label) center / cover;
+    }
+}
+
+.mh-spot-text {
+    position: relative;
+    z-index: 1;
+    min-width: 0;
+    animation: mhTextIn 0.55s ease-out both;
+
+    p {
+        margin: 0 0 6px;
+        color: var(--mh-soft);
+        font-size: 0.78rem;
+        font-weight: 800;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+    }
+
+    h2 {
+        margin: 0 0 6px;
+        font-size: clamp(1.45rem, 3.6vw, 2.7rem);
+        font-weight: 900;
+        line-height: 1.08;
+    }
+
+    span {
+        display: block;
+        margin-bottom: 16px;
+        color: rgba(255, 255, 255, 0.82);
+        font-weight: 700;
+    }
+}
+
+.mh-dots {
+    position: absolute;
+    right: 18px;
+    bottom: 14px;
+    z-index: 2;
+    display: flex;
+    gap: 2px;
+
+    button {
+        width: 24px;
+        height: 24px;
+        padding: 0;
+        border: 0;
+        cursor: pointer;
+        background: transparent;
+
+        &::before {
+            content: '';
+            display: block;
+            width: 8px;
+            height: 8px;
+            margin: auto;
+            border-radius: 4px;
+            background: rgba(255, 255, 255, 0.4);
+            transition: width 0.25s ease, background 0.25s ease;
+        }
+
+        &.is-on::before {
+            width: 20px;
+            background: #fff;
+        }
+    }
+}
+
+.mh-reveal {
+    opacity: 0;
+    transform: translateY(26px);
+    transition: opacity 0.6s ease, transform 0.6s cubic-bezier(0.2, 0.8, 0.3, 1);
+
+    &.is-in {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+.mh-cover {
+    overflow: visible;
+    transition: transform 0.25s cubic-bezier(0.2, 0.9, 0.3, 1.3);
+
+    > a {
+        position: relative;
+        z-index: 1;
+        overflow: hidden;
+        border-radius: 8px;
+    }
+
+    .mh-play {
+        z-index: 2;
+    }
+}
+
+.mh-disc {
+    inset: 4%;
+    opacity: 0;
+    transition: transform 0.45s cubic-bezier(0.2, 0.9, 0.3, 1.2), opacity 0.2s ease;
+}
+
+.mh-card {
+    position: relative;
+}
+
+@media (hover: hover) {
+    .mh-card:hover {
+        z-index: 2;
+
+        .mh-cover {
+            transform: translateY(-5px) rotate(-1.5deg);
+        }
+
+        .mh-disc {
+            opacity: 1;
+            transform: translateX(24%) rotate(160deg);
+        }
+    }
+}
+
+.mh-mood {
+    isolation: isolate;
+    animation: mhPop 0.5s calc(var(--mh-i, 0) * 60ms) cubic-bezier(0.2, 0.9, 0.3, 1.4) backwards;
+
+    &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        transform: translateX(-120%) skewX(-18deg);
+        background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    }
+
+    &:hover::after {
+        transform: translateX(120%) skewX(-18deg);
+        transition: transform 0.7s ease;
+    }
+
+    &:hover .mh-mood-icon {
+        animation: mhWiggle 0.6s ease-in-out infinite;
+    }
+}
+
+.mh-mood-icon {
+    animation: mhBob 3.4s calc(var(--mh-i, 0) * -0.4s) ease-in-out infinite;
+}
+
+@keyframes mhShimmer {
+    to {
+        background-position: -240% 0;
+    }
+}
+
+@keyframes mhLane {
+    to {
+        transform: translateX(-50%);
+    }
+}
+
+@keyframes mhFloat {
+    to {
+        transform: translate(16%, 14%) scale(1.25);
+    }
+}
+
+@keyframes mhNote {
+    0% {
+        opacity: 0;
+        transform: translateY(0) rotate(-12deg);
+    }
+
+    15% {
+        opacity: 0.8;
+    }
+
+    100% {
+        opacity: 0;
+        transform: translateY(-420px) translateX(26px) rotate(18deg);
+    }
+}
+
+@keyframes mhBar {
+    from {
+        transform: scaleY(0.25);
+    }
+
+    to {
+        transform: scaleY(1);
+    }
+}
+
+@keyframes mhSpin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+@keyframes mhZoom {
+    from {
+        transform: scale(1.18);
+        opacity: 0.2;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+@keyframes mhArtIn {
+    from {
+        opacity: 0;
+        transform: translateX(-26px) scale(0.86) rotate(-5deg);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes mhTextIn {
+    from {
+        opacity: 0;
+        transform: translateX(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes mhPop {
+    from {
+        opacity: 0;
+        transform: scale(0.82);
+    }
+
+    to {
+        opacity: 1;
+        transform: none;
+    }
+}
+
+@keyframes mhBob {
+    0%,
+    100% {
+        transform: rotate(14deg) translateY(0);
+    }
+
+    50% {
+        transform: rotate(8deg) translateY(-7px);
+    }
+}
+
+@keyframes mhWiggle {
+    0%,
+    100% {
+        transform: rotate(4deg) scale(1.16);
+    }
+
+    50% {
+        transform: rotate(24deg) scale(1.16);
+    }
+}
+
+@media (max-width: 620px) {
+    .mh-spot {
+        flex-direction: column;
+        align-items: flex-start;
+        padding-bottom: 42px;
+    }
+
+    .mh-spot-art {
+        width: min(46vw, 170px);
+    }
+
+    .mh-floating i:nth-child(n + 4) {
+        display: none;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .mh *,
+    .mh *::before,
+    .mh *::after {
+        animation: none !important;
+        transition: none !important;
+    }
+
+    .mh-reveal {
+        opacity: 1;
+        transform: none;
+    }
+}

@@ -38,6 +38,10 @@ import { bindSkipSegment } from './skipsegment.ts';
 import * as bitrateTest from 'utils/bitrateTest';
 
 const UNLIMITED_ITEMS = -1;
+/** How long before a song ends the next one is prepared, so the change does not wait for a busy server. */
+const PREPARE_NEXT_SONG_MS = 40000;
+/** A song prepared longer ago than this is asked for again. */
+const PREPARED_SONG_AGE_MS = 10 * 60 * 1000;
 
 function enableLocalPlaylistManagement(player) {
     if (player.getPlaylist) {
@@ -2448,11 +2452,13 @@ export class PlaybackManager {
 
             // TODO: This should be the media type requested, not the original media type
             const mediaType = item.MediaType;
+            // A song that follows another changes quietly: no loading screen over what is being used
+            const followsSong = mediaType === 'Audio' && !!self._currentPlayer;
 
             return runInterceptors(item, playOptions)
                 .catch(onInterceptorRejection)
                 .then(() => {
-                    if (playOptions.fullscreen) {
+                    if (playOptions.fullscreen && !followsSong) {
                         loading.show();
                     }
                 })
@@ -2730,7 +2736,9 @@ export class PlaybackManager {
 
             const apiClient = ServerConnections.getApiClient(item.ServerId);
             const isLiveTv = [BaseItemKind.TvChannel, BaseItemKind.LiveTvChannel].includes(item.Type);
-            const getSourceItem = isLiveTv ? Promise.resolve(null) : apiClient.getItem(apiClient.getCurrentUserId(), mediaSourceId || item.Id);
+            const prepared = takePreparedSong(item, playOptions, player, maxBitrate);
+            const askSourceItem = () => (isLiveTv ? Promise.resolve(null) : apiClient.getItem(apiClient.getCurrentUserId(), mediaSourceId || item.Id));
+            const getSourceItem = prepared ? prepared.sourceItem.then(known => known || askSourceItem()) : askSourceItem();
 
             return Promise.all([promise, player.getDeviceProfile(item), apiClient.getCurrentUser(), getSourceItem]).then(function (responses) {
                 const deviceProfile = responses[1];
@@ -2788,7 +2796,10 @@ export class PlaybackManager {
                     mediaSourceId ||= item.Id;
                 }
 
-                return getPlaybackMediaSource(player, apiClient, deviceProfile, item, mediaSourceId, options).then(async (mediaSource) => {
+                const askMediaSource = () => getPlaybackMediaSource(player, apiClient, deviceProfile, item, mediaSourceId, options);
+                const getMediaSource = prepared ? prepared.mediaSource.then(known => known || askMediaSource()) : askMediaSource();
+
+                return getMediaSource.then(async (mediaSource) => {
                     if (trackOptions.DefaultSecondarySubtitleStreamIndex != null) {
                         mediaSource.DefaultSecondarySubtitleStreamIndex = trackOptions.DefaultSecondarySubtitleStreamIndex;
                     }
@@ -2837,6 +2848,58 @@ export class PlaybackManager {
                     });
                 });
             });
+        }
+
+        /** The song prepared ahead, if it is the one asked for and nothing about how to play it has changed. */
+        function takePreparedSong(item, playOptions, player, maxBitrate) {
+            const prepared = self._preparedSong;
+            self._preparedSong = null;
+            const usable = prepared
+                && prepared.playlistItemId === (item.PlaylistItemId ?? item.Id)
+                && prepared.player === player
+                && prepared.maxBitrate === maxBitrate
+                && !playOptions.startPositionTicks
+                && !playOptions.mediaSourceId
+                && Date.now() - prepared.at < PREPARED_SONG_AGE_MS;
+            return usable ? prepared : null;
+        }
+
+        /** While a song ends, what the next one needs from the server is asked for and it starts loading. */
+        function prepareNextSong(player) {
+            const streamInfo = getPlayerData(player).streamInfo;
+            const runtimeMs = (streamInfo?.item?.RunTimeTicks || 0) / 10000;
+            if (!player.preloadNext || !enableLocalPlaylistManagement(player) || streamInfo?.mediaType !== 'Audio' || !streamInfo.started || !runtimeMs) {
+                return;
+            }
+            if (runtimeMs - (self.currentTime(player) || 0) > PREPARE_NEXT_SONG_MS) return;
+
+            const next = self._playQueueManager.getNextItemInfo()?.item;
+            if (!next || next.MediaType !== 'Audio' || !isServerItem(next) || itemHelper.isLocalItem(next)) return;
+            const playlistItemId = next.PlaylistItemId ?? next.Id;
+            if (self._preparedSong?.playlistItemId === playlistItemId) return;
+
+            const apiClient = ServerConnections.getApiClient(next.ServerId);
+            const maxBitrate = getSavedMaxStreamingBitrate(apiClient, 'Audio');
+            const sourceItem = apiClient.getItem(apiClient.getCurrentUserId(), next.Id).catch(() => null);
+            const mediaSource = Promise.resolve(player.getDeviceProfile(next))
+                .then(deviceProfile => getPlaybackMediaSource(player, apiClient, deviceProfile, next, undefined, {
+                    maxBitrate,
+                    startPosition: 0,
+                    isPlayback: null,
+                    audioStreamIndex: null,
+                    subtitleStreamIndex: null,
+                    forceMediaSource: false
+                }))
+                .catch(() => null);
+            const prepared = { playlistItemId, player, maxBitrate, at: Date.now(), sourceItem, mediaSource };
+            self._preparedSong = prepared;
+
+            mediaSource.then(source => {
+                if (source && self._preparedSong === prepared) {
+                    const nextStream = createStreamInfo(apiClient, 'Audio', next, source, 0, player);
+                    return player.preloadNext(nextStream);
+                }
+            }).catch(err => console.debug('next song not prepared', err));
         }
 
         self.getPlaybackInfo = function (item, options) {
@@ -3730,6 +3793,7 @@ export class PlaybackManager {
         function onPlaybackTimeUpdate() {
             const player = this;
             sendProgressUpdate(player, 'timeupdate');
+            prepareNextSong(player);
         }
 
         function onPlaybackPause() {

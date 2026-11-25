@@ -2,7 +2,7 @@
  * "Play on…": every place the content can go, grouped and refreshed while the menu is open.
  * - this device
  * - Jellyfin apps signed in on other devices (TVs, phones, other browsers…) that accept remote control
- * - Google Cast: Chromecast through the Cast SDK (https) or, for the video playing here, through the browser
+ * - Google Cast: Chromecast through the Cast SDK (https) or, for the video or song playing here, through the browser
  */
 import type { SessionInfoDto } from '@jellyfin/sdk/lib/generated-client/models/session-info-dto';
 import { getSessionApi } from '@jellyfin/sdk/lib/utils/api/session-api';
@@ -24,7 +24,7 @@ import React, { type FC, type ReactNode, useCallback, useEffect, useState } from
 
 import { CAST_STATUS_TEXT, type CastStatus, getCastStatus } from 'components/playback/castStatus';
 import { playbackManager } from 'components/playback/playbackmanager';
-import { getVideoElement, promptRemotePlayback, type RemoteState, watchRemotePlayback } from 'components/playback/remotePlayback';
+import { getAudioElement, getVideoElement, promptRemotePlayback, type RemoteState, watchRemotePlayback } from 'components/playback/remotePlayback';
 import toast from 'components/toast/toast';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
@@ -43,6 +43,11 @@ export const ID = 'app-remote-play-menu';
 
 const REFRESH_MS = 5000;
 const CAST_PLAYER = 'Google Cast';
+
+const getPlayingMedia = (): HTMLMediaElement | null => {
+    if (playbackManager.isPlayingVideo()) return getVideoElement();
+    return playbackManager.isPlayingAudio() ? getAudioElement() : null;
+};
 
 const Section: FC<{ title: string, children: ReactNode }> = ({ title, children }) => (
     <>
@@ -96,7 +101,7 @@ const RemotePlayMenu: FC<RemotePlayMenuProps> = ({ anchorEl, open, onMenuClose }
     const [ loading, setLoading ] = useState(false);
     const [ castStatus, setCastStatus ] = useState<CastStatus>(getCastStatus);
     const [ remoteState, setRemoteState ] = useState<RemoteState>('unsupported');
-    const [ hasVideo, setHasVideo ] = useState(false);
+    const [ media, setMedia ] = useState<HTMLMediaElement | null>(null);
 
     const refresh = useCallback(async () => {
         setLoading(true);
@@ -127,14 +132,13 @@ const RemotePlayMenu: FC<RemotePlayMenuProps> = ({ anchorEl, open, onMenuClose }
         return () => clearInterval(timer);
     }, [ open, refresh ]);
 
-    // The video playing here can go to a screen through the browser (works over http too)
+    // The video or song playing here can go to a device through the browser (works over http too)
     useEffect(() => {
         if (!open) return;
-        const video = getVideoElement();
-        const isPlaying = !!video && playbackManager.isPlayingVideo();
-        setHasVideo(isPlaying);
-        if (!isPlaying) return;
-        return watchRemotePlayback(video, setRemoteState);
+        const playing = getPlayingMedia();
+        setMedia(playing);
+        if (!playing) return;
+        return watchRemotePlayback(playing, setRemoteState);
     }, [ open ]);
 
     const onPick = useCallback((target: PlayTarget) => {
@@ -142,12 +146,14 @@ const RemotePlayMenu: FC<RemotePlayMenuProps> = ({ anchorEl, open, onMenuClose }
         onMenuClose();
     }, [ onMenuClose ]);
 
+    const isSong = media instanceof HTMLAudioElement;
+
     const onRemotePlayback = useCallback(() => {
-        void promptRemotePlayback().then(ok => {
-            if (!ok) toast({ text: globalize.translate('RpRemotePlaybackFailed') });
+        void promptRemotePlayback(media).then(ok => {
+            if (!ok) toast({ text: globalize.translate(isSong ? 'RpRemoteSongFailed' : 'RpRemotePlaybackFailed') });
         });
         onMenuClose();
-    }, [ onMenuClose ]);
+    }, [ isSong, media, onMenuClose ]);
 
     const onRefresh = useCallback(() => {
         refresh().catch(console.error);
@@ -156,8 +162,9 @@ const RemotePlayMenu: FC<RemotePlayMenuProps> = ({ anchorEl, open, onMenuClose }
     const castTargets = targets.filter(t => t.playerName === CAST_PLAYER);
     const jellyfinTargets = targets.filter(t => t.playerName !== CAST_PLAYER && !t.isLocalPlayer);
     const sessionById = new Map(sessions.map(s => [ s.Id, s ]));
-    const canRemote = hasVideo && remoteState !== 'unsupported' && remoteState !== 'unavailable';
+    const canRemote = !!media && remoteState !== 'unsupported' && remoteState !== 'unavailable';
     const remoteConnected = remoteState === 'connected' || remoteState === 'connecting';
+    const castLabel = isSong ? 'RpRemoteSong' : 'RpRemotePlayback';
 
     return (
         <Popover
@@ -204,13 +211,13 @@ const RemotePlayMenu: FC<RemotePlayMenuProps> = ({ anchorEl, open, onMenuClose }
                         <ListItemButton onClick={onRemotePlayback}>
                             <ListItemIcon><CastRounded sx={{ color: remoteConnected ? '#00a4dc' : undefined }} /></ListItemIcon>
                             <ListItemText
-                                primary={globalize.translate(remoteConnected ? 'RpRemotePlaybackActive' : 'RpRemotePlayback')}
+                                primary={globalize.translate(remoteConnected ? 'RpRemotePlaybackActive' : castLabel)}
                                 secondary={globalize.translate('RpRemotePlaybackHint')}
                             />
                         </ListItemButton>
                     )}
                     {castStatus !== 'ready' && <Hint text={globalize.translate(CAST_STATUS_TEXT[castStatus])} />}
-                    {castStatus === 'insecure' && !hasVideo && <Hint text={globalize.translate('RpCastFromPlayer')} />}
+                    {castStatus === 'insecure' && !media && <Hint text={globalize.translate('RpCastFromPlayer')} />}
                 </Section>
 
                 <Box sx={{ mx: 2, mt: 1.25, pt: 1.25, borderTop: '1px solid rgba(255,255,255,0.08)' }}>

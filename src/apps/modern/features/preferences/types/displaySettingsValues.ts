@@ -1,4 +1,6 @@
 export interface DisplaySettingsValues {
+    /** Badges over the posters: 'all', 'quality' or 'none'. */
+    cardBadges: string;
     customCss: string;
     dashboardTheme: string;
     dateTimeLocale: string;

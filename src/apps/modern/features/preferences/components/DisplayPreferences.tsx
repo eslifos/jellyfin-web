@@ -250,6 +250,26 @@ export function DisplayPreferences({ onChange, values }: Readonly<DisplayPrefere
                     {globalize.translate('EnableBlurHashHelp')}
                 </FormHelperText>
             </FormControl>
+
+            <FormControl fullWidth>
+                <InputLabel id='display-settings-card-badges-label'>{globalize.translate('LabelCardBadges')}</InputLabel>
+                <Select
+                    aria-describedby='display-settings-card-badges-description'
+                    inputProps={{
+                        name: 'cardBadges'
+                    }}
+                    labelId='display-settings-card-badges-label'
+                    onChange={onChange}
+                    value={values.cardBadges}
+                >
+                    <MenuItem value='all'>{globalize.translate('CardBadgesAll')}</MenuItem>
+                    <MenuItem value='quality'>{globalize.translate('CardBadgesQuality')}</MenuItem>
+                    <MenuItem value='none'>{globalize.translate('CardBadgesNone')}</MenuItem>
+                </Select>
+                <FormHelperText id='display-settings-card-badges-description'>
+                    {globalize.translate('LabelCardBadgesHelp')}
+                </FormHelperText>
+            </FormControl>
         </Stack>
     );
 }

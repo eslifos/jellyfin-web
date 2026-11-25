@@ -981,6 +981,66 @@
     }
 }
 
+/* ---------- TV (remote control) ---------- */
+
+// What has the focus is seen from the sofa: a thick white ring with a glow, and cards grow a little.
+// The arrows (left, right, up, down) move between and inside the rows; Enter opens or plays.
+.layout-tv .qh {
+    // The mouse arrows of the rows are not reached with the remote: the focus moves the row
+    .qh-arrow {
+        display: none;
+    }
+
+    // Room inside the rows for the grown card, its ring and its glow
+    .qh-scroller {
+        padding-top: 40px;
+        padding-bottom: 26px;
+    }
+
+    .qh-btn {
+        padding: 14px 30px;
+        font-size: 1.15rem;
+    }
+
+    a,
+    button {
+        transition: transform 0.15s, box-shadow 0.15s, outline-color 0.15s;
+    }
+
+    a:focus,
+    button:focus {
+        outline: 4px solid #fff;
+        outline-offset: 4px;
+        box-shadow: 0 0 0 10px rgba(0, 164, 220, 0.45);
+    }
+
+    .qh-card {
+        border-radius: 16px;
+    }
+
+    // The poster carries the ring, so it follows its rounded corners
+    .qh-card:focus {
+        outline: none;
+        box-shadow: none;
+
+        // Grows upwards, so it never covers its own title
+        .qh-poster {
+            transform: scale(1.08);
+            transform-origin: 50% 100%;
+            outline: 4px solid #fff;
+            outline-offset: 3px;
+            box-shadow: 0 0 0 10px rgba(0, 164, 220, 0.45), 0 18px 36px rgba(0, 0, 0, 0.6);
+        }
+    }
+
+    .qh-wide:focus,
+    .qh-btn:focus,
+    .qh-chip:focus,
+    .qh-genre:focus {
+        transform: scale(1.06);
+    }
+}
+
 @keyframes qhFade {
     from { opacity: 0; }
     to { opacity: 1; }

@@ -5,6 +5,7 @@ import Button from '@mui/material/Button';
 import ButtonGroup from '@mui/material/ButtonGroup';
 import useMediaQuery from '@mui/material/useMediaQuery';
 
+import { touchGroupSx } from 'apps/modern/components/touchTarget';
 import globalize from 'lib/globalize';
 import type { LibraryViewSettings } from 'types/library';
 
@@ -46,9 +47,12 @@ const Pagination: FC<PaginationProps> = ({
             color='inherit'
             variant='text'
             size={isSmallScreen ? undefined : 'small'}
+            sx={touchGroupSx}
         >
             <Button
+                className='btnPreviousPage'
                 title={globalize.translate('Previous')}
+                aria-label={globalize.translate('Previous')}
                 disabled={disabled || index == 0}
                 onClick={onPreviousPageClick}
             >
@@ -56,7 +60,9 @@ const Pagination: FC<PaginationProps> = ({
             </Button>
 
             <Button
+                className='btnNextPage'
                 title={globalize.translate('Next')}
+                aria-label={globalize.translate('Next')}
                 disabled={disabled || index + pageSize >= total}
                 onClick={onNextPageClick}
             >

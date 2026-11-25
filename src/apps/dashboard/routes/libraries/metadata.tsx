@@ -17,6 +17,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import TranslateIcon from '@mui/icons-material/Translate';
 import { type ActionFunctionArgs, Form, useActionData, useNavigation } from 'react-router-dom';
 
+import LastFmKeyCard from 'apps/dashboard/features/libraries/components/LastFmKeyCard';
 import { useCountries } from 'apps/dashboard/features/libraries/api/useCountries';
 import { useCultures } from 'apps/dashboard/features/libraries/api/useCultures';
 import { useVirtualFolders } from 'apps/dashboard/features/libraries/api/useVirtualFolders';
@@ -272,6 +273,10 @@ export const Component = () => {
                         </Box>
                     </Form>
                 )}
+
+                <Box sx={{ mt: 3 }}>
+                    <LastFmKeyCard />
+                </Box>
             </Box>
 
             <SavedSnackbar open={saved} onClose={closeSaved} />

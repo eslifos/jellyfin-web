@@ -13,6 +13,14 @@ function getDefaultProfile() {
     return profileBuilder({});
 }
 
+/** How long the sound takes to go down when the song is changed, so the cut does not click. */
+const SONG_OUT_SECONDS = 0.09;
+/** How long the next song takes to reach its level. */
+const SONG_IN_SECONDS = 0.14;
+/** How long a difference of level between two songs takes to settle. */
+const LEVEL_SECONDS = 0.05;
+const SILENT_GAIN = 0.0001;
+
 let fadeTimeout;
 function fade(instance, elem, startingVolume) {
     instance._isFadingOut = true;
@@ -130,6 +138,8 @@ class HtmlAudioPlayer {
                         ?? options.item.NormalizationGain;
                 } else {
                     console.debug('normalization disabled');
+                    self.normalizationGain = 1;
+                    if (self.gainNode && !self._gainLowered) rampGain(restingGain(elem), LEVEL_SECONDS);
                     return;
                 }
 
@@ -138,17 +148,9 @@ class HtmlAudioPlayer {
                     if (!self.gainNode) return;
                 }
 
-                if (normalizationGain) {
-                    self.normalizationGain = Math.pow(10, normalizationGain / 20);
-                    self.gainNode.gain.value = self.normalizationGain;
-                } else {
-                    self.gainNode.gain.value = 1;
-                    self.normalizationGain = 1;
-                }
-                if (browser.safari) {
-                    // Gain value is absolute in Safari. Add volume from the slider
-                    self.gainNode.gain.value *= elem.volume;
-                }
+                self.normalizationGain = normalizationGain ? Math.pow(10, normalizationGain / 20) : 1;
+                // While the song changes the level is restored when the next one really sounds
+                if (!self._gainLowered) rampGain(restingGain(elem), LEVEL_SECONDS);
                 console.debug('gain: ' + self.normalizationGain);
             }).catch((err) => {
                 console.error('Failed to add/change gainNode', err);
@@ -164,6 +166,11 @@ class HtmlAudioPlayer {
 
             self._currentPlayOptions = options;
 
+            // Asked about while the previous song ended: the server is not asked again
+            const knownRoute = self._nextRoute?.url === val ? self._nextRoute : null;
+            self._nextRoute = null;
+            if (!knownRoute) releaseNextSong();
+
             const crossOrigin = htmlMediaHelper.getCrossOriginValue(options.mediaSource);
             if (crossOrigin) {
                 elem.crossOrigin = crossOrigin;
@@ -174,7 +181,10 @@ class HtmlAudioPlayer {
                 navigator.audioSession.type = 'playback';
             }
 
-            return enableHlsPlayer(val, options.item, options.mediaSource, 'Audio').then(function () {
+            // If the answer is still on its way, this waits for that same answer
+            const route = knownRoute ? knownRoute.check : enableHlsPlayer(val, options.item, options.mediaSource, 'Audio');
+
+            return route.then(function () {
                 return new Promise(function (resolve, reject) {
                     requireHlsPlayer(async () => {
                         const includeCorsCredentials = await getIncludeCorsCredentials();
@@ -212,6 +222,66 @@ class HtmlAudioPlayer {
             });
         }
 
+        /** Stops loading the song that was coming, when it already plays or it is no longer the next one. */
+        function releaseNextSong() {
+            const next = self._nextSong;
+            self._nextSong = null;
+            if (next) {
+                next.removeAttribute('src');
+                next.load();
+            }
+        }
+
+        /** Starts loading the next song in the background, without playing it. */
+        self.preloadNext = async function (streamInfo) {
+            const url = streamInfo.url;
+            if (!url || self._nextRoute?.url === url) return;
+            releaseNextSong();
+            const route = { url, check: enableHlsPlayer(url, streamInfo.item, streamInfo.mediaSource, 'Audio') };
+            self._nextRoute = route;
+            try {
+                await route.check;
+                return;
+            } catch {
+                // Plays as a plain file: it can be loaded ahead
+            }
+            if (self._nextRoute !== route) return;
+
+            const includeCorsCredentials = await getIncludeCorsCredentials();
+            if (self._nextRoute !== route) return;
+            const next = new Audio();
+            next.preload = 'auto';
+            next.muted = true;
+            next.crossOrigin = includeCorsCredentials ? 'use-credentials' : htmlMediaHelper.getCrossOriginValue(streamInfo.mediaSource);
+            next.src = url;
+            self._nextSong = next;
+        };
+
+        /** Moves the level gradually: an instant change is heard as a jump. */
+        function rampGain(value, seconds) {
+            const gain = self.gainNode?.gain;
+            if (!gain || !self.audioContext) return;
+            const now = self.audioContext.currentTime;
+            gain.cancelScheduledValues(now);
+            gain.setValueAtTime(gain.value, now);
+            gain.linearRampToValueAtTime(value, now + seconds);
+        }
+
+        // Gain value is absolute in Safari: it includes the volume of the slider
+        function restingGain(elem) {
+            const level = self.normalizationGain || 1;
+            return browser.safari ? level * elem.volume : level;
+        }
+
+        /** Lowers the sound before a song is cut; false when this device does not process the sound. */
+        function lowerForChange(elem) {
+            if (self._songLeaving) return true;
+            if (!self.gainNode || self.audioContext?.state !== 'running' || elem.paused) return false;
+            self._gainLowered = true;
+            rampGain(SILENT_GAIN, SONG_OUT_SECONDS);
+            return true;
+        }
+
         function bindEvents(elem) {
             elem.addEventListener('timeupdate', onTimeUpdate);
             elem.addEventListener('ended', onEnded);
@@ -241,14 +311,30 @@ class HtmlAudioPlayer {
 
             if (elem && src) {
                 if (!destroyPlayer || !supportsFade()) {
-                    elem.pause();
+                    const finish = () => {
+                        if (self._currentSrc !== src) return;
+                        elem.pause();
 
-                    htmlMediaHelper.onEndedInternal(self, elem, onError);
+                        htmlMediaHelper.onEndedInternal(self, elem, onError);
 
-                    if (destroyPlayer) {
-                        self.destroy();
+                        if (destroyPlayer) {
+                            self.destroy();
+                        }
+                    };
+
+                    if (destroyPlayer || !lowerForChange(elem)) {
+                        finish();
+                        return Promise.resolve();
                     }
-                    return Promise.resolve();
+
+                    self._songLeaving ||= new Promise(function (resolve) {
+                        setTimeout(function () {
+                            self._songLeaving = null;
+                            finish();
+                            resolve();
+                        }, SONG_OUT_SECONDS * 1000);
+                    });
+                    return self._songLeaving;
                 }
 
                 const originalVolume = elem.volume;
@@ -268,6 +354,8 @@ class HtmlAudioPlayer {
         };
 
         self.destroy = function () {
+            self._nextRoute = null;
+            releaseNextSong();
             unBindEvents(self._mediaElement);
             htmlMediaHelper.resetSrc(self._mediaElement);
         };
@@ -312,10 +400,23 @@ class HtmlAudioPlayer {
                 gainNode.connect(audioCtx.destination);
 
                 self.gainNode = gainNode;
+                self.audioContext = audioCtx;
+                self.sourceNode = source;
             } catch (e) {
                 console.error('Web Audio API is not supported in this browser', e);
             }
         }
+
+        // The equalizer and the DJ mix of the player go between the source and the gain
+        self.getAudioGraph = function () {
+            const elem = self._mediaElement;
+            if (browser.iOS || !elem) return null;
+            if (!self.gainNode) addGainElement(elem);
+            if (!self.gainNode || !self.sourceNode) return null;
+            if (!self.normalizationGain) self.normalizationGain = 1;
+            if (browser.safari) self.gainNode.gain.value = elem.volume * self.normalizationGain;
+            return { context: self.audioContext, source: self.sourceNode, gain: self.gainNode };
+        };
 
         function onEnded() {
             htmlMediaHelper.onEndedInternal(self, this, onError);
@@ -343,9 +444,15 @@ class HtmlAudioPlayer {
         }
 
         function onPlaying(e) {
+            if (self._gainLowered) {
+                self._gainLowered = false;
+                rampGain(restingGain(this), SONG_IN_SECONDS);
+            }
+
             if (!self._started) {
                 self._started = true;
                 this.removeAttribute('controls');
+                releaseNextSong();
 
                 htmlMediaHelper.seekOnPlaybackStart(self, e.target, self._currentPlayOptions.playerStartPositionTicks);
             }

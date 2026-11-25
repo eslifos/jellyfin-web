@@ -617,6 +617,9 @@ function reloadPlayButtons(page, item) {
             } else {
                 btnPlay.title = globalize.translate('Play');
             }
+            // The short label under the button on phones says the same
+            const label = btnPlay.querySelector('.detailButton-label');
+            if (label) label.textContent = btnPlay.title;
         }
     } else {
         hideAll(page, 'btnPlay');
@@ -886,9 +889,9 @@ function reloadFromItem(instance, page, params, item, user) {
             const durationSinceBorn = intervalToDuration({ start: birthday, end: Date.now() });
             itemBirthday.classList.remove('hide');
             if (item.EndDate) {
-                itemBirthday.innerHTML = globalize.translate('BirthDateValue', birthday.toLocaleDateString());
+                itemBirthday.innerHTML = globalize.translate('BirthDateValue', datetime.toLocaleDateString(birthday));
             } else {
-                itemBirthday.innerHTML = `${globalize.translate('BirthDateValue', birthday.toLocaleDateString())} ${globalize.translate('AgeValue', durationSinceBorn.years)}`;
+                itemBirthday.innerHTML = `${globalize.translate('BirthDateValue', datetime.toLocaleDateString(birthday))} ${globalize.translate('AgeValue', durationSinceBorn.years)}`;
             }
         } catch (err) {
             console.error(err);
@@ -908,9 +911,9 @@ function reloadFromItem(instance, page, params, item, user) {
                 const birthday = datetime.parseISO8601Date(item.PremiereDate, true);
                 const durationSinceBorn = intervalToDuration({ start: birthday, end: deathday });
 
-                itemDeathDate.innerHTML = `${globalize.translate('DeathDateValue', deathday.toLocaleDateString())} ${globalize.translate('AgeValue', durationSinceBorn.years)}`;
+                itemDeathDate.innerHTML = `${globalize.translate('DeathDateValue', datetime.toLocaleDateString(deathday))} ${globalize.translate('AgeValue', durationSinceBorn.years)}`;
             } else {
-                itemDeathDate.innerHTML = globalize.translate('DeathDateValue', deathday.toLocaleDateString());
+                itemDeathDate.innerHTML = globalize.translate('DeathDateValue', datetime.toLocaleDateString(deathday));
             }
         } catch (err) {
             console.error(err);

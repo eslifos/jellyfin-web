@@ -1,3 +1,5 @@
+import escapeHtml from 'escape-html';
+
 import globalize from 'lib/globalize';
 
 export function showLayoutMenu (button, currentLayout, views) {
@@ -57,8 +59,11 @@ export function getQueryPagingHtml (options) {
         html += '<div style="display:inline-block;">';
 
         if (showControls) {
-            html += '<button is="paper-icon-button-light" class="btnPreviousPage autoSize" ' + (startIndex ? '' : 'disabled') + '><span class="material-icons arrow_back" aria-hidden="true"></span></button>';
-            html += '<button is="paper-icon-button-light" class="btnNextPage autoSize" ' + (startIndex + limit >= totalRecordCount ? 'disabled' : '') + '><span class="material-icons arrow_forward" aria-hidden="true"></span></button>';
+            // Icon-only buttons: their name for screen readers and on hover
+            const previous = escapeHtml(globalize.translate('Previous'));
+            const next = escapeHtml(globalize.translate('Next'));
+            html += `<button is="paper-icon-button-light" class="btnPreviousPage autoSize" title="${previous}" aria-label="${previous}" ${startIndex ? '' : 'disabled'}><span class="material-icons arrow_back" aria-hidden="true"></span></button>`;
+            html += `<button is="paper-icon-button-light" class="btnNextPage autoSize" title="${next}" aria-label="${next}" ${startIndex + limit >= totalRecordCount ? 'disabled' : ''}><span class="material-icons arrow_forward" aria-hidden="true"></span></button>`;
         }
 
         if (options.addLayoutButton) {

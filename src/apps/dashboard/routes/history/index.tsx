@@ -19,7 +19,7 @@ import SearchIcon from '@mui/icons-material/Search';
 import { Link, useSearchParams } from 'react-router-dom';
 
 import { Badge } from 'apps/dashboard/features/plugins/components/PluginCosmic';
-import { type HistoryEntry, KIND_COLORS, formatDuration, useHistory } from 'apps/dashboard/features/stats/api/playbackStats';
+import { type HistoryEntry, KINDS, entryColor, entryMedia, formatDuration, hideBrokenImage, useHistory } from 'apps/dashboard/features/stats/api/playbackStats';
 import { useUsers } from 'hooks/useUsers';
 import Loading from 'components/loading/LoadingComponent';
 import Page from 'components/Page';
@@ -31,15 +31,6 @@ import { toggleSx } from 'apps/dashboard/features/plugins/components/PluginCosmi
 
 const PAGE = 50;
 const METHOD_COLORS: Record<string, string> = { DirectPlay: '#4caf50', DirectStream: '#26c6da', Transcode: '#ff7043' };
-
-const title = (e: HistoryEntry) => {
-    if (e.ItemType === 'Episode') {
-        const s = String(e.ParentIndexNumber ?? 0).padStart(2, '0');
-        const n = String(e.IndexNumber ?? 0).padStart(2, '0');
-        return { main: e.SeriesName || e.ItemName || '', sub: `S${s}E${n} · ${e.ItemName || ''}` };
-    }
-    return { main: e.ItemName || '', sub: e.ProductionYear ? String(e.ProductionYear) : globalize.translate(e.ItemType === 'Movie' ? 'StsMovie' : 'StsOther') };
-};
 
 const dayLabel = (iso: string) => {
     const d = new Date(iso);
@@ -53,9 +44,9 @@ const dayLabel = (iso: string) => {
 
 const Row: FC<{ e: HistoryEntry }> = ({ e }) => {
     const { api } = useApi();
-    const t = title(e);
-    const kindColor = e.ItemType === 'Episode' ? KIND_COLORS.episode : e.ItemType === 'Movie' ? KIND_COLORS.movie : KIND_COLORS.other;
-    const posterId = e.ItemType === 'Episode' && e.SeriesId ? e.SeriesId : e.ItemId;
+    const media = entryMedia(e);
+    const kindColor = entryColor(e);
+    const posterId = media.id;
     const img = api ? getImageApi(api).getItemImageUrlById(posterId, ImageType.Primary, { maxHeight: 96 }) : undefined;
     const runtimeS = (e.RunTimeTicks || 0) / 1e7;
     const pct = runtimeS > 0 && e.PositionTicks ? Math.min(100, Math.round(((e.PositionTicks / 1e7) / runtimeS) * 100)) : null;
@@ -67,11 +58,11 @@ const Row: FC<{ e: HistoryEntry }> = ({ e }) => {
     return (
         <Paper elevation={0} sx={{ display: 'flex', gap: 1.5, p: 1.25, borderRadius: '14px', alignItems: 'center', borderLeft: `3px solid ${kindColor}` }}>
             <Box component={Link} to={`/details?id=${posterId}`} sx={{ flexShrink: 0 }}>
-                <Box component='img' src={img} alt='' loading='lazy' sx={{ width: 40, height: 60, objectFit: 'cover', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'block' }} />
+                <Box component='img' src={img} alt='' loading='lazy' onError={hideBrokenImage} sx={{ width: media.square ? 48 : 40, height: media.square ? 48 : 60, objectFit: 'cover', borderRadius: '6px', background: 'rgba(255,255,255,0.05)', display: 'block' }} />
             </Box>
             <Box sx={{ flex: 1, minWidth: 0 }}>
-                <Typography noWrap sx={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>{t.main}</Typography>
-                <Typography noWrap sx={{ fontSize: '0.74rem', color: 'rgba(255,255,255,0.6)' }}>{t.sub}</Typography>
+                <Typography noWrap sx={{ fontSize: '0.9rem', fontWeight: 700, color: '#fff' }}>{media.title}</Typography>
+                <Typography noWrap sx={{ fontSize: '0.74rem', color: 'rgba(255,255,255,0.6)' }}>{media.sub}</Typography>
                 <Box sx={{ display: 'flex', gap: 0.75, mt: 0.5, flexWrap: 'wrap', alignItems: 'center' }}>
                     {playing && <Badge label={globalize.translate('HisPlaying')} color='#4caf50' dot />}
                     {e.Completed && <Badge label={globalize.translate('HisFinished')} color='#4caf50' />}
@@ -152,11 +143,9 @@ export const Component = () => {
                                 <MenuItem value=''>{globalize.translate('All')}</MenuItem>
                                 {(users || []).map(u => <MenuItem key={u.Id} value={u.Id || ''}>{u.Name}</MenuItem>)}
                             </TextField>
-                            <ToggleButtonGroup size='small' exclusive value={itemType} onChange={(_, v: string | null) => setItemType(v ?? '')} sx={toggleSx}>
+                            <ToggleButtonGroup size='small' exclusive value={itemType} onChange={(_, v: string | null) => setItemType(v ?? '')} sx={{ ...toggleSx, flexWrap: 'wrap' }}>
                                 <ToggleButton value=''>{globalize.translate('All')}</ToggleButton>
-                                <ToggleButton value='Episode'>{globalize.translate('StsEpisodes')}</ToggleButton>
-                                <ToggleButton value='Movie'>{globalize.translate('StsMovies')}</ToggleButton>
-                                <ToggleButton value='Other'>{globalize.translate('StsOther')}</ToggleButton>
+                                {KINDS.map(kind => <ToggleButton key={kind.key} value={kind.key}>{globalize.translate(kind.labelKey)}</ToggleButton>)}
                             </ToggleButtonGroup>
                             <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.5)', ml: 'auto' }}>{globalize.translate('HisTotal', data?.TotalRecordCount ?? 0)}</Typography>
                         </Box>

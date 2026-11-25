@@ -32,4 +32,10 @@ $drawer-width: 240px;
     .metadataEditorPage {
         padding-top: 0 !important;
     }
+
+    // Help under the fields: the same small text as the descriptions in the cards (the theme makes it 1rem)
+    .MuiFormHelperText-root {
+        font-size: 0.75rem;
+        line-height: 1.45;
+    }
 }

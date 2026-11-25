@@ -4,6 +4,7 @@ import {
     getDefaultColorIndex,
     getDesiredAspect,
     getPostersPerRow,
+    hasMostlySquareCovers,
     isResizable,
     isUsingLiveTvNaming,
     resolveAction, resolveCardBoxCssClasses,
@@ -12,6 +13,26 @@ import {
     resolveMixedShapeByAspectRatio
 } from './builder';
 import { ItemAction } from 'constants/itemAction';
+
+describe('hasMostlySquareCovers', () => {
+    test('audiobooks are square', () => {
+        expect(hasMostlySquareCovers([{ Type: 'AudioBook' }, { Type: 'AudioBook' }])).toBe(true);
+    });
+
+    test('half audiobooks, half books: square, so no audiobook cover is cut', () => {
+        expect(hasMostlySquareCovers([{ Type: 'AudioBook' }, { Type: 'Book' }])).toBe(true);
+    });
+
+    test('mostly books or movies: not square', () => {
+        expect(hasMostlySquareCovers([{ Type: 'AudioBook' }, { Type: 'Book' }, { Type: 'Book' }])).toBe(false);
+        expect(hasMostlySquareCovers([{ Type: 'Movie' }])).toBe(false);
+    });
+
+    test('no items or no type: not square', () => {
+        expect(hasMostlySquareCovers([])).toBe(false);
+        expect(hasMostlySquareCovers([{ Type: null }, {}])).toBe(false);
+    });
+});
 
 describe('getDesiredAspect', () => {
     test('"portrait" (case insensitive)', () => {

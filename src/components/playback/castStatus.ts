@@ -8,8 +8,9 @@ import { pluginManager } from 'components/pluginManager';
  * - insecure: Chrome only allows the Cast SDK on https pages (or localhost)
  * - browser: not a Chromium browser (Chrome, Edge…)
  * - unsupported: the Cast plugin is not loaded
+ * - appNoCast: this build of the phone app comes without Google Cast
  */
-export type CastStatus = 'ready' | 'none' | 'loading' | 'insecure' | 'browser' | 'unsupported';
+export type CastStatus = 'ready' | 'none' | 'loading' | 'insecure' | 'browser' | 'unsupported' | 'appNoCast';
 
 interface CastPlugin {
     id: string
@@ -22,9 +23,14 @@ const isChromium = () => {
     return /Chrome|CriOS|Edg\//.test(navigator.userAgent);
 };
 
+const getNativeApp = () => (window as unknown as { NativeShell?: { AppHost?: { supports?: (feature: string) => boolean } } }).NativeShell;
+
 export function getCastStatus(): CastStatus {
+    const nativeApp = getNativeApp();
+    if (nativeApp?.AppHost?.supports?.('chromecast') === false) return 'appNoCast';
     const plugin = (pluginManager.plugins as CastPlugin[]).find(p => p.id === 'chromecast');
     if (!plugin) return 'unsupported';
+    if (nativeApp) return plugin._castPlayer?.isInitialized ? 'ready' : 'loading';
     if (!isChromium()) return 'browser';
     if (!window.isSecureContext) return 'insecure';
     const castPlayer = plugin._castPlayer;
@@ -37,5 +43,6 @@ export const CAST_STATUS_TEXT: Record<Exclude<CastStatus, 'ready'>, string> = {
     loading: 'RpCastLoading',
     insecure: 'RpCastInsecure',
     browser: 'RpCastBrowser',
-    unsupported: 'GoogleCastUnsupported'
+    unsupported: 'GoogleCastUnsupported',
+    appNoCast: 'RpCastAppNoCast'
 };

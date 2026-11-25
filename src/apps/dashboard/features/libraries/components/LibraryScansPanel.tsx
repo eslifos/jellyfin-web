@@ -149,7 +149,8 @@ const ActivityList: FC<{ items: LibraryActivityItem[] }> = ({ items }) => {
     );
 };
 
-const timeFormat = new Intl.DateTimeFormat(undefined, { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+// Read when drawn: the language can change after the page was loaded
+const clockTime = (date: Date) => date.toLocaleTimeString(globalize.getCurrentDateTimeLocale(), { hour: '2-digit', minute: '2-digit', second: '2-digit' });
 
 /** Latest steps, newest first, like a log: time, kind of work, title and library. */
 export const LiveLog: FC<{ log: LibraryActivityItem[], max?: number }> = ({ log, max = 15 }) => {
@@ -162,7 +163,7 @@ export const LiveLog: FC<{ log: LibraryActivityItem[], max?: number }> = ({ log,
             <Box sx={{ display: 'grid', gap: 0.35, p: 1, borderRadius: '10px', background: 'rgba(0,0,0,0.28)', border: '1px solid rgba(255,255,255,0.06)', maxHeight: 260, overflowY: 'auto' }}>
                 {log.slice(0, max).map((l, i) => (
                     <Box key={`${l.StartedUtc}-${l.ItemId ?? l.Title}-${l.Kind}`} sx={{ display: 'flex', gap: 1, alignItems: 'baseline', minWidth: 0, opacity: 1 - (i / (max * 1.6)) }}>
-                        <Typography component='span' sx={{ ...mutedSx, fontFamily: 'monospace', flexShrink: 0 }}>{timeFormat.format(new Date(l.StartedUtc))}</Typography>
+                        <Typography component='span' sx={{ ...mutedSx, fontFamily: 'monospace', flexShrink: 0 }}>{clockTime(new Date(l.StartedUtc))}</Typography>
                         <Box sx={{ flexShrink: 0, minWidth: 108 }}><KindLabel item={l} /></Box>
                         <Typography component='span' noWrap title={l.File ?? l.Title ?? undefined} sx={{ fontSize: '0.75rem', flex: 1, minWidth: 0 }}>
                             {l.Title}

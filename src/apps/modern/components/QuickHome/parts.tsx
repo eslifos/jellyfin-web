@@ -8,11 +8,13 @@ import { useQuery } from '@tanstack/react-query';
 import React, { type FC, type ReactNode, type TouchEvent, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
 import { useMovieRecommendations } from 'apps/modern/features/libraries/hooks/api/useMovieRecommendations';
+import layoutManager from 'components/layoutManager';
 import { playbackManager } from 'components/playback/playbackmanager';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 
 import { itemRoute } from '../HomeFeed/feedUtils';
+import { tmdbImageUrl } from '../HomeFeed/tmdbImage';
 
 import './quickHome.scss';
 
@@ -75,6 +77,7 @@ export interface Upcoming {
     Title: string;
     ReleaseDate: string;
     ImageUrl?: string | null;
+    ImagePath?: string | null;
     SeriesId?: string | null;
     SeriesName?: string | null;
     SeasonNumber?: number | null;
@@ -276,9 +279,16 @@ export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ a
     const [ paused, setPaused ] = useState(false);
     const [ inView, setInView ] = useState(true);
     const ref = useRef<HTMLElement>(null);
+    const playButton = useRef<HTMLButtonElement>(null);
     const touchX = useRef<number | null>(null);
     const count = items.length;
     const item = items[index % count];
+
+    // TV: arriving at the home screen the remote is on "Play" of the banner
+    useEffect(() => {
+        if (!layoutManager.tv || document.querySelector('.dialog, [role="dialog"]')) return;
+        playButton.current?.focus();
+    }, []);
 
     // Only moves on its own while it is on screen, the tab is visible and nobody is looking at it
     useEffect(() => {
@@ -301,6 +311,10 @@ export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ a
     }, []);
     const onEnter = useCallback(() => setPaused(true), []);
     const onLeave = useCallback(() => setPaused(false), []);
+    // With the focus on the banner (remote control, keyboard) it does not change under it
+    const onFocusOut = useCallback((e: React.FocusEvent<HTMLElement>) => {
+        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setPaused(false);
+    }, []);
     const onTouchStart = useCallback((e: TouchEvent) => {
         touchX.current = e.touches[0]?.clientX ?? null;
     }, []);
@@ -328,6 +342,8 @@ export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ a
             aria-roledescription='carousel'
             onMouseEnter={onEnter}
             onMouseLeave={onLeave}
+            onFocus={onEnter}
+            onBlur={onFocusOut}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
         >
@@ -353,7 +369,7 @@ export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ a
                 </div>
                 {item.Overview && <p className='qh-hero-overview'>{item.Overview}</p>}
                 <div className='qh-hero-actions'>
-                    <button type='button' className='qh-btn qh-btn-main' onClick={onPlay}>▶ {globalize.translate('QhPlay')}</button>
+                    <button ref={playButton} type='button' className='qh-btn qh-btn-main' onClick={onPlay}>▶ {globalize.translate('QhPlay')}</button>
                     <a className='qh-btn' href={href({ Id: item.Id, Type: item.Type as BaseItemDto['Type'] }, serverId)}>{globalize.translate('QhInfo')}</a>
                 </div>
             </div>
@@ -473,11 +489,12 @@ export const UpcomingCard: FC<{ api: Api, release: Upcoming, serverId?: string }
     const target = release.Kind === 'Episode' ? release.SeriesId : release.RelatedItemId;
     const sources = useMemo(() => {
         const local = (type: string) => (target ? `${api.basePath}/Items/${target}/Images/${type}?maxWidth=480&quality=85` : undefined);
-        return [ release.ImageUrl, local('Thumb'), local('Backdrop'), local('Primary') ].filter((s): s is string => !!s);
-    }, [ api, release.ImageUrl, target ]);
+        // The TMDb picture from the server cache first, then straight from TMDb, then the library's own art
+        return [ tmdbImageUrl(api.basePath, release, 'w300'), release.ImageUrl, local('Thumb'), local('Backdrop'), local('Primary') ].filter((s): s is string => !!s);
+    }, [ api, release, target ]);
     const [ source, setSource ] = useState(0);
     const onError = useCallback(() => setSource(i => i + 1), []);
-    const date = new Date(release.ReleaseDate).toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
+    const date = new Date(release.ReleaseDate).toLocaleDateString(globalize.getCurrentDateTimeLocale(), { weekday: 'short', day: 'numeric', month: 'short', timeZone: 'UTC' });
     const episode = release.Kind === 'Episode' && release.SeasonNumber != null ? `T${release.SeasonNumber}:E${release.EpisodeNumber ?? '?'}` : release.CollectionName;
     const image = sources[source];
     return (
@@ -543,7 +560,7 @@ export const Spotlight: FC<{ api: Api, items: HomeCard[], title: string, accent?
                     <img key={item.Id} className='qh-spot-bg qh-spot-bg-blur' src={imageUrl(api, item.Id, 'Primary', item.PrimaryTag, 120)} alt='' loading='lazy' decoding='async' />
                 )}
                 <div className='qh-spot-shade' />
-                <a className={SQUARE_TYPES.has(item.Type) ? 'qh-spot-poster qh-spot-square' : 'qh-spot-poster'} href={link} tabIndex={-1} aria-hidden='true'>
+                <a className={SQUARE_TYPES.has(item.Type) ? 'qh-spot-poster qh-spot-square' : 'qh-spot-poster'} href={link} tabIndex={-1} aria-hidden='true' aria-label={item.Name} title={item.Name}>
                     <img key={item.Id} className='qh-spot-cover' src={imageUrl(api, item.Id, 'Primary', item.PrimaryTag, 300)} alt='' loading='lazy' decoding='async' />
                 </a>
                 <div key={item.Id} className='qh-spot-body'>

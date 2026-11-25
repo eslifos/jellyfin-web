@@ -238,6 +238,7 @@ const ItemsContainer: FC<PropsWithChildren<ItemsContainerProps>> = ({
             } else if (
                 state.NowPlayingItem
                 && state.NowPlayingItem.MediaType === MediaType.Audio
+                && !stopInfo.nextItem
                 && eventsToMonitor.includes('audioplayback')
             ) {
                 notifyRefreshNeeded(true);

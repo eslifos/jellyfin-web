@@ -19,6 +19,7 @@ import TextField from '@mui/material/TextField';
 import Tooltip from '@mui/material/Tooltip';
 import Typography from '@mui/material/Typography';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import AlbumIcon from '@mui/icons-material/Album';
 import BarChartIcon from '@mui/icons-material/BarChart';
 import CalendarViewWeekIcon from '@mui/icons-material/CalendarViewWeek';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
@@ -26,7 +27,11 @@ import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import DevicesIcon from '@mui/icons-material/Devices';
 import HistoryIcon from '@mui/icons-material/History';
 import LockIcon from '@mui/icons-material/Lock';
+import MenuBookIcon from '@mui/icons-material/MenuBook';
 import MovieIcon from '@mui/icons-material/Movie';
+import MusicNoteIcon from '@mui/icons-material/MusicNote';
+import MusicVideoIcon from '@mui/icons-material/MusicVideo';
+import PersonIcon from '@mui/icons-material/Person';
 import PhotoCameraIcon from '@mui/icons-material/PhotoCamera';
 import PieChartIcon from '@mui/icons-material/PieChart';
 import TvIcon from '@mui/icons-material/Tv';
@@ -42,8 +47,9 @@ import { useUser } from 'hooks/api/useUser';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
-import { KIND_COLORS, type HistoryEntry, type StatsDay, type StatsRank, formatDuration } from 'apps/dashboard/features/stats/api/playbackStats';
+import { KIND_COLORS, type HistoryEntry, type StatsDay, type StatsRank, daySegments, entryMedia, formatDuration, hideBrokenImage, kindLegend } from 'apps/dashboard/features/stats/api/playbackStats';
 import BarChart, { type BarDatum } from 'apps/dashboard/features/stats/components/BarChart';
+import KindSplit from 'apps/dashboard/features/stats/components/KindSplit';
 import { relativeTime } from 'apps/dashboard/features/tasks/components/TaskCosmic';
 
 interface PersonalStats {
@@ -72,6 +78,15 @@ interface PersonalStats {
     TopMovies?: StatsRank[];
     TopClients?: StatsRank[];
     Recent?: HistoryEntry[];
+    ByCategory?: StatsRank[];
+    TopArtists?: StatsRank[];
+    TopAlbums?: StatsRank[];
+    TopSongs?: StatsRank[];
+    TopMusicVideos?: StatsRank[];
+    TopBooks?: StatsRank[];
+    SongsFinished?: number;
+    MusicVideosFinished?: number;
+    BooksFinished?: number;
 }
 
 const ACCENT = '#00a4dc';
@@ -147,16 +162,16 @@ const Empty: FC<{ text: string }> = ({ text }) => (
 );
 
 /** Horizontal posters of the most watched series or movies. */
-const PosterRow: FC<{ rows: StatsRank[] }> = ({ rows }) => {
+const PosterRow: FC<{ rows: StatsRank[]; square?: boolean }> = ({ rows, square }) => {
     const { api } = useApi();
     if (!rows.length) return <Empty text={globalize.translate('StsEmpty')} />;
     return (
         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(96px, 1fr))', gap: 1.5 }}>
             {rows.map((r, i) => (
                 <Box key={r.Id || i} component={Link} to={`/details?id=${r.Id}`} sx={{ textDecoration: 'none', color: 'inherit', minWidth: 0, '&:hover img': { transform: 'scale(1.04)', borderColor: 'rgba(0,164,220,0.6)' } }}>
-                    <Box sx={{ position: 'relative', aspectRatio: '2 / 3', borderRadius: '12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)' }}>
-                        {api && r.Id && (
-                            <Box component='img' src={getImageApi(api).getItemImageUrlById(r.Id, ImageType.Primary, { maxHeight: 300 })} alt='' loading='lazy'
+                    <Box sx={{ position: 'relative', aspectRatio: square ? '1 / 1' : '2 / 3', borderRadius: '12px', overflow: 'hidden', background: 'rgba(255,255,255,0.05)' }}>
+                        {api && (r.ImageId || r.Id) && (
+                            <Box component='img' src={getImageApi(api).getItemImageUrlById((r.ImageId || r.Id) as string, ImageType.Primary, { maxHeight: 300 })} alt='' loading='lazy' onError={hideBrokenImage}
                                 sx={{ width: '100%', height: '100%', objectFit: 'cover', display: 'block', border: '1px solid transparent', borderRadius: '12px', transition: 'transform 0.2s, border-color 0.2s' }} />
                         )}
                         <Box sx={{
@@ -165,6 +180,7 @@ const PosterRow: FC<{ rows: StatsRank[] }> = ({ rows }) => {
                         }}>{i + 1}</Box>
                     </Box>
                     <Typography noWrap sx={{ fontSize: '0.78rem', fontWeight: 600, color: '#fff', mt: 0.75 }}>{r.Name || '—'}</Typography>
+                    {r.Subtitle && <Typography noWrap sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.6)' }}>{r.Subtitle}</Typography>}
                     <Typography noWrap sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.5)' }}>{formatDuration(r.WatchedSeconds)} · {r.Plays}×</Typography>
                 </Box>
             ))}
@@ -172,36 +188,32 @@ const PosterRow: FC<{ rows: StatsRank[] }> = ({ rows }) => {
     );
 };
 
-/** One stacked bar splitting all-time watch time into episodes / movies / other. */
+/** How all-time play time splits across the kinds of library, and what was finished in each. */
 const SplitBar: FC<{ stats: PersonalStats }> = ({ stats }) => {
     const total = stats.TotalWatchedSeconds || 0;
     const ep = stats.TotalEpisodeSeconds || 0;
     const mv = stats.TotalMovieSeconds || 0;
-    const parts = [
-        { key: 'e', label: globalize.translate('StsEpisodes'), value: ep, color: KIND_COLORS.episode },
-        { key: 'm', label: globalize.translate('StsMovies'), value: mv, color: KIND_COLORS.movie },
-        { key: 'o', label: globalize.translate('StsOther'), value: Math.max(0, total - ep - mv), color: KIND_COLORS.other }
-    ].filter(p => p.value > 0);
-    if (!total) return <Empty text={globalize.translate('StsEmpty')} />;
+    // A server without the new statistics only tells episodes and movies apart
+    const rows: StatsRank[] = stats.ByCategory?.length ? stats.ByCategory : [
+        { Name: 'Episode', WatchedSeconds: ep, Plays: 0, Users: 1 },
+        { Name: 'Movie', WatchedSeconds: mv, Plays: 0, Users: 1 },
+        { Name: 'Other', WatchedSeconds: Math.max(0, total - ep - mv), Plays: 0, Users: 1 }
+    ];
+    const finished = [
+        { key: 'e', value: stats.EpisodesFinished ?? 0, labelKey: 'PrfEpisodesFinished', color: KIND_COLORS.episode },
+        { key: 'm', value: stats.MoviesFinished ?? 0, labelKey: 'PrfMoviesFinished', color: KIND_COLORS.movie },
+        { key: 's', value: stats.SongsFinished ?? 0, labelKey: 'PrfSongsFinished', color: KIND_COLORS.music },
+        { key: 'v', value: stats.MusicVideosFinished ?? 0, labelKey: 'PrfMusicVideosFinished', color: KIND_COLORS.musicVideo },
+        { key: 'b', value: stats.BooksFinished ?? 0, labelKey: 'PrfBooksFinished', color: KIND_COLORS.book }
+    ].filter(item => item.value > 0);
     return (
         <Box>
-            <Box sx={{ display: 'flex', gap: '2px', height: 14, borderRadius: '7px', overflow: 'hidden' }}>
-                {parts.map(p => <Box key={p.key} sx={{ flexGrow: p.value, flexBasis: 0, background: p.color }} />)}
-            </Box>
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, mt: 2 }}>
-                {parts.map(p => (
-                    <Box key={p.key} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{ width: 10, height: 10, borderRadius: '3px', background: p.color, flexShrink: 0 }} />
-                        <Typography sx={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.75)', flex: 1 }}>{p.label}</Typography>
-                        <Typography sx={{ fontSize: '0.82rem', fontWeight: 700, color: '#fff' }}>{formatDuration(p.value)}</Typography>
-                        <Typography sx={{ fontSize: '0.74rem', color: 'rgba(255,255,255,0.5)', width: 40, textAlign: 'right' }}>{Math.round((p.value / total) * 100)}%</Typography>
-                    </Box>
-                ))}
-            </Box>
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1.25, mt: 2.5 }}>
-                <Tile value={stats.EpisodesFinished ?? 0} label={globalize.translate('PrfEpisodesFinished')} color={KIND_COLORS.episode} />
-                <Tile value={stats.MoviesFinished ?? 0} label={globalize.translate('PrfMoviesFinished')} color={KIND_COLORS.movie} />
-            </Box>
+            <KindSplit rows={rows} emptyKey='StsEmpty' />
+            {finished.length > 0 && (
+                <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: 1.25, mt: 2.5 }}>
+                    {finished.map(item => <Tile key={item.key} value={item.value} label={globalize.translate(item.labelKey)} color={item.color} />)}
+                </Box>
+            )}
         </Box>
     );
 };
@@ -212,22 +224,17 @@ const RecentList: FC<{ rows: HistoryEntry[] }> = ({ rows }) => {
     return (
         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
             {rows.map(r => {
-                const isEpisode = r.ItemType === 'Episode';
-                const imageId = isEpisode && r.SeriesId ? r.SeriesId : r.ItemId;
-                const title = isEpisode ? (r.SeriesName || r.ItemName) : r.ItemName;
-                const sub = isEpisode
-                    ? `S${r.ParentIndexNumber ?? '?'}·E${r.IndexNumber ?? '?'} · ${r.ItemName || ''}`
-                    : (r.ProductionYear ? String(r.ProductionYear) : globalize.translate('StsMovie'));
+                const media = entryMedia(r);
                 return (
                     <Box key={r.Id} component={Link} to={`/details?id=${r.ItemId}`} sx={{
                         display: 'flex', alignItems: 'center', gap: 1.25, p: 1, borderRadius: '12px', textDecoration: 'none', color: 'inherit',
                         background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', '&:hover': { borderColor: 'rgba(0,164,220,0.4)' }
                     }}>
-                        {api && <Box component='img' src={getImageApi(api).getItemImageUrlById(imageId, ImageType.Primary, { maxHeight: 90 })} alt='' loading='lazy'
-                            sx={{ width: 30, height: 45, objectFit: 'cover', borderRadius: '6px', flexShrink: 0, background: 'rgba(255,255,255,0.05)' }} />}
+                        {api && <Box component='img' src={getImageApi(api).getItemImageUrlById(media.id, ImageType.Primary, { maxHeight: 90 })} alt='' loading='lazy' onError={hideBrokenImage}
+                            sx={{ width: media.square ? 40 : 30, height: media.square ? 40 : 45, objectFit: 'cover', borderRadius: '6px', flexShrink: 0, background: 'rgba(255,255,255,0.05)' }} />}
                         <Box sx={{ flex: 1, minWidth: 0 }}>
-                            <Typography noWrap sx={{ fontSize: '0.86rem', fontWeight: 600, color: '#fff' }}>{title || '—'}</Typography>
-                            <Typography noWrap sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>{sub}</Typography>
+                            <Typography noWrap sx={{ fontSize: '0.86rem', fontWeight: 600, color: '#fff' }}>{media.title || '—'}</Typography>
+                            <Typography noWrap sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>{media.sub}</Typography>
                         </Box>
                         <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
                             <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.7)', display: 'flex', alignItems: 'center', gap: 0.5, justifyContent: 'flex-end' }}>
@@ -469,11 +476,7 @@ const UserProfile: FC = () => {
                 id: d.Date,
                 label: i % 5 === 0 || i === n - 1 ? (i === n - 1 ? globalize.translate('StsToday') : date.toLocaleDateString(locale(), { day: 'numeric', month: 'short' })) : '',
                 title: `${date.toLocaleDateString(locale(), { weekday: 'long', day: 'numeric', month: 'long' })} · ${globalize.translate('StsPlaysN', d.Plays)}`,
-                segments: [
-                    { key: 'e', label: globalize.translate('StsEpisodes'), value: d.EpisodeSeconds, color: KIND_COLORS.episode },
-                    { key: 'm', label: globalize.translate('StsMovies'), value: d.MovieSeconds, color: KIND_COLORS.movie },
-                    { key: 'o', label: globalize.translate('StsOther'), value: d.OtherSeconds, color: KIND_COLORS.other }
-                ]
+                segments: daySegments(d)
             };
         });
     }, [ stats ]);
@@ -511,6 +514,14 @@ const UserProfile: FC = () => {
     const binge = stats && stats.BingeEpisodes > 1 && stats.BingeSeriesName ? stats : null;
     const bingeDate = binge?.BingeDate ? new Date(`${binge.BingeDate}T12:00:00`).toLocaleDateString(locale(), { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' }) : '';
     const since = stats?.FirstPlayUtc ? new Date(stats.FirstPlayUtc).toLocaleDateString(locale(), { month: 'long', year: 'numeric' }) : null;
+
+    const mediaTops = [
+        { key: 'artists', titleKey: 'PrfTopArtists', icon: <PersonIcon />, color: KIND_COLORS.music, rows: stats?.TopArtists },
+        { key: 'albums', titleKey: 'PrfTopAlbums', icon: <AlbumIcon />, color: KIND_COLORS.music, rows: stats?.TopAlbums },
+        { key: 'songs', titleKey: 'PrfTopSongs', icon: <MusicNoteIcon />, color: KIND_COLORS.music, rows: stats?.TopSongs },
+        { key: 'videos', titleKey: 'PrfTopMusicVideos', icon: <MusicVideoIcon />, color: KIND_COLORS.musicVideo, rows: stats?.TopMusicVideos },
+        { key: 'books', titleKey: 'PrfTopBooks', icon: <MenuBookIcon />, color: KIND_COLORS.book, rows: stats?.TopBooks }
+    ].filter(top => top.rows?.length);
 
     const grid2 = { display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 1fr) minmax(0, 1fr)' }, gap: 2 } as const;
 
@@ -634,11 +645,7 @@ const UserProfile: FC = () => {
                                     height={190}
                                     formatValue={formatDuration}
                                     ariaLabel={globalize.translate('PrfActivity30')}
-                                    legend={[
-                                        { key: 'e', label: globalize.translate('StsEpisodes'), color: KIND_COLORS.episode },
-                                        { key: 'm', label: globalize.translate('StsMovies'), color: KIND_COLORS.movie },
-                                        { key: 'o', label: globalize.translate('StsOther'), color: KIND_COLORS.other }
-                                    ]}
+                                    legend={kindLegend()}
                                 />
                             </Card>
                             <Card title={globalize.translate('PrfSplit')} icon={<PieChartIcon />} color='#d95926'>
@@ -665,6 +672,16 @@ const UserProfile: FC = () => {
                                 <PosterRow rows={stats.TopMovies || []} />
                             </Card>
                         </Box>
+
+                        {mediaTops.length > 0 && (
+                            <Box sx={grid2}>
+                                {mediaTops.map(top => (
+                                    <Card key={top.key} title={globalize.translate(top.titleKey)} icon={top.icon} color={top.color}>
+                                        <PosterRow rows={top.rows || []} square />
+                                    </Card>
+                                ))}
+                            </Box>
+                        )}
 
                         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: 'minmax(0, 2fr) minmax(0, 1fr)' }, gap: 2 }}>
                             <Card title={globalize.translate('PrfRecent')} icon={<HistoryIcon />}>
