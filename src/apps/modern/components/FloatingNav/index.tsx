@@ -35,8 +35,11 @@ import { hiddenBarSx, useBottomSpace, useHideOnScroll } from './bottomSpace';
 import { isSettingsSubPath } from './settingsPaths';
 import { ambientAnimation } from 'utils/reducedMotion';
 
-/** Below this width the bar keeps the main buttons and puts the rest in "More". */
-export const NARROW_BAR = '(max-width: 419.98px)';
+/**
+ * Phones (below the "sm" breakpoint): the bar keeps the main buttons and puts the rest in "More". With every button
+ * (downloads in the app, the tasks ring) the full bar needs about 520 px, more than a phone held upright has.
+ */
+export const NARROW_BAR = '(max-width: 599.98px)';
 
 export const barBtnSx = (active: boolean, narrow: boolean) => ({
     color: active ? '#00a4dc' : 'rgba(255,255,255,0.55)',
