@@ -70,7 +70,7 @@ const CopyLine: FC<{ label: string; value: string; color: string; icon: React.Re
                 <Typography noWrap sx={{ fontFamily: 'monospace', fontSize: '0.84rem', color: 'rgba(255,255,255,0.9)' }}>{value}</Typography>
             </Box>
             <Tooltip title={globalize.translate(copied ? 'LtvCopied' : 'NetCopy')}>
-                <IconButton size='small' onClick={copy}><ContentCopyIcon sx={{ fontSize: '1rem' }} /></IconButton>
+                <IconButton aria-label={globalize.translate(copied ? 'LtvCopied' : 'NetCopy')} size='small' onClick={copy}><ContentCopyIcon sx={{ fontSize: '1rem' }} /></IconButton>
             </Tooltip>
         </Box>
     );

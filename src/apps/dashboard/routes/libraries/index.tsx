@@ -196,7 +196,7 @@ export const Component = () => {
                             </Typography>
                             <Tooltip title={globalize.translate('LibRefreshStats')}>
                                 <span>
-                                    <IconButton size='small' onClick={onRefreshStats} disabled={isRefreshingStats} sx={{ color: 'rgba(255,255,255,0.5)' }}>
+                                    <IconButton aria-label={globalize.translate('LibRefreshStats')} size='small' onClick={onRefreshStats} disabled={isRefreshingStats} sx={{ color: 'rgba(255,255,255,0.5)' }}>
                                         <RefreshIcon fontSize='small' sx={isRefreshingStats ? { animation: 'spin 1s linear infinite', '@keyframes spin': { to: { transform: 'rotate(360deg)' } } } : undefined} />
                                     </IconButton>
                                 </span>

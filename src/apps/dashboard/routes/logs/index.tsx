@@ -108,7 +108,7 @@ const LogRow: FC<{ log: LogFile; maxSize: number }> = ({ log, maxSize }) => {
                 </Box>
             </Box>
             <Tooltip title={globalize.translate('Download')}>
-                <IconButton size='small' onClick={download} disabled={downloading}>
+                <IconButton aria-label={globalize.translate('Download')} size='small' onClick={download} disabled={downloading}>
                     {downloading ? <CircularProgress size={16} /> : <FileDownloadIcon fontSize='small' />}
                 </IconButton>
             </Tooltip>

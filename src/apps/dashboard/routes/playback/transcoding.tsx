@@ -42,6 +42,7 @@ import { ActionData } from 'types/actionData';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard, ToggleRow } from '../../components/cosmic';
+import Tooltip from '@mui/material/Tooltip';
 
 const CONFIG_KEY = 'encoding';
 
@@ -450,7 +451,7 @@ export const Component = () => {
                                                 input: {
                                                     endAdornment: (
                                                         <InputAdornment position='end'>
-                                                            <IconButton edge='end' onClick={showTranscodingPathPicker} sx={{ color: COLORS.paths }}><FolderOpenIcon /></IconButton>
+                                                            <Tooltip title={globalize.translate('ButtonSelectDirectory')}><IconButton aria-label={globalize.translate('ButtonSelectDirectory')} edge='end' onClick={showTranscodingPathPicker} sx={{ color: COLORS.paths }}><FolderOpenIcon /></IconButton></Tooltip>
                                                         </InputAdornment>
                                                     )
                                                 }
@@ -471,7 +472,7 @@ export const Component = () => {
                                                 input: {
                                                     endAdornment: (
                                                         <InputAdornment position='end'>
-                                                            <IconButton edge='end' onClick={showFallbackFontPathPicker} sx={{ color: COLORS.paths }}><FolderOpenIcon /></IconButton>
+                                                            <Tooltip title={globalize.translate('ButtonSelectDirectory')}><IconButton aria-label={globalize.translate('ButtonSelectDirectory')} edge='end' onClick={showFallbackFontPathPicker} sx={{ color: COLORS.paths }}><FolderOpenIcon /></IconButton></Tooltip>
                                                         </InputAdornment>
                                                     )
                                                 }

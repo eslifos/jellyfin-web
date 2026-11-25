@@ -94,6 +94,7 @@
     "LibScansCount": "{0} bibliotecas",
     "LibScanOpen": "Ver bibliotecas",
     "LibScanning": "Escaneando",
+    "ClearSearch": "Borrar búsqueda",
     "LabelServerUrl": "URL del servidor",
     "WizardRemoteAccessHelp": "Permite acceder a tu servidor Jellyfin desde fuera de tu red local.",
     "WizardUpnp": "Habilitar mapeo de puertos automático (UPnP)",

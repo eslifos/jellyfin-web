@@ -143,7 +143,7 @@ const BackupCard: FC<{ backup: BackupManifestDto; latest: boolean; currentVersio
                     </Typography>
                 </Tooltip>
                 <Tooltip title={globalize.translate(copied ? 'LtvCopied' : 'BakCopyPath')}>
-                    <IconButton size='small' onClick={copy}><ContentCopyIcon sx={{ fontSize: '0.95rem' }} /></IconButton>
+                    <IconButton aria-label={globalize.translate(copied ? 'LtvCopied' : 'BakCopyPath')} size='small' onClick={copy}><ContentCopyIcon sx={{ fontSize: '0.95rem' }} /></IconButton>
                 </Tooltip>
             </Box>
 

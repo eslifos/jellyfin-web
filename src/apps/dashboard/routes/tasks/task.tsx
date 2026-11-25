@@ -67,6 +67,9 @@ const sameTrigger = (a: TaskTriggerInfo, b: TaskTriggerInfo) => (
 
 const fullDate = (d?: string | null) => (d ? new Date(d).toLocaleString(globalize.getCurrentDateTimeLocale(), { dateStyle: 'medium', timeStyle: 'medium' }) : '—');
 
+/** Name of the button that opens or closes the error of the last run. */
+const errorToggleLabel = (open: boolean) => globalize.translate(open ? 'ShowLess' : 'ShowMore');
+
 const Row: FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1, borderBottom: '1px solid rgba(255,255,255,0.05)', '&:last-child': { borderBottom: 0 } }}>
         <Typography sx={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}>{label}</Typography>
@@ -187,7 +190,7 @@ export const Component = () => {
                                             </Typography>
                                         </Box>
                                         <Tooltip title={globalize.translate('ButtonRemove')}>
-                                            <IconButton size='small' onClick={() => setToDelete(t)} disabled={updateTask.isPending} sx={{ color: '#ef5350' }}><DeleteIcon fontSize='small' /></IconButton>
+                                            <IconButton aria-label={globalize.translate('ButtonRemove')} size='small' onClick={() => setToDelete(t)} disabled={updateTask.isPending} sx={{ color: '#ef5350' }}><DeleteIcon fontSize='small' /></IconButton>
                                         </Tooltip>
                                     </Box>
                                 );
@@ -217,9 +220,9 @@ export const Component = () => {
                                 {last.ErrorMessage && (
                                     <Box sx={{ mt: 1.5 }}>
                                         <Alert severity='error' action={last.LongErrorMessage ? (
-                                            <IconButton size='small' color='inherit' onClick={toggleError}>
+                                            <Tooltip title={errorToggleLabel(showError)}><IconButton aria-label={errorToggleLabel(showError)} size='small' color='inherit' onClick={toggleError}>
                                                 <ExpandMoreIcon sx={{ transform: showError ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }} />
-                                            </IconButton>
+                                            </IconButton></Tooltip>
                                         ) : undefined}>
                                             {last.ErrorMessage}
                                         </Alert>

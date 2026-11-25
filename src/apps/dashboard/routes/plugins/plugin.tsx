@@ -398,7 +398,7 @@ const PluginPage: FC = () => {
                                     <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.5 }}>
                                         <Box component='span' sx={{ fontFamily: 'monospace', fontSize: '0.72rem' }}>{pluginId}</Box>
                                         <Tooltip title={globalize.translate(copied ? 'LtvCopied' : 'PlgCopyId')}>
-                                            <IconButton size='small' onClick={copyId}><ContentCopyIcon sx={{ fontSize: '0.9rem' }} /></IconButton>
+                                            <IconButton aria-label={globalize.translate(copied ? 'LtvCopied' : 'PlgCopyId')} size='small' onClick={copyId}><ContentCopyIcon sx={{ fontSize: '0.9rem' }} /></IconButton>
                                         </Tooltip>
                                     </Box>
                                 </InfoRow>

@@ -180,7 +180,7 @@ const DamagedCard: FC<{ item: BaseItemDto; issue?: ProbeIssue; ignored: boolean;
                     </Typography>
                 </Tooltip>
                 <Tooltip title={globalize.translate(copied ? 'LtvCopied' : 'BakCopyPath')}>
-                    <IconButton size='small' onClick={copy}><ContentCopyIcon sx={{ fontSize: '0.95rem' }} /></IconButton>
+                    <IconButton aria-label={globalize.translate(copied ? 'LtvCopied' : 'BakCopyPath')} size='small' onClick={copy}><ContentCopyIcon sx={{ fontSize: '0.95rem' }} /></IconButton>
                 </Tooltip>
             </Box>
 
@@ -207,7 +207,7 @@ const DamagedCard: FC<{ item: BaseItemDto; issue?: ProbeIssue; ignored: boolean;
                 <Button size='small' variant='outlined' component={Link} to={`/details?id=${item.Id}`} startIcon={<OpenInNewIcon />}>{globalize.translate('HlthOpen')}</Button>
                 <Box sx={{ flex: 1 }} />
                 <Tooltip title={globalize.translate(ignored ? 'HlthUnignore' : 'HlthIgnore')}>
-                    <IconButton size='small' onClick={toggleIgnore}>{ignored ? <VisibilityIcon fontSize='small' /> : <VisibilityOffIcon fontSize='small' />}</IconButton>
+                    <IconButton aria-label={globalize.translate(ignored ? 'HlthUnignore' : 'HlthIgnore')} size='small' onClick={toggleIgnore}>{ignored ? <VisibilityIcon fontSize='small' /> : <VisibilityOffIcon fontSize='small' />}</IconButton>
                 </Tooltip>
             </Box>
             {retry.isError && <Typography sx={{ fontSize: '0.72rem', color: '#ef5350' }}>{globalize.translate('HlthRetryError')}</Typography>}
@@ -250,8 +250,6 @@ export const Component = () => {
         const q = query.toLowerCase();
         return !q || `${episodeLabel(r.item)} ${r.item.Path}`.toLowerCase().includes(q);
     });
-
-
 
     /** Paths for the VobSub repair script: broken-track files that are not ignored. */
     const scriptPaths = useMemo(() => rows

@@ -73,7 +73,7 @@ const COLORS = {
 const BrowseButton = ({ onClick, label }: { onClick: () => void; label: string }) => (
     <InputAdornment position='end'>
         <Tooltip title={label}>
-            <IconButton edge='end' onClick={onClick} sx={{ color: COLORS.paths }}>
+            <IconButton aria-label={label} edge='end' onClick={onClick} sx={{ color: COLORS.paths }}>
                 <FolderOpenIcon />
             </IconButton>
         </Tooltip>

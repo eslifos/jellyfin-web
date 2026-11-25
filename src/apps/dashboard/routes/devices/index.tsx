@@ -277,7 +277,7 @@ export const Component = () => {
                                 slotProps={{
                                     input: {
                                         startAdornment: <InputAdornment position='start'><SearchIcon sx={{ color: 'rgba(255,255,255,0.4)' }} /></InputAdornment>,
-                                        endAdornment: search ? <InputAdornment position='end'><IconButton size='small' onClick={clearSearch}><CloseIcon fontSize='small' /></IconButton></InputAdornment> : undefined
+                                        endAdornment: search ? <InputAdornment position='end'><IconButton aria-label={globalize.translate('ClearSearch')} size='small' onClick={clearSearch}><CloseIcon fontSize='small' /></IconButton></InputAdornment> : undefined
                                     }
                                 }}
                             />
@@ -327,9 +327,9 @@ export const Component = () => {
             <ConfirmDialog
                 open={!!bulkDelete}
                 title={globalize.translate('HeaderDeleteDevices')}
-                text={bulkDelete === 'inactive'
-                    ? globalize.translate('DevDeleteInactiveConfirm', inactiveDevices.length, INACTIVE_DAYS)
-                    : globalize.translate('DeleteDevicesConfirmation')}
+                text={bulkDelete === 'inactive' ?
+                    globalize.translate('DevDeleteInactiveConfirm', inactiveDevices.length, INACTIVE_DAYS) :
+                    globalize.translate('DeleteDevicesConfirmation')}
                 onCancel={closeBulk}
                 onConfirm={onConfirmBulkDelete}
                 confirmButtonColor='error'

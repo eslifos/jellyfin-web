@@ -91,10 +91,10 @@ const RepositoryCard: FC<{ repository: RepositoryInfo; pluginCount: number; busy
                     {repository.Url}
                 </Typography>
                 <Tooltip title={globalize.translate(copied ? 'LtvCopied' : 'LtvCopyUrl')}>
-                    <IconButton size='small' onClick={copy}><ContentCopyIcon sx={{ fontSize: '0.95rem' }} /></IconButton>
+                    <IconButton aria-label={globalize.translate(copied ? 'LtvCopied' : 'LtvCopyUrl')} size='small' onClick={copy}><ContentCopyIcon sx={{ fontSize: '0.95rem' }} /></IconButton>
                 </Tooltip>
                 <Tooltip title={globalize.translate('PlgOpenManifest')}>
-                    <IconButton size='small' component='a' href={repository.Url || '#'} target='_blank' rel='noopener noreferrer'><OpenInNewIcon sx={{ fontSize: '0.95rem' }} /></IconButton>
+                    <IconButton aria-label={globalize.translate('PlgOpenManifest')} size='small' component='a' href={repository.Url || '#'} target='_blank' rel='noopener noreferrer'><OpenInNewIcon sx={{ fontSize: '0.95rem' }} /></IconButton>
                 </Tooltip>
             </Box>
 
@@ -107,7 +107,7 @@ const RepositoryCard: FC<{ repository: RepositoryInfo; pluginCount: number; busy
                     <Button size='small' component={Link} to='/dashboard/plugins?status=Available'>{globalize.translate('PlgBrowse')}</Button>
                 )}
                 <Tooltip title={globalize.translate('ButtonRemove')}>
-                    <IconButton size='small' onClick={openConfirm} disabled={busy} sx={{ color: '#ef5350' }}><DeleteIcon fontSize='small' /></IconButton>
+                    <IconButton aria-label={globalize.translate('ButtonRemove')} size='small' onClick={openConfirm} disabled={busy} sx={{ color: '#ef5350' }}><DeleteIcon fontSize='small' /></IconButton>
                 </Tooltip>
             </Box>
 

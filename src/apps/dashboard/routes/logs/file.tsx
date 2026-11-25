@@ -232,14 +232,14 @@ export const Component = () => {
                                 {globalize.translate(live ? 'Unwatch' : 'Watch')}
                             </Button>
                             <Tooltip title={globalize.translate('LogWrap')}>
-                                <IconButton size='small' onClick={toggleWrap} sx={{ color: wrap ? '#00a4dc' : undefined }}><WrapTextIcon fontSize='small' /></IconButton>
+                                <IconButton aria-label={globalize.translate('LogWrap')} size='small' onClick={toggleWrap} sx={{ color: wrap ? '#00a4dc' : undefined }}><WrapTextIcon fontSize='small' /></IconButton>
                             </Tooltip>
-                            <Tooltip title={globalize.translate('LogTop')}><IconButton size='small' onClick={toTop}><VerticalAlignTopIcon fontSize='small' /></IconButton></Tooltip>
-                            <Tooltip title={globalize.translate('LogBottom')}><IconButton size='small' onClick={toBottom}><VerticalAlignBottomIcon fontSize='small' /></IconButton></Tooltip>
+                            <Tooltip title={globalize.translate('LogTop')}><IconButton aria-label={globalize.translate('LogTop')} size='small' onClick={toTop}><VerticalAlignTopIcon fontSize='small' /></IconButton></Tooltip>
+                            <Tooltip title={globalize.translate('LogBottom')}><IconButton aria-label={globalize.translate('LogBottom')} size='small' onClick={toBottom}><VerticalAlignBottomIcon fontSize='small' /></IconButton></Tooltip>
                             <Tooltip title={globalize.translate(filtered.length === lines.length ? 'Copy' : 'LogCopyFiltered')}>
-                                <IconButton size='small' onClick={onCopy}><ContentCopyIcon fontSize='small' /></IconButton>
+                                <IconButton aria-label={globalize.translate(filtered.length === lines.length ? 'Copy' : 'LogCopyFiltered')} size='small' onClick={onCopy}><ContentCopyIcon fontSize='small' /></IconButton>
                             </Tooltip>
-                            <Tooltip title={globalize.translate('Download')}><IconButton size='small' onClick={onDownload}><FileDownloadIcon fontSize='small' /></IconButton></Tooltip>
+                            <Tooltip title={globalize.translate('Download')}><IconButton aria-label={globalize.translate('Download')} size='small' onClick={onDownload}><FileDownloadIcon fontSize='small' /></IconButton></Tooltip>
                         </Box>
 
                         {(levels.length > 0 || (query && onlyMatches)) && (

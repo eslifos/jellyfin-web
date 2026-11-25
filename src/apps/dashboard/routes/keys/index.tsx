@@ -90,7 +90,7 @@ const KeyCard: FC<{ apiKey: AuthenticationInfo; isNew: boolean; onRevoke: (token
     return (
         <Paper elevation={0} sx={{
             position: 'relative', overflow: 'hidden', p: 2, display: 'flex', flexDirection: 'column', gap: 1.5, borderRadius: '16px',
-            border: `1px solid ${isNew ? '#4caf50aa' : `${color}33`}`, boxShadow: isNew ? '0 0 24px #4caf5040' : `0 8px 28px rgba(0,0,0,0.3)`,
+            border: `1px solid ${isNew ? '#4caf50aa' : `${color}33`}`, boxShadow: isNew ? '0 0 24px #4caf5040' : '0 8px 28px rgba(0,0,0,0.3)',
             transition: 'border-color 0.2s', '&:hover': { borderColor: `${color}77` }
         }}>
             <Box sx={{ position: 'absolute', top: 0, left: '1.25rem', right: '1.25rem', height: '2px', background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
@@ -109,7 +109,7 @@ const KeyCard: FC<{ apiKey: AuthenticationInfo; isNew: boolean; onRevoke: (token
                     </Box>
                 </Box>
                 <Tooltip title={globalize.translate('ButtonRevoke')}>
-                    <IconButton onClick={revoke} sx={{ color: '#ef5350' }}><DeleteIcon /></IconButton>
+                    <IconButton aria-label={globalize.translate('ButtonRevoke')} onClick={revoke} sx={{ color: '#ef5350' }}><DeleteIcon /></IconButton>
                 </Tooltip>
             </Box>
 
@@ -119,10 +119,10 @@ const KeyCard: FC<{ apiKey: AuthenticationInfo; isNew: boolean; onRevoke: (token
                     {visible ? token : mask(token)}
                 </Typography>
                 <Tooltip title={globalize.translate(visible ? 'KeyHide' : 'KeyShow')}>
-                    <IconButton size='small' onClick={toggle}>{visible ? <VisibilityOffIcon sx={{ fontSize: '1rem' }} /> : <VisibilityIcon sx={{ fontSize: '1rem' }} />}</IconButton>
+                    <IconButton aria-label={globalize.translate(visible ? 'KeyHide' : 'KeyShow')} size='small' onClick={toggle}>{visible ? <VisibilityOffIcon sx={{ fontSize: '1rem' }} /> : <VisibilityIcon sx={{ fontSize: '1rem' }} />}</IconButton>
                 </Tooltip>
                 <Tooltip title={globalize.translate(copied ? 'LtvCopied' : 'KeyCopy')}>
-                    <IconButton size='small' onClick={doCopy}><ContentCopyIcon sx={{ fontSize: '1rem' }} /></IconButton>
+                    <IconButton aria-label={globalize.translate(copied ? 'LtvCopied' : 'KeyCopy')} size='small' onClick={doCopy}><ContentCopyIcon sx={{ fontSize: '1rem' }} /></IconButton>
                 </Tooltip>
             </Box>
 
@@ -287,7 +287,7 @@ export const Component = () => {
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, p: 1, pl: 1.25, borderRadius: '10px', background: 'rgba(0,0,0,0.3)', border: '1px solid rgba(255,255,255,0.06)' }}>
                                             <Typography sx={{ flex: 1, minWidth: 0, fontFamily: 'monospace', fontSize: '0.76rem', color: '#9be7ff', overflowX: 'auto', whiteSpace: 'nowrap' }}>{ex.code}</Typography>
                                             <Tooltip title={globalize.translate(copied === ex.id ? 'LtvCopied' : 'KeyCopy')}>
-                                                <IconButton size='small' onClick={() => copy(ex.id, ex.code)}><ContentCopyIcon sx={{ fontSize: '1rem' }} /></IconButton>
+                                                <IconButton aria-label={globalize.translate(copied === ex.id ? 'LtvCopied' : 'KeyCopy')} size='small' onClick={() => copy(ex.id, ex.code)}><ContentCopyIcon sx={{ fontSize: '1rem' }} /></IconButton>
                                             </Tooltip>
                                         </Box>
                                     </Box>
