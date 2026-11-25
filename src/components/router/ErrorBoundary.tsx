@@ -1,16 +1,16 @@
-import Alert from '@mui/material/Alert/Alert';
-import AlertTitle from '@mui/material/AlertTitle/AlertTitle';
-import Box from '@mui/material/Box/Box';
-import Paper from '@mui/material/Paper/Paper';
-import Typography from '@mui/material/Typography/Typography';
+/**
+ * Error screen of a section of the app (the errorElement of its routes): "We couldn't load this section", why
+ * in plain words, "Retry" and "Go to Downloads". A piece of the app that did not download was already tried twice
+ * (retryImport); the screen then offers to reload the page. It retries by itself when the connection is back.
+ */
 import classNames from 'classnames';
-import React, { type FC, useEffect, useMemo } from 'react';
-import { useRouteError } from 'react-router-dom';
+import React, { type FC, useCallback, useEffect } from 'react';
+import { useLocation, useNavigate, useRouteError } from 'react-router-dom';
 
+import LoadErrorState from 'components/common/LoadErrorState';
+import layoutManager from 'components/layoutManager';
 import loading from 'components/loading/loading';
 import Page from 'components/Page';
-
-import { reloadOnChunkError } from './chunkReload';
 
 interface ErrorBoundaryParams {
     pageClasses?: string[]
@@ -19,52 +19,32 @@ interface ErrorBoundaryParams {
 const ErrorBoundary: FC<ErrorBoundaryParams> = ({
     pageClasses = [ 'libraryPage' ]
 }) => {
-    const error = useRouteError() as Error;
-    const reloading = useMemo(() => reloadOnChunkError(error), [ error ]);
+    const error = useRouteError();
+    const navigate = useNavigate();
+    const { pathname, search } = useLocation();
 
     useEffect(() => {
-        if (!reloading) loading.hide();
-    }, [ reloading ]);
+        loading.hide();
+        console.error('[ErrorBoundary] section failed to load', error);
+    }, [ error ]);
 
-    if (reloading) return null;
+    // Going to the same place again loads the section again (a failed route is loaded anew)
+    const retry = useCallback(() => {
+        navigate({ pathname, search }, { replace: true });
+    }, [ navigate, pathname, search ]);
+    const goToDownloads = useCallback(() => navigate('/downloads'), [ navigate ]);
 
     return (
         <Page
             id='errorBoundary'
             className={classNames('mainAnimatedPage', pageClasses)}
         >
-            <Box className='content-primary'>
-                <Alert severity='error'>
-                    <AlertTitle>
-                        {error.name}
-                    </AlertTitle>
-
-                    <Typography>
-                        {error.message}
-                    </Typography>
-
-                    {error.stack && (
-                        <Paper
-                            variant='outlined'
-                            sx={{
-                                marginTop: 1,
-                                backgroundColor: 'transparent'
-                            }}
-                        >
-                            <Box
-                                component='pre'
-                                sx={{
-                                    overflow: 'auto',
-                                    margin: 2,
-                                    maxHeight: '25rem' // 20 lines
-                                }}
-                            >
-                                {error.stack}
-                            </Box>
-                        </Paper>
-                    )}
-                </Alert>
-            </Box>
+            <LoadErrorState
+                variant='page'
+                error={error}
+                onRetry={retry}
+                onDownloads={layoutManager.modern && pathname !== '/downloads' ? goToDownloads : undefined}
+            />
         </Page>
     );
 };

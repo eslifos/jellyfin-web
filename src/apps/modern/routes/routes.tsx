@@ -6,16 +6,17 @@ import { toAsyncPageRoute } from 'components/router/AsyncRoute';
 import { AppType } from 'constants/appType';
 import { toViewManagerPageRoute } from 'components/router/LegacyRoute';
 import ErrorBoundary from 'components/router/ErrorBoundary';
+import { retryImport } from 'utils/connection/loadError';
 import FallbackRoute from 'components/router/FallbackRoute';
 
 import { ASYNC_PUBLIC_ROUTES, ASYNC_USER_ROUTES } from './asyncRoutes';
 import { LEGACY_PUBLIC_ROUTES, LEGACY_USER_ROUTES } from './legacyRoutes';
 import VideoPage from './video';
 
-const LoginPage           = lazy(() => import('apps/legacy/routes/session/login'));
-const AddServerPage       = lazy(() => import('apps/legacy/routes/session/addServer'));
-const SelectServerPage    = lazy(() => import('apps/legacy/routes/session/selectServer'));
-const ForgotPinPage       = lazy(() => import('apps/legacy/routes/session/forgotPasswordPin'));
+const LoginPage = lazy(() => retryImport(() => import('apps/legacy/routes/session/login')));
+const AddServerPage = lazy(() => retryImport(() => import('apps/legacy/routes/session/addServer')));
+const SelectServerPage = lazy(() => retryImport(() => import('apps/legacy/routes/session/selectServer')));
+const ForgotPinPage = lazy(() => retryImport(() => import('apps/legacy/routes/session/forgotPasswordPin')));
 
 const withSuspense = (Component: React.ComponentType) => (
     <Suspense fallback={null}><Component /></Suspense>
@@ -26,7 +27,7 @@ const MIGRATED_PUBLIC = [ 'login', 'addserver', 'selectserver', 'forgotpasswordp
 export const APP_ROUTES: RouteObject[] = [
     {
         path: '/*',
-        lazy: () => import('../AppLayout'),
+        lazy: () => retryImport(() => import('../AppLayout')),
         children: [
             { index: true, element: <Navigate replace to='/home' /> },
 
@@ -48,9 +49,9 @@ export const APP_ROUTES: RouteObject[] = [
                 /* Public routes */
                 element: <ConnectionRequired level='public' />,
                 children: [
-                    { path: 'login',             element: withSuspense(LoginPage) },
-                    { path: 'addserver',         element: withSuspense(AddServerPage) },
-                    { path: 'selectserver',      element: withSuspense(SelectServerPage) },
+                    { path: 'login', element: withSuspense(LoginPage) },
+                    { path: 'addserver', element: withSuspense(AddServerPage) },
+                    { path: 'selectserver', element: withSuspense(SelectServerPage) },
                     { path: 'forgotpasswordpin', element: withSuspense(ForgotPinPage) },
                     ...ASYNC_PUBLIC_ROUTES.map(toAsyncPageRoute),
                     ...LEGACY_PUBLIC_ROUTES.filter(r => !MIGRATED_PUBLIC.includes(r.path)).map(toViewManagerPageRoute),

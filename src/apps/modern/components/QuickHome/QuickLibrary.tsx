@@ -12,6 +12,7 @@ import { useQuery } from '@tanstack/react-query';
 import React, { type FC, type ReactNode, useCallback, useEffect, useRef, useState } from 'react';
 
 import { type ExternalMovie, ExternalMovieDialog } from 'apps/modern/components/Trailer';
+import LoadErrorState from 'components/common/LoadErrorState';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
@@ -101,8 +102,14 @@ const favoriteShape = (type?: string): Shape => (type === 'musicvideos' || type 
 
 const QuickLibrary: FC<{ libraryId: string, name?: string, accent?: string, theme?: string }> = ({ libraryId, name, accent: themeAccent, theme }) => {
     const { api, user, __legacyApiClient__: legacy } = useApi();
-    const { data: page } = useLibraryPage(libraryId);
-    const { data: personal } = useLibraryPersonal(libraryId);
+    const pageQuery = useLibraryPage(libraryId);
+    const { data: personal, refetch: refetchPersonal } = useLibraryPersonal(libraryId);
+    const page = pageQuery.data;
+    const refetchPage = pageQuery.refetch;
+    const retry = useCallback(() => {
+        void refetchPage();
+        void refetchPersonal();
+    }, [ refetchPage, refetchPersonal ]);
     const root = useRef<HTMLDivElement>(null);
     const serverId = legacy?.serverId();
     const [ external, setExternal ] = useState<ExternalMovie | null>(null);
@@ -118,6 +125,11 @@ const QuickLibrary: FC<{ libraryId: string, name?: string, accent?: string, them
         host.addEventListener('viewshow', onShow);
         return () => host.removeEventListener('viewshow', onShow);
     }, [ user?.Id, libraryId ]);
+
+    // The server did not answer and nothing was kept from before: say so instead of loading forever
+    if (api && !page && pageQuery.isError) {
+        return <div ref={root} className='qh'><LoadErrorState error={pageQuery.error} onRetry={retry} /></div>;
+    }
 
     if (!api || !page) {
         return <div ref={root} className='qh qh-loading' aria-busy='true'><div className='qh-skeleton-hero' /><div className='qh-skeleton-row' /><div className='qh-skeleton-row' /></div>;

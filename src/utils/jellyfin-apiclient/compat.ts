@@ -2,6 +2,7 @@ import { type Api, Jellyfin, type JellyfinParameters } from '@jellyfin/sdk';
 import type { ApiClient } from 'jellyfin-apiclient';
 
 import { getLanguages } from 'lib/globalize';
+import { watchAxios } from 'utils/connection/monitor';
 import { safeDecodeURIComponent } from 'utils/url';
 
 const getParameters = (apiClient: ApiClient): JellyfinParameters => ({
@@ -24,11 +25,14 @@ const getParameters = (apiClient: ApiClient): JellyfinParameters => ({
  * @returns {Api} An equivalent SDK Api instance.
  */
 export const toApi = (apiClient: ApiClient): Api => {
-    return (new Jellyfin(getParameters(apiClient)))
+    const api = (new Jellyfin(getParameters(apiClient)))
         .createApi(
             apiClient.serverAddress(),
             apiClient.accessToken()
         );
+    // Its failures tell the whole app when the server stops answering
+    watchAxios(api.axiosInstance);
+    return api;
 };
 
 /**

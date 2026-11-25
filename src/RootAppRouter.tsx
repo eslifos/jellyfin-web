@@ -13,6 +13,7 @@ import { APP_ROUTES as LEGACY_APP_ROUTES } from 'apps/legacy/routes/routes';
 import { WIZARD_APP_ROUTES } from 'apps/wizard/routes/routes';
 import AppHeader from 'components/AppHeader';
 import Backdrop from 'components/Backdrop';
+import ConnectionBanner from 'components/connection/ConnectionBanner';
 import layoutManager from 'components/layoutManager';
 import BangRedirect from 'components/router/BangRedirect';
 import RootErrorBoundary from 'components/router/RootErrorBoundary';
@@ -58,6 +59,7 @@ function RootAppLayout() {
             storageManager={ThemeStorageManager}
         >
             <Backdrop />
+            <ConnectionBanner />
             <AppHeader isHidden={layoutManager.modern || isNewLayoutPath} />
 
             <Outlet />

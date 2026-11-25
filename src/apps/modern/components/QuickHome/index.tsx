@@ -9,8 +9,9 @@
  * ones chosen in Settings → Home.
  */
 import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client/models/base-item-dto';
-import React, { type FC, type ReactNode, useEffect, useMemo, useRef, useState } from 'react';
+import React, { type FC, type ReactNode, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 
+import LoadErrorState from 'components/common/LoadErrorState';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 import { formatNumber } from 'utils/localeNumber';
@@ -31,8 +32,10 @@ const NO_CARDS: ProgressCard[] = [];
 
 const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
     const { api, user, __legacyApiClient__: legacy } = useApi();
-    const { data: page } = useHomePage();
-    const { data: personal } = usePersonal();
+    const pageQuery = useHomePage();
+    const personalQuery = usePersonal();
+    const page = pageQuery.data;
+    const personal = personalQuery.data;
     const root = useRef<HTMLDivElement>(null);
     const serverId = legacy?.serverId();
     const [ sections, setSections ] = useState(loadHomeSections);
@@ -53,6 +56,25 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
     const order = useMemo(() => orderSections(views, sections).filter(k => !sections.hidden.includes(k)), [ views, sections ]);
     const blocks = useMemo(() => new Map((page?.Blocks ?? []).map(b => [ `lib:${b.LibraryId}`, b ])), [ page?.Blocks ]);
     const personalRows = useMemo(() => new Map((personal?.LibraryRows ?? []).map(b => [ b.LibraryId, b.Rows ])), [ personal?.LibraryRows ]);
+    const refetchPage = pageQuery.refetch;
+    const refetchPersonal = personalQuery.refetch;
+    const retryPage = useCallback(() => {
+        void refetchPage();
+        void refetchPersonal();
+    }, [ refetchPage, refetchPersonal ]);
+    const retryPersonal = useCallback(() => {
+        void refetchPersonal();
+    }, [ refetchPersonal ]);
+
+    // The server did not answer and nothing was kept from before: say so instead of loading forever
+    if (api && !page && pageQuery.isError) {
+        return (
+            <div ref={root} className='qh'>
+                {nav}
+                <LoadErrorState error={pageQuery.error} onRetry={retryPage} />
+            </div>
+        );
+    }
 
     if (!api || !page) {
         return <div ref={root} className='qh qh-loading' aria-busy='true'><div className='qh-skeleton-hero' />{nav}<div className='qh-skeleton-row' /><div className='qh-skeleton-row' /></div>;
@@ -62,6 +84,8 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
     const hasContent = page.Hero.length > 0
         || page.Blocks.some(b => b.Rows.some(r => r.Items.length > 0))
         || !!(personal && (personal.Continue.length || personal.NextUp.length || personal.Listening.length || personal.Favorites.length));
+
+    const personalFailed = !personal && personalQuery.isError;
 
     const progressRow = (key: string, cards: ProgressCard[] | undefined, title: string, accent: string): ReactNode => (cards?.length ? (
         <Row key={key} id={`qh-${key}`} title={globalize.translate(title)} accent={accent}>
@@ -76,9 +100,12 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
         ) : null),
         // With a menu on each card: remove it from the row (undo) or mark it as watched. Always mounted: when the
         // last card leaves, the row hides itself but keeps its undo notice
-        resume: () => (
+        // When the user's rows could not be asked for, their place says so (with retry)
+        resume: () => (personalFailed ? (
+            <LoadErrorState key='resume' error={personalQuery.error} onRetry={retryPersonal} />
+        ) : (
             <ContinueRow key='resume' id='qh-resume' api={api} cards={personal?.Continue ?? NO_CARDS} title={globalize.translate('QhContinue')} accent='#00a4dc' serverId={serverId} />
-        ),
+        )),
         nextup: () => progressRow('nextup', personal?.NextUp, 'QhNextUp', '#aa5cc3'),
         listening: () => progressRow('listening', personal?.Listening, 'QhListening', '#ff7043'),
         upcoming: () => (page.Upcoming.length ? (
@@ -127,14 +154,20 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
 
     const render = (key: string): ReactNode => (isLibKey(key) ? libraryView(key) : sectionViews[key]?.() ?? null);
 
+    // Under the banner: "still preparing", or the empty home (not when the user's rows just failed to load)
+    let intro: ReactNode = null;
+    if (hasContent) {
+        if (!page.Ready) intro = <p className='qh-preparing'>{globalize.translate('QhPreparing')}</p>;
+    } else if (!personalFailed) {
+        intro = <HomeEmptyState hasLibraries={page.Libraries.length > 0} ready={page.Ready} />;
+    }
+
     return (
         <div ref={root} className='qh'>
             {/* The banner always goes on top, edge to edge, then the one row of libraries and universes */}
             {page.Hero.length > 0 && <Hero api={api} items={page.Hero} serverId={serverId} />}
             {nav}
-            {hasContent ?
-                !page.Ready && <p className='qh-preparing'>{globalize.translate('QhPreparing')}</p> :
-                <HomeEmptyState hasLibraries={page.Libraries.length > 0} ready={page.Ready} />}
+            {intro}
             {order.map(render)}
         </div>
     );

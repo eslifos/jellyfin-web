@@ -1,6 +1,7 @@
 import type { RouteObject } from 'react-router-dom';
 
 import { AppType } from 'constants/appType';
+import { retryImport } from 'utils/connection/loadError';
 
 export interface AsyncRoute {
     /** The URL path for this route. */
@@ -37,7 +38,7 @@ export const toAsyncPageRoute = ({
                 // If there is a default export, use it as the Component for compatibility
                 default: Component,
                 ...route
-            } = await importRoute(page ?? path, type);
+            } = await retryImport(async () => importRoute(page ?? path, type));
 
             return {
                 Component,

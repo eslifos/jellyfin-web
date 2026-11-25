@@ -4,6 +4,7 @@ import type { ApiClient, ConnectResponse } from 'jellyfin-apiclient';
 
 import { ConnectionState, ServerConnections } from 'lib/jellyfin-apiclient';
 
+import { BOOT_TIMEOUT_MS } from './connection/bootCheck';
 import ConnectionErrorPage from './ConnectionErrorPage';
 import Loading from './loading/LoadingComponent';
 
@@ -63,6 +64,13 @@ const ConnectionRequired: FunctionComponent<ConnectionRequiredProps> = ({
 
     const [ errorState, setErrorState ] = useState<ConnectionState>();
     const [ isLoading, setIsLoading ] = useState(true);
+
+    // The connection never takes more than 15 s to say something: then the server is reported out of reach
+    useEffect(() => {
+        if (!isLoading) return;
+        const timer = setTimeout(() => setErrorState(state => state ?? ConnectionState.Unavailable), BOOT_TIMEOUT_MS);
+        return () => clearTimeout(timer);
+    }, [ isLoading ]);
 
     const navigateIfNotThere = useCallback((route: BounceRoutes) => {
         // If we try to navigate to the current route, just set isLoading = false

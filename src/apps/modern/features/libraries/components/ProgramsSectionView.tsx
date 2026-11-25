@@ -1,6 +1,7 @@
-import React, { type FC } from 'react';
+import React, { type FC, useCallback } from 'react';
 
 import { CardShape } from 'components/cardbuilder/utils/shape';
+import LoadErrorState from 'components/common/LoadErrorState';
 import NoItemsMessage from 'components/common/NoItemsMessage';
 import SectionContainer from 'components/common/SectionContainer';
 import Loading from 'components/loading/LoadingComponent';
@@ -21,17 +22,27 @@ const ProgramsSectionView: FC<ProgramsSectionViewProps> = ({
     isUpcomingRecordingsEnabled = false
 }) => {
     const { __legacyApiClient__ } = useApi();
-    const { isLoading, data: sectionsWithItems, refetch } = useGetProgramsSectionsWithItems(sectionType);
+    const { isLoading, data: sectionsWithItems, refetch, error } = useGetProgramsSectionsWithItems(sectionType);
     const {
         isLoading: isUpcomingRecordingsLoading,
-        data: upcomingRecordings
+        data: upcomingRecordings,
+        error: timersError,
+        refetch: refetchTimers
     } = useGetTimers(isUpcomingRecordingsEnabled);
+
+    const retry = useCallback(() => {
+        void refetch();
+        if (isUpcomingRecordingsEnabled) void refetchTimers();
+    }, [ refetch, refetchTimers, isUpcomingRecordingsEnabled ]);
 
     if (isLoading || isUpcomingRecordingsLoading) {
         return <Loading />;
     }
 
     if (!sectionsWithItems?.length && !upcomingRecordings?.length) {
+        // Empty because the server did not answer: say so, with a way to try again
+        const failure = error ?? timersError;
+        if (failure) return <LoadErrorState error={failure} onRetry={retry} />;
         return <NoItemsMessage />;
     }
 

@@ -5,13 +5,14 @@ import Box from '@mui/material/Box';
 
 import ConnectionRequired from 'components/ConnectionRequired';
 import ErrorBoundary from 'components/router/ErrorBoundary';
+import { retryImport } from 'utils/connection/loadError';
 
-const WizardStartPage = lazy(() => import('../pages/WizardStartPage'));
-const WizardUserPage = lazy(() => import('../pages/WizardUserPage'));
-const WizardLibraryPage = lazy(() => import('../pages/WizardLibraryPage'));
-const WizardSettingsPage = lazy(() => import('../pages/WizardSettingsPage'));
-const WizardRemotePage = lazy(() => import('../pages/WizardRemotePage'));
-const WizardFinishPage = lazy(() => import('../pages/WizardFinishPage'));
+const WizardStartPage = lazy(() => retryImport(() => import('../pages/WizardStartPage')));
+const WizardUserPage = lazy(() => retryImport(() => import('../pages/WizardUserPage')));
+const WizardLibraryPage = lazy(() => retryImport(() => import('../pages/WizardLibraryPage')));
+const WizardSettingsPage = lazy(() => retryImport(() => import('../pages/WizardSettingsPage')));
+const WizardRemotePage = lazy(() => retryImport(() => import('../pages/WizardRemotePage')));
+const WizardFinishPage = lazy(() => retryImport(() => import('../pages/WizardFinishPage')));
 
 const WizardFallback = () => (
     <Box sx={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#080810' }}>
@@ -34,12 +35,12 @@ export const WIZARD_APP_ROUTES: RouteObject[] = [
                 ErrorBoundary,
                 children: [
                     { index: true, element: <Navigate replace to='start' /> },
-                    { path: 'start',        element: withSuspense(WizardStartPage) },
-                    { path: 'user',         element: withSuspense(WizardUserPage) },
-                    { path: 'library',      element: withSuspense(WizardLibraryPage) },
-                    { path: 'settings',     element: withSuspense(WizardSettingsPage) },
+                    { path: 'start', element: withSuspense(WizardStartPage) },
+                    { path: 'user', element: withSuspense(WizardUserPage) },
+                    { path: 'library', element: withSuspense(WizardLibraryPage) },
+                    { path: 'settings', element: withSuspense(WizardSettingsPage) },
                     { path: 'remoteaccess', element: withSuspense(WizardRemotePage) },
-                    { path: 'finish',       element: withSuspense(WizardFinishPage) }
+                    { path: 'finish', element: withSuspense(WizardFinishPage) }
                 ]
             }
         ]

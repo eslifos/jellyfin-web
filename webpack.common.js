@@ -32,6 +32,8 @@ try {
 }
 
 const NODE_MODULES_REGEX = /[\\/]node_modules[\\/]/;
+/** The entry of the service worker (production only). */
+const SERVICE_WORKER = 'serviceworker';
 
 const THEMES = fg.globSync('themes/**/*.scss', { cwd: path.resolve(__dirname, 'src') });
 const THEMES_BY_ID = THEMES.reduce((acc, theme) => {
@@ -71,9 +73,9 @@ const config = {
             template: 'index.html',
             // Append file hashes to bundle urls for cache busting
             hash: true,
+            // Not the service worker: it never runs in the page (index.jsx registers it)
             chunks: [
-                'main.jellyfin',
-                'serviceworker'
+                'main.jellyfin'
             ]
         }),
         new CopyPlugin({
@@ -120,7 +122,10 @@ const config = {
     ],
     output: {
         filename: pathData => (
-            pathData.chunk.name === 'serviceworker' ? '[name].js' : '[name].bundle.js'
+            // The bundles carry the hash of their content in the name: a new version is a new file, so no cache
+            // (browser, proxy, service worker) can mix an old runtime with new chunks. The service worker keeps a
+            // fixed name, as browsers require to update it
+            pathData.chunk.name === SERVICE_WORKER ? '[name].js' : '[name].[contenthash].bundle.js'
         ),
         chunkFilename: '[name].[contenthash].chunk.js',
         assetModuleFilename: pathData => {
@@ -136,11 +141,15 @@ const config = {
         publicPath: ''
     },
     optimization: {
-        runtimeChunk: 'single',
+        // The service worker has no page to share a runtime or split chunks with: it is built self-contained,
+        // otherwise it is a chunk waiting for a runtime that never loads and none of its events are registered
+        runtimeChunk: {
+            name: entrypoint => (entrypoint.name === SERVICE_WORKER ? false : 'runtime')
+        },
         removeAvailableModules: false,
         removeEmptyChunks: false,
         splitChunks: {
-            chunks: 'all',
+            chunks: chunk => chunk.name !== SERVICE_WORKER,
             maxInitialRequests: Infinity,
             cacheGroups: {
                 node_modules: {

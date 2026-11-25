@@ -1,13 +1,14 @@
 import { ItemFields } from '@jellyfin/sdk/lib/generated-client/models/item-fields';
 import type { RecommendationDto } from '@jellyfin/sdk/lib/generated-client/models/recommendation-dto';
 import { RecommendationType } from '@jellyfin/sdk/lib/generated-client/models/recommendation-type';
-import React, { type FC } from 'react';
+import React, { type FC, useCallback } from 'react';
 
 import { CardShape } from 'components/cardbuilder/utils/shape';
 import { useApi } from 'hooks/useApi';
 import { useGetSuggestionSectionsWithItems } from 'hooks/useFetchItems';
 import globalize from 'lib/globalize';
 import Loading from 'components/loading/LoadingComponent';
+import LoadErrorState from 'components/common/LoadErrorState';
 import NoItemsMessage from 'components/common/NoItemsMessage';
 import SectionContainer from 'components/common/SectionContainer';
 import type { ParentId } from 'types/library';
@@ -28,12 +29,14 @@ const SuggestionsSectionView: FC<SuggestionsSectionViewProps> = ({
     isMovieRecommendationEnabled = false
 }) => {
     const { __legacyApiClient__ } = useApi();
-    const { isLoading, data: sectionsWithItems } =
+    const { isLoading, data: sectionsWithItems, error, refetch } =
         useGetSuggestionSectionsWithItems(parentId, sectionType);
 
     const {
         isLoading: isRecommendationsLoading,
-        data: movieRecommendationsItems
+        data: movieRecommendationsItems,
+        error: recommendationsError,
+        refetch: refetchRecommendations
     } = useMovieRecommendations({
         parentId: parentId || undefined,
         fields: [
@@ -44,11 +47,19 @@ const SuggestionsSectionView: FC<SuggestionsSectionViewProps> = ({
         itemLimit: 20
     }, isMovieRecommendationEnabled);
 
+    const retry = useCallback(() => {
+        void refetch();
+        if (isMovieRecommendationEnabled) void refetchRecommendations();
+    }, [ refetch, refetchRecommendations, isMovieRecommendationEnabled ]);
+
     if (isLoading || isRecommendationsLoading) {
         return <Loading />;
     }
 
     if (!sectionsWithItems?.length && !movieRecommendationsItems?.length) {
+        // Empty because the server did not answer: say so, with a way to try again
+        const failure = error ?? recommendationsError;
+        if (failure) return <LoadErrorState error={failure} onRetry={retry} />;
         return <NoItemsMessage />;
     }
 

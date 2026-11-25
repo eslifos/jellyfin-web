@@ -1,13 +1,20 @@
+import Box from '@mui/material/Box';
 import DOMPurify from 'dompurify';
 import React, { FC, useCallback, useEffect, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 
 import { appHost } from 'components/apphost';
+import { serverLabel } from 'components/connection/bootCheck';
+import ServerUnreachable from 'components/connection/ServerUnreachable';
 import Page from 'components/Page';
 import toast from 'components/toast/toast';
 import { AppFeature } from 'constants/appFeature';
 import LinkButton from 'elements/emby-button/LinkButton';
 import globalize from 'lib/globalize';
 import { ConnectionState, ServerConnections } from 'lib/jellyfin-apiclient';
+
+const reloadPage = () => window.location.reload();
+const RECONNECT_EVERY_MS = 5000;
 
 interface ConnectionErrorPageProps {
     state: ConnectionState
@@ -35,6 +42,39 @@ const ConnectionErrorPage: FC<ConnectionErrorPageProps> = ({
         }
     }, []);
 
+    // Server out of reach: the whole connection (with the session) is tried again every few seconds and the app
+    // opens again by itself as soon as it works
+    const [ checking, setChecking ] = useState(false);
+    const unavailable = state === ConnectionState.Unavailable;
+    const serverName = serverLabel(ServerConnections.currentApiClient()?.serverAddress(), ServerConnections.getLastUsedServer()?.Name);
+    const tryAgain = useCallback(async () => {
+        setChecking(true);
+        try {
+            const result = await ServerConnections.connect();
+            if (result?.State !== ConnectionState.Unavailable) {
+                reloadPage();
+                return;
+            }
+        } catch {
+            // Still out of reach
+        }
+        setChecking(false);
+    }, []);
+    const onRetry = useCallback(() => {
+        void tryAgain();
+    }, [ tryAgain ]);
+    useEffect(() => {
+        if (!unavailable) return;
+        const timer = setInterval(onRetry, RECONNECT_EVERY_MS);
+        window.addEventListener('online', onRetry);
+        return () => {
+            clearInterval(timer);
+            window.removeEventListener('online', onRetry);
+        };
+    }, [ unavailable, onRetry ]);
+    const navigate = useNavigate();
+    const onChangeServer = useCallback(() => navigate('/selectserver'), [ navigate ]);
+
     useEffect(() => {
         switch (state) {
             case ConnectionState.ServerMismatch:
@@ -49,13 +89,28 @@ const ConnectionErrorPage: FC<ConnectionErrorPageProps> = ({
                     '<a href="https://jellyfin.org/downloads/server/">jellyfin.org/downloads/server</a>'
                 ));
                 setMessage(undefined);
-                return;
-            case ConnectionState.Unavailable:
-                setTitle(globalize.translate('HeaderServerUnavailable'));
-                setHtmlMessage(undefined);
-                setMessage(globalize.translate('MessageUnableToConnectToServer'));
         }
     }, [ state ]);
+
+    if (unavailable) {
+        return (
+            <Page
+                id='connectionErrorPage'
+                className='mainAnimatedPage standalonePage'
+                isBackButtonEnabled={false}
+                shouldAutoFocus
+            >
+                <Box sx={{ minHeight: '55vh', display: 'flex' }}>
+                    <ServerUnreachable
+                        serverName={serverName}
+                        checking={checking}
+                        onRetry={onRetry}
+                        onChangeServer={onChangeServer}
+                    />
+                </Box>
+            </Page>
+        );
+    }
 
     if (!title) return;
 

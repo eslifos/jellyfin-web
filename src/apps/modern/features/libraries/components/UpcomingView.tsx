@@ -1,12 +1,13 @@
 import { ImageType } from '@jellyfin/sdk/lib/generated-client/models/image-type';
 import { ItemFields } from '@jellyfin/sdk/lib/generated-client/models/item-fields';
 import Box from '@mui/material/Box';
-import React, { type FC, useEffect, useMemo } from 'react';
+import React, { type FC, useCallback, useEffect, useMemo } from 'react';
 import { useIntersectionObserver } from 'usehooks-ts';
 
 import { CardShape } from 'components/cardbuilder/utils/shape';
 import { useApi } from 'hooks/useApi';
 import Loading from 'components/loading/LoadingComponent';
+import LoadErrorState from 'components/common/LoadErrorState';
 import NoItemsMessage from 'components/common/NoItemsMessage';
 import SectionContainer from 'components/common/SectionContainer';
 import type { ItemDto } from 'types/base/models/item-dto';
@@ -22,7 +23,9 @@ const UpcomingView: FC<LibraryViewProps> = ({ parentId }) => {
         data,
         fetchNextPage,
         hasNextPage,
-        isFetchingNextPage
+        isFetchingNextPage,
+        error,
+        refetch
     } = useUpcomingEpisodes({
         parentId: parentId || undefined,
         fields: [ItemFields.AirTime],
@@ -54,7 +57,16 @@ const UpcomingView: FC<LibraryViewProps> = ({ parentId }) => {
         }
     }, [isIntersecting, hasNextPage, isFetchingNextPage, fetchNextPage]);
 
+    const retry = useCallback(() => {
+        void refetch();
+    }, [ refetch ]);
+
     if (isLoading) return <Loading />;
+
+    // Empty because the server did not answer: say so, with a way to try again
+    if (!groups.length && error) {
+        return <LoadErrorState error={error} onRetry={retry} />;
+    }
 
     if (!groups.length) {
         return <NoItemsMessage message='MessagePleaseEnsureInternetMetadata' />;

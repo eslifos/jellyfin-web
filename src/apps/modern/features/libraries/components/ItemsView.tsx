@@ -9,6 +9,7 @@ import { useLibrary } from 'apps/modern/features/libraries/hooks/useLibrary';
 import { getDefaultLibraryViewSettings } from 'apps/modern/features/libraries/utils/settings';
 import Cards from 'components/cardbuilder/Card/Cards';
 import { CardShape } from 'components/cardbuilder/utils/shape';
+import LoadErrorState from 'components/common/LoadErrorState';
 import NoItemsMessage from 'components/common/NoItemsMessage';
 import Lists from 'components/listview/List/Lists';
 import Loading from 'components/loading/LoadingComponent';
@@ -193,6 +194,10 @@ const ItemsView: FC = () => {
     }, [setLibraryViewSettings]);
 
     const hasSortName = !libraryViewSettings.SortBy.includes(ItemSortBy.Random);
+    const refetchItems = itemsResult?.refetch;
+    const retryItems = useCallback(() => {
+        void refetchItems?.();
+    }, [ refetchItems ]);
 
     // Infinite scroll: a marker after the grid asks for the next page before it gets on screen
     const sentinel = useRef<HTMLDivElement>(null);
@@ -218,6 +223,25 @@ const ItemsView: FC = () => {
             'vertical-wrap'
     );
 
+    let itemsBody: React.ReactNode;
+    if (!itemsResult || itemsResult.isPending) {
+        itemsBody = <Loading />;
+    } else if (itemsResult.isError && !itemsResult.data?.Items?.length) {
+        // Nothing to show because the server did not answer: say it instead of "Nothing here"
+        itemsBody = <LoadErrorState error={itemsResult.error} onRetry={retryItems} />;
+    } else {
+        itemsBody = (
+            <ItemsContainer
+                className={itemsContainerClass}
+                parentId={parentId}
+                reloadItems={itemsResult?.refetch}
+                queryKey={allItemsQueryKey}
+            >
+                {getItems()}
+            </ItemsContainer>
+        );
+    }
+
     return (
         <Box className='padded-bottom-page'>
             {isAlphabetPickerSupported && isAlphabetPickerEnabled && hasSortName && (
@@ -227,18 +251,7 @@ const ItemsView: FC = () => {
                 />
             )}
 
-            {(!itemsResult || itemsResult.isPending) ? (
-                <Loading />
-            ) : (
-                <ItemsContainer
-                    className={itemsContainerClass}
-                    parentId={parentId}
-                    reloadItems={itemsResult?.refetch}
-                    queryKey={allItemsQueryKey}
-                >
-                    {getItems()}
-                </ItemsContainer>
-            )}
+            {itemsBody}
 
             {hasNextPage && (
                 <Box ref={sentinel} sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>

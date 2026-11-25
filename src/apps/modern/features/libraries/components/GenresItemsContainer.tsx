@@ -1,9 +1,10 @@
 import type { BaseItemKind } from '@jellyfin/sdk/lib/generated-client/models/base-item-kind';
 import type { CollectionType } from '@jellyfin/sdk/lib/generated-client/models/collection-type';
 import Box from '@mui/material/Box';
-import React, { FC, useEffect, useMemo, useState } from 'react';
+import React, { FC, useCallback, useEffect, useMemo, useState } from 'react';
 import { useIntersectionObserver } from 'usehooks-ts';
 
+import LoadErrorState from 'components/common/LoadErrorState';
 import NoItemsMessage from 'components/common/NoItemsMessage';
 import Loading from 'components/loading/LoadingComponent';
 import type { ParentId } from 'types/library';
@@ -29,7 +30,9 @@ const GenresItemsContainer: FC<GenresItemsContainerProps> = ({
         data,
         fetchNextPage,
         hasNextPage,
-        isFetchingNextPage
+        isFetchingNextPage,
+        error,
+        refetch
     } = useGenres({
         parentId,
         includeItemTypes: itemType,
@@ -50,6 +53,15 @@ const GenresItemsContainer: FC<GenresItemsContainerProps> = ({
             void fetchNextPage();
         }
     }, [isIntersecting, hasNextPage, isFetchingNextPage, fetchNextPage]);
+
+    const retry = useCallback(() => {
+        void refetch();
+    }, [ refetch ]);
+
+    // Empty because the server did not answer: say so, with a way to try again
+    if (!isLoading && !genres.length && error) {
+        return <LoadErrorState error={error} onRetry={retry} />;
+    }
 
     // No genres at all (no letter filter active) - nothing to pick from
     if (!isLoading && !genres.length && alphabet == null) {

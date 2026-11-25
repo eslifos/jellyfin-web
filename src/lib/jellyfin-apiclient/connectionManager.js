@@ -233,12 +233,20 @@ export default class ConnectionManager {
             }).then(
                 (systemInfo) => {
                     updateServerInfo(server, systemInfo);
-                    return Promise.resolve();
+                    return true;
                 },
-                () => {
+                (error) => {
+                    // No answer, or the server (or a proxy before it) failing: the session is not the problem, it
+                    // is kept and the server is reported out of reach instead of asking to sign in again
+                    const status = error?.status;
+                    if (typeof status !== 'number' || status >= 500) {
+                        console.warn('[ConnectionManager] the server did not answer while checking the session', status);
+                        return false;
+                    }
+                    // The server refused the session
                     server.UserId = null;
                     server.AccessToken = null;
-                    return Promise.resolve();
+                    return true;
                 }
             );
         }
@@ -573,7 +581,11 @@ export default class ConnectionManager {
                 server.UserId = null;
                 server.AccessToken = null;
             } else if (server.AccessToken && verifyLocalAuthentication) {
-                void validateAuthentication(server, serverUrl).then(function () {
+                void validateAuthentication(server, serverUrl).then(function (answered) {
+                    if (!answered) {
+                        resolve({ State: ConnectionState.Unavailable, Servers: [ server ] });
+                        return;
+                    }
                     onSuccessfulConnection(server, systemInfo, connectionMode, serverUrl, false, resolve, options);
                 });
                 return;
