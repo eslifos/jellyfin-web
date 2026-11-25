@@ -15,6 +15,7 @@ import { Link } from 'react-router-dom';
 
 import { useApi } from 'hooks/useApi';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
+import globalize from 'lib/globalize';
 
 export const glassCard = {
     position: 'relative',
@@ -110,8 +111,8 @@ export const RowSection: FC<SectionProps> = ({ title, icon, actions, children })
                 {icon && <Box sx={{ color: '#00a4dc', display: 'flex' }}>{icon}</Box>}
                 <Typography component='h2' sx={{ fontSize: '1.25rem', fontWeight: 800, flex: 1, minWidth: 0 }}>{title}</Typography>
                 {actions}
-                <IconButton size='small' onClick={() => scroll(-1)} sx={{ display: { xs: 'none', sm: 'inline-flex' }, border: '1px solid rgba(255,255,255,0.12)' }}><ChevronLeftIcon /></IconButton>
-                <IconButton size='small' onClick={() => scroll(1)} sx={{ display: { xs: 'none', sm: 'inline-flex' }, border: '1px solid rgba(255,255,255,0.12)' }}><ChevronRightIcon /></IconButton>
+                <IconButton aria-label={globalize.translate('Previous')} size='small' onClick={() => scroll(-1)} sx={{ display: { xs: 'none', sm: 'inline-flex' }, border: '1px solid rgba(255,255,255,0.12)' }}><ChevronLeftIcon /></IconButton>
+                <IconButton aria-label={globalize.translate('Next')} size='small' onClick={() => scroll(1)} sx={{ display: { xs: 'none', sm: 'inline-flex' }, border: '1px solid rgba(255,255,255,0.12)' }}><ChevronRightIcon /></IconButton>
             </Box>
             <Box ref={scroller} sx={{
                 display: 'flex', gap: 1.6, overflowX: 'auto', pb: 1, pt: 0.5, px: 0.5,

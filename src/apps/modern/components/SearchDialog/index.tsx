@@ -266,12 +266,12 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
                             }}
                         />
                         {query && (
-                            <IconButton size='small' onClick={() => setQuery('')} sx={{ color: 'rgba(255,255,255,0.35)', p: 0.5, '&:hover': { color: '#fff' } }}>
+                            <IconButton aria-label={globalize.translate('ClearSearch')} size='small' onClick={() => setQuery('')} sx={{ color: 'rgba(255,255,255,0.35)', p: 0.5, '&:hover': { color: '#fff' } }}>
                                 <CloseIcon sx={{ fontSize: '1rem' }} />
                             </IconButton>
                         )}
                         <Box sx={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.1)', mx: 0.5 }} />
-                        <IconButton size='small' onClick={onClose} sx={{ color: 'rgba(255,255,255,0.35)', p: 0.5, '&:hover': { color: '#fff' } }}>
+                        <IconButton aria-label={globalize.translate('ButtonClose')} size='small' onClick={onClose} sx={{ color: 'rgba(255,255,255,0.35)', p: 0.5, '&:hover': { color: '#fff' } }}>
                             <CloseIcon sx={{ fontSize: '1.1rem' }} />
                         </IconButton>
                     </Box>

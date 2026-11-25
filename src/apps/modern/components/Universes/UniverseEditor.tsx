@@ -275,13 +275,13 @@ const UniverseEditor: FC<Props> = ({ open, onClose, onSaved, definition, details
                                 <ItemLine key={id} item={item} fallback={id}>
                                     {item?.BackdropImageTags?.length ? (
                                         <Tooltip title={t('UniUseAsBanner')}>
-                                            <IconButton size='small' onClick={() => setDef({ ...def, BackdropItemId: isBanner ? null : id })} sx={{ color: isBanner ? '#00a4dc' : 'inherit' }}>
+                                            <IconButton aria-label={t('UniUseAsBanner')} size='small' onClick={() => setDef({ ...def, BackdropItemId: isBanner ? null : id })} sx={{ color: isBanner ? '#00a4dc' : 'inherit' }}>
                                                 <WallpaperRoundedIcon fontSize='small' />
                                             </IconButton>
                                         </Tooltip>
                                     ) : null}
                                     <Tooltip title={t('UniRemove')}>
-                                        <IconButton size='small' onClick={() => removeItem(id)}><CloseRoundedIcon fontSize='small' /></IconButton>
+                                        <IconButton aria-label={t('UniRemove')} size='small' onClick={() => removeItem(id)}><CloseRoundedIcon fontSize='small' /></IconButton>
                                     </Tooltip>
                                 </ItemLine>
                             );
@@ -292,7 +292,7 @@ const UniverseEditor: FC<Props> = ({ open, onClose, onSaved, definition, details
                                 {def.ExcludeIds.map(id => (
                                     <ItemLine key={id} item={lookup(id)} fallback={id}>
                                         <Tooltip title={t('UniRestore')}>
-                                            <IconButton size='small' onClick={() => restore(id)}><RestoreRoundedIcon fontSize='small' /></IconButton>
+                                            <IconButton aria-label={t('UniRestore')} size='small' onClick={() => restore(id)}><RestoreRoundedIcon fontSize='small' /></IconButton>
                                         </Tooltip>
                                     </ItemLine>
                                 ))}
@@ -316,8 +316,8 @@ const UniverseEditor: FC<Props> = ({ open, onClose, onSaved, definition, details
                         {chrono.map((id, index) => (
                             <ItemLine key={id} item={lookup(id)} fallback={id}>
                                 <Typography sx={{ width: 28, textAlign: 'right', fontWeight: 800, color: '#00a4dc' }}>{index + 1}</Typography>
-                                <IconButton size='small' disabled={index === 0} onClick={() => move(index, -1)}><ArrowUpwardRoundedIcon fontSize='small' /></IconButton>
-                                <IconButton size='small' disabled={index === chrono.length - 1} onClick={() => move(index, 1)}><ArrowDownwardRoundedIcon fontSize='small' /></IconButton>
+                                <Tooltip title={t('NavMoveUp')}><span><IconButton aria-label={t('NavMoveUp')} size='small' disabled={index === 0} onClick={() => move(index, -1)}><ArrowUpwardRoundedIcon fontSize='small' /></IconButton></span></Tooltip>
+                                <Tooltip title={t('NavMoveDown')}><span><IconButton aria-label={t('NavMoveDown')} size='small' disabled={index === chrono.length - 1} onClick={() => move(index, 1)}><ArrowDownwardRoundedIcon fontSize='small' /></IconButton></span></Tooltip>
                             </ItemLine>
                         ))}
                     </Box>
