@@ -10,6 +10,7 @@ import { getDefaultBackgroundClass } from 'components/cardbuilder/utils/builder'
 import CardActionArea from '@mui/material/CardActionArea';
 import Stack from '@mui/material/Stack';
 import { Link, To } from 'react-router-dom';
+import globalize from 'lib/globalize';
 
 interface BaseCardProps {
     title?: string;
@@ -107,7 +108,7 @@ const BaseCard = ({
                     </Stack>
                     <Box>
                         {action ? (
-                            <IconButton ref={actionRef} onClick={onActionClick}>
+                            <IconButton aria-label={globalize.translate('ButtonMore')} ref={actionRef} onClick={onActionClick}>
                                 <MoreVertIcon />
                             </IconButton>
                         ) : null}

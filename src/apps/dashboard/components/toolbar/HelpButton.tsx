@@ -17,6 +17,7 @@ const HelpButton = () => (
                     element={
                         <Tooltip title={globalize.translate('Help')}>
                             <IconButton
+                                aria-label={globalize.translate('Help')}
                                 href={url}
                                 rel='noopener noreferrer'
                                 target='_blank'

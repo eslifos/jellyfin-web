@@ -57,7 +57,7 @@ const Widget = ({ title, href, icon, accentColor = '#00a4dc', bare = false, coll
             {headerContent}
             {href && (
                 <Tooltip title={title}>
-                    <IconButton component={RouterLink} to={href} size='small' onClick={e => e.stopPropagation()}
+                    <IconButton aria-label={title} component={RouterLink} to={href} size='small' onClick={e => e.stopPropagation()}
                         sx={{ color: accentColor, opacity: 0.7, '&:hover': { opacity: 1 } }}>
                         <OpenInNew sx={{ fontSize: '1rem' }} />
                     </IconButton>

@@ -6,6 +6,7 @@ import Typography from '@mui/material/Typography';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import CloseIcon from '@mui/icons-material/Close';
 import ErrorIcon from '@mui/icons-material/Error';
+import globalize from 'lib/globalize';
 
 type ToastProps = SnackbarProps & {
     /** Visual style: green check (default) or red error. */
@@ -27,6 +28,7 @@ const Toast = ({ severity = 'success', message, ContentProps, ...props }: ToastP
 
     const action = (
         <IconButton
+            aria-label={globalize.translate('ButtonClose')}
             size='small'
             onClick={onCloseClick}
             sx={{ color: 'rgba(255,255,255,0.6)', '&:hover': { color: '#fff', background: 'rgba(255,255,255,0.08)' } }}
