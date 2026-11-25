@@ -29,6 +29,7 @@ import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard, ToggleRow } from '../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const DEFAULT_TUNER: TunerHostInfo = {
     Type: '',
@@ -170,7 +171,7 @@ export const Component = () => {
                                     <Button variant='outlined' onClick={runDiscover} disabled={discover.isPending} startIcon={discover.isPending ? <CircularProgress size={16} /> : <WifiFindIcon />}>
                                         {globalize.translate('HeaderDetectMyDevices')}
                                     </Button>
-                                    <Typography sx={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.45)' }}>{globalize.translate('LtfDetectHelp')}</Typography>
+                                    <Typography sx={{ fontSize: '0.76rem', color: TEXT_TERTIARY }}>{globalize.translate('LtfDetectHelp')}</Typography>
                                 </Box>
                                 {found && !found.length && (
                                     <Alert severity='info' sx={{ mt: 1.5 }}>{globalize.translate('LtvNothingFound')}</Alert>
@@ -182,7 +183,7 @@ export const Component = () => {
                                                 <IconBox color={tunerColor(d.Type)} size={36}><TunerTypeIcon type={d.Type} /></IconBox>
                                                 <Box sx={{ flex: 1, minWidth: 0 }}>
                                                     <Typography sx={{ fontSize: '0.88rem' }}>{d.FriendlyName || getTunerName(d.Type)}</Typography>
-                                                    <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace' }}>{d.Url}</Typography>
+                                                    <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY, fontFamily: 'monospace' }}>{d.Url}</Typography>
                                                 </Box>
                                                 <Button size='small' variant='contained' onClick={() => update({ ...d, Id: undefined })}>{globalize.translate('LtfUseDevice')}</Button>
                                             </Box>

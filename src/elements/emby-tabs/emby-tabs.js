@@ -6,6 +6,7 @@ import focusManager from '../../components/focusManager';
 import layoutManager from '../../components/layoutManager';
 import './emby-tabs.scss';
 import '../../styles/scrollstyles.scss';
+import { motionDuration } from 'utils/reducedMotion';
 
 const EmbyTabs = Object.create(HTMLDivElement.prototype);
 const buttonClass = 'emby-tab-button';
@@ -34,7 +35,7 @@ function fadeInRight(elem) {
         { opacity: '1', transform: 'none', offset: 1 }];
 
     elem.animate(keyframes, {
-        duration: 160,
+        duration: motionDuration(160),
         iterations: 1,
         easing: 'ease-out'
     });

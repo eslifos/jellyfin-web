@@ -55,6 +55,7 @@ import 'elements/emby-select/emby-select';
 import 'styles/scrollstyles.scss';
 import './cosmicDetails.scss';
 import { showCosmicInfo } from './cosmicInfoDialog';
+import { scrollBehavior } from 'utils/reducedMotion';
 
 /** Item types that use a list view for their children. */
 const LIST_VIEW_TYPES = [
@@ -1415,7 +1416,7 @@ function renderSeasonNav(view, item, apiClient) {
                         p.setAttribute('aria-selected', String(p === btn));
                     });
                     renderMoreFromSeason(view, item, apiClient, btn.dataset.id, btn.getAttribute('data-name'));
-                    view.querySelector('.moreFromSeasonSection')?.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+                    view.querySelector('.moreFromSeasonSection')?.scrollIntoView({ behavior: scrollBehavior(), block: 'nearest' });
                 });
             });
         }

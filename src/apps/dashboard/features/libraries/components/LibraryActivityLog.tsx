@@ -13,6 +13,7 @@ import ReceiptLongIcon from '@mui/icons-material/ReceiptLong';
 import globalize from 'lib/globalize';
 
 import { activityLabelKey, KIND_COLORS, type LibraryActivityItem, type LibraryActivityKind, useLibraryActivity } from '../api/useLibraryActivity';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 type Filter = 'all' | 'changes' | 'work' | 'errors';
 
@@ -36,7 +37,7 @@ const LogRow: FC<{ line: LibraryActivityItem }> = ({ line }) => {
     const file = line.Kind === 'Error' ? line.File : fileName(line.File);
     return (
         <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', sm: '72px 168px 1fr' }, gap: { xs: 0.25, sm: 1.5 }, alignItems: 'baseline', py: 0.75, px: 1, borderBottom: '1px solid rgba(255,255,255,0.05)', minWidth: 0 }}>
-            <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace' }}>
+            <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY, fontFamily: 'monospace' }}>
                 {clockTime(new Date(line.StartedUtc))}
             </Typography>
             <Box>
@@ -47,10 +48,10 @@ const LogRow: FC<{ line: LibraryActivityItem }> = ({ line }) => {
             <Box sx={{ minWidth: 0 }}>
                 <Typography noWrap title={line.Title ?? undefined} sx={{ fontSize: '0.82rem', fontWeight: 600 }}>
                     {line.Title}
-                    {line.LibraryName && <Box component='span' sx={{ fontWeight: 400, color: 'rgba(255,255,255,0.45)', ml: 0.75 }}>{`· ${line.LibraryName}`}</Box>}
+                    {line.LibraryName && <Box component='span' sx={{ fontWeight: 400, color: TEXT_TERTIARY, ml: 0.75 }}>{`· ${line.LibraryName}`}</Box>}
                 </Typography>
                 {file && file !== line.Title && (
-                    <Typography noWrap title={line.File ?? undefined} sx={{ fontSize: '0.7rem', color: line.Kind === 'Error' ? '#ef9a9a' : 'rgba(255,255,255,0.4)', fontFamily: 'monospace' }}>
+                    <Typography noWrap title={line.File ?? undefined} sx={{ fontSize: '0.7rem', color: line.Kind === 'Error' ? '#ef9a9a' : TEXT_TERTIARY, fontFamily: 'monospace' }}>
                         {file}
                     </Typography>
                 )}
@@ -97,7 +98,7 @@ const LibraryActivityLog: FC = () => {
                     <Typography sx={{ p: 2, fontSize: '0.85rem', color: 'rgba(255,255,255,0.5)' }}>{globalize.translate('LibLogEmpty')}</Typography>
                 )}
             </Box>
-            <Typography sx={{ mt: 1, fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }}>{globalize.translate('LibLogHelp')}</Typography>
+            <Typography sx={{ mt: 1, fontSize: '0.7rem', color: TEXT_TERTIARY }}>{globalize.translate('LibLogHelp')}</Typography>
         </Paper>
     );
 };

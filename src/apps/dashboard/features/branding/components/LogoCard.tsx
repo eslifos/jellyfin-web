@@ -12,6 +12,7 @@ import globalize from 'lib/globalize';
 import { type CustomLogoType, refreshCustomLogo, useCustomLogo } from 'utils/customLogo';
 
 import { SectionCard } from '../../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const ACCENT = '#ff9800';
 const ACCEPT = 'image/png,image/jpeg,image/webp,image/gif';
@@ -112,7 +113,7 @@ const LogoSlot: FC<LogoSlotProps> = ({ type, title, help, url, isCustom, aspect,
                     <Typography sx={{ fontSize: '0.95rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>{title}</Typography>
                     <Box sx={{
                         px: 1, py: 0.2, borderRadius: '8px', fontSize: '0.66rem', fontWeight: 700, whiteSpace: 'nowrap',
-                        color: isCustom ? ACCENT : 'rgba(255,255,255,0.45)',
+                        color: isCustom ? ACCENT : TEXT_TERTIARY,
                         background: isCustom ? `${ACCENT}1f` : 'rgba(255,255,255,0.05)',
                         border: `1px solid ${isCustom ? `${ACCENT}55` : 'rgba(255,255,255,0.1)'}`
                     }}>
@@ -120,7 +121,7 @@ const LogoSlot: FC<LogoSlotProps> = ({ type, title, help, url, isCustom, aspect,
                     </Box>
                 </Box>
 
-                <Typography sx={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>{help}</Typography>
+                <Typography sx={{ fontSize: '0.76rem', color: TEXT_TERTIARY, lineHeight: 1.5 }}>{help}</Typography>
 
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, maxWidth: 280 }}>
                     <Button component='label' variant='outlined' size='small' startIcon={<Upload />} disabled={busy}

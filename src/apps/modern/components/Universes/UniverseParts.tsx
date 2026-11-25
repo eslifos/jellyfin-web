@@ -16,6 +16,7 @@ import { Link } from 'react-router-dom';
 import { useApi } from 'hooks/useApi';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import globalize from 'lib/globalize';
+import { scrollBehavior } from 'utils/reducedMotion';
 
 export const glassCard = {
     position: 'relative',
@@ -103,7 +104,7 @@ interface SectionProps {
 /** Glass card with a title and a horizontal scrolling row. */
 export const RowSection: FC<SectionProps> = ({ title, icon, actions, children }) => {
     const scroller = useRef<HTMLDivElement>(null);
-    const scroll = (dir: number) => scroller.current?.scrollBy({ left: dir * scroller.current.clientWidth * 0.8, behavior: 'smooth' });
+    const scroll = (dir: number) => scroller.current?.scrollBy({ left: dir * scroller.current.clientWidth * 0.8, behavior: scrollBehavior() });
 
     return (
         <Box component='section' sx={glassCard}>

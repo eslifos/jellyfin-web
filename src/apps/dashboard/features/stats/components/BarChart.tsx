@@ -7,6 +7,7 @@ import React, { type FC, useCallback, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Box from '@mui/material/Box';
 import Typography from '@mui/material/Typography';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 export interface BarSegment {
     key: string;
@@ -37,7 +38,7 @@ interface BarChartProps {
 const GRID = 'rgba(255,255,255,0.07)';
 /** Half the width of the tooltip: it never goes past the edges of the window. */
 const TIP_HALF = 90;
-const AXIS_TEXT = 'rgba(255,255,255,0.45)';
+const AXIS_TEXT = TEXT_TERTIARY;
 
 /** Rounds the max up to a "nice" number so gridlines land on round values. */
 const niceMax = (max: number) => {

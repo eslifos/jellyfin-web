@@ -29,13 +29,16 @@ import {
     useLibraryActivity
 } from '../api/useLibraryActivity';
 import { getLibraryAccent } from '../utils/libraryUi';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
+/** A turning icon while something is busy. Give it the class BUSY_SPIN: it keeps turning when motion is reduced. */
 export const spinSx = { animation: 'jfScanSpin 1.4s linear infinite', '@keyframes jfScanSpin': { to: { transform: 'rotate(360deg)' } } } as const;
+export const BUSY_SPIN = 'jf-busy-spin';
 
 /** Rows shown per library, so a busy scan does not fill the screen. */
 const ROWS_PER_LIBRARY = 4;
 
-const mutedSx = { fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)' } as const;
+const mutedSx = { fontSize: '0.7rem', color: TEXT_TERTIARY } as const;
 
 const progressSx = (accent: string) => ({
     height: 6, borderRadius: 3, background: `${accent}22`,
@@ -124,7 +127,7 @@ export const ActivityRow: FC<{ item: LibraryActivityItem }> = ({ item }) => {
     const showFile = !!item.File && item.File !== item.Title;
     return (
         <Box sx={{ display: 'flex', alignItems: 'flex-start', gap: 1, minWidth: 0 }}>
-            <SyncIcon sx={{ fontSize: '0.9rem', mt: '2px', color: KIND_COLORS[item.Kind] ?? '#00a4dc', ...spinSx }} />
+            <SyncIcon className={BUSY_SPIN} sx={{ fontSize: '0.9rem', mt: '2px', color: KIND_COLORS[item.Kind] ?? '#00a4dc', ...spinSx }} />
             <Box sx={{ minWidth: 0, flex: 1 }}>
                 <KindLabel item={item} />
                 <Typography noWrap title={item.Title ?? undefined} sx={{ fontSize: '0.8rem', fontWeight: 600, lineHeight: 1.3 }}>{item.Title}</Typography>
@@ -228,7 +231,7 @@ const LibraryScansPanel: FC = () => {
         <Paper elevation={0} sx={{ position: 'relative', overflow: 'hidden', p: 2, borderRadius: '16px', border: '1px solid rgba(0,164,220,0.3)', boxShadow: '0 0 22px rgba(0,164,220,0.12)' }}>
             <Box sx={{ position: 'absolute', top: 0, left: '1rem', right: '1rem', height: '2px', background: 'linear-gradient(90deg, transparent, #00a4dc, #aa5cc3, transparent)' }} />
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
-                <SyncIcon sx={{ color: '#00a4dc', ...spinSx }} />
+                <SyncIcon className={BUSY_SPIN} sx={{ color: '#00a4dc', ...spinSx }} />
                 <Typography sx={{ fontWeight: 800 }}>{globalize.translate(scans.length ? 'LibScansTitle' : 'LibActTitle')}</Typography>
                 <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)', ml: 'auto' }}>{globalize.translate('LibScansHelp')}</Typography>
             </Box>

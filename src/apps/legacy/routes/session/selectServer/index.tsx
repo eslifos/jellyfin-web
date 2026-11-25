@@ -24,6 +24,8 @@ import { ServerConnections } from 'lib/jellyfin-apiclient';
 import Dashboard from 'utils/dashboard';
 import WizardBackground from 'apps/wizard/components/WizardBackground';
 import globalize from 'lib/globalize';
+import { ambientAnimation } from 'utils/reducedMotion';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 interface Server {
     Id: string;
@@ -87,7 +89,7 @@ const SelectServerPage = () => {
                 width: 220, height: 56, mb: 2.5, zIndex: 2, position: 'relative',
                 backgroundImage: `url(${bannerLight as string})`,
                 backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-                animation: 'jf-logo-glow 3s ease-in-out infinite, jf-float-logo 4s ease-in-out infinite'
+                ...ambientAnimation('jf-logo-glow 3s ease-in-out infinite, jf-float-logo 4s ease-in-out infinite')
             }} />
 
             <Box sx={{ width: '100%', maxWidth: 560, zIndex: 2, position: 'relative' }}>
@@ -100,7 +102,7 @@ const SelectServerPage = () => {
                         <CircularProgress sx={{ color: '#00a4dc' }} />
                     </Box>
                 ) : servers.length === 0 ? (
-                    <Box sx={{ textAlign: 'center', py: 4, color: 'rgba(255,255,255,0.4)' }}>
+                    <Box sx={{ textAlign: 'center', py: 4, color: TEXT_TERTIARY }}>
                         <DnsIcon sx={{ fontSize: '3rem', mb: 1, opacity: 0.4 }} />
                         <Typography>No hay servidores guardados</Typography>
                     </Box>
@@ -125,7 +127,7 @@ const SelectServerPage = () => {
                                                 <Typography sx={{ fontWeight: 600, color: '#fff' }} noWrap>
                                                     {server.Name}
                                                 </Typography>
-                                                <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }} noWrap>
+                                                <Typography sx={{ fontSize: '0.75rem', color: TEXT_TERTIARY }} noWrap>
                                                     {serverUrl(server)}
                                                 </Typography>
                                             </Box>
@@ -135,7 +137,7 @@ const SelectServerPage = () => {
                                     <IconButton
                                         aria-label={globalize.translate('ButtonMore')}
                                         onClick={e => { setMenuAnchor(e.currentTarget); setMenuServer(server); }}
-                                        sx={{ color: 'rgba(255,255,255,0.4)', mr: 1, '&:hover': { color: '#00a4dc' } }}
+                                        sx={{ color: TEXT_TERTIARY, mr: 1, '&:hover': { color: '#00a4dc' } }}
                                     >
                                         <MoreVertIcon />
                                     </IconButton>

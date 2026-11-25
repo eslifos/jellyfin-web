@@ -41,6 +41,7 @@ import globalize from 'lib/globalize';
 import { getLocaleWithSuffix } from 'utils/dateFnsLocale';
 
 import { UserTab } from '../constants/userTab';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 export type UserSort = 'name' | 'activity' | 'login';
 
@@ -133,7 +134,7 @@ export const UserChips: FC<{ user: UserDto; compact?: boolean; profileOf?: strin
 
 /** Small icons for remote access and password. */
 const UserFlags: FC<{ user: UserDto }> = ({ user }) => (
-    <Box sx={{ display: 'flex', gap: 0.75, color: 'rgba(255,255,255,0.45)', '& svg': { fontSize: '1rem' } }}>
+    <Box sx={{ display: 'flex', gap: 0.75, color: TEXT_TERTIARY, '& svg': { fontSize: '1rem' } }}>
         <Tooltip title={globalize.translate(user.Policy?.EnableRemoteAccess ? 'UsersRemoteAccess' : 'UsersLocalOnly')}>
             {user.Policy?.EnableRemoteAccess ? <PublicIcon /> : <PublicOffIcon />}
         </Tooltip>
@@ -235,7 +236,7 @@ export const UserCardsView: FC<ViewProps> = ({ users, onDelete, profileOf }) => 
                             display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 1
                         }}>
                             <Box sx={{ minWidth: 0 }}>
-                                <Typography sx={{ fontSize: '0.64rem', letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.35)' }}>
+                                <Typography sx={{ fontSize: '0.64rem', letterSpacing: '1px', textTransform: 'uppercase', color: TEXT_TERTIARY }}>
                                     {globalize.translate('UsersSortActivity')}
                                 </Typography>
                                 <Typography noWrap sx={{ fontSize: '0.8rem', color: isOnline(user) ? '#4caf50' : 'rgba(255,255,255,0.7)' }}>

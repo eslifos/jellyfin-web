@@ -61,8 +61,8 @@ const WizardSettingsPage = () => {
                     </>
                 )}
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-                    <Button onClick={() => navigate('/wizard/library')} startIcon={<ArrowBackIcon />} sx={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 2, '&:hover': { borderColor: 'rgba(0,164,220,0.35)', color: '#00a4dc', bgcolor: 'rgba(0,164,220,0.08)' } }}>
+                <Box className='wizardNav' sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+                    <Button variant='text' onClick={() => navigate('/wizard/library')} startIcon={<ArrowBackIcon />} sx={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 2, '&:hover': { borderColor: 'rgba(0,164,220,0.35)', color: '#00a4dc', bgcolor: 'rgba(0,164,220,0.08)' } }}>
                         {globalize.translate('Previous')}
                     </Button>
                     <Button type='submit' variant='contained' disabled={saving || isLoading} endIcon={saving ? <CircularProgress size={16} color='inherit' /> : <ArrowForwardIcon />} sx={{ background: 'linear-gradient(135deg, #00a4dc, #0077b6)', borderRadius: 2, px: 3, fontWeight: 600, '&:hover': { background: 'linear-gradient(135deg, #00b8f0, #0090d0)', transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,164,220,0.45)' } }}>

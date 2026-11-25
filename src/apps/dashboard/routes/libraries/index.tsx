@@ -21,7 +21,7 @@ import VideoLibraryIcon from '@mui/icons-material/VideoLibrary';
 import { QUERY_KEY as STATS_QUERY_KEY, refreshLibraryStats, useLibraryStats } from 'apps/dashboard/features/libraries/api/useLibraryStats';
 import { useVirtualFolders } from 'apps/dashboard/features/libraries/api/useVirtualFolders';
 import LibraryCard from 'apps/dashboard/features/libraries/components/LibraryCard';
-import LibraryScansPanel from 'apps/dashboard/features/libraries/components/LibraryScansPanel';
+import LibraryScansPanel, { BUSY_SPIN, spinSx } from 'apps/dashboard/features/libraries/components/LibraryScansPanel';
 import LibraryActivityLog from 'apps/dashboard/features/libraries/components/LibraryActivityLog';
 import { useLibraryScans } from 'apps/dashboard/features/libraries/api/useLibraryScans';
 import AddLibraryDialog from 'apps/dashboard/features/libraries/components/AddLibraryDialog';
@@ -35,6 +35,7 @@ import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader } from '../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const SummaryTile = ({ icon, label, value, color }: { icon: React.ReactNode; label: string; value: string; color: string }) => (
     <Paper elevation={0} sx={{
@@ -191,13 +192,13 @@ export const Component = () => {
                             {summaryTiles.map(tile => <SummaryTile key={tile.label} {...tile} />)}
                         </Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 0.5, mb: 2.5 }}>
-                            <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>
+                            <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY }}>
                                 {dataUpdatedAt ? globalize.translate('LibStatsUpdated', formatRelative(new Date(dataUpdatedAt).toISOString())) : ''}
                             </Typography>
                             <Tooltip title={globalize.translate('LibRefreshStats')}>
                                 <span>
                                     <IconButton aria-label={globalize.translate('LibRefreshStats')} size='small' onClick={onRefreshStats} disabled={isRefreshingStats} sx={{ color: 'rgba(255,255,255,0.5)' }}>
-                                        <RefreshIcon fontSize='small' sx={isRefreshingStats ? { animation: 'spin 1s linear infinite', '@keyframes spin': { to: { transform: 'rotate(360deg)' } } } : undefined} />
+                                        <RefreshIcon fontSize='small' className={isRefreshingStats ? BUSY_SPIN : undefined} sx={isRefreshingStats ? spinSx : undefined} />
                                     </IconButton>
                                 </span>
                             </Tooltip>

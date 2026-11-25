@@ -43,6 +43,7 @@ import { useLocale } from 'hooks/useLocale';
 import globalize from 'lib/globalize';
 
 import { SectionCard } from '../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const HOUR_TICKS = 36e9;
 
@@ -72,7 +73,7 @@ const errorToggleLabel = (open: boolean) => globalize.translate(open ? 'ShowLess
 
 const Row: FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1, borderBottom: '1px solid rgba(255,255,255,0.05)', '&:last-child': { borderBottom: 0 } }}>
-        <Typography sx={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}>{label}</Typography>
+        <Typography sx={{ fontSize: '0.76rem', color: TEXT_TERTIARY, flexShrink: 0 }}>{label}</Typography>
         <Box sx={{ ml: 'auto', fontSize: '0.84rem', color: 'rgba(255,255,255,0.88)', textAlign: 'right' }}>{children}</Box>
     </Box>
 );

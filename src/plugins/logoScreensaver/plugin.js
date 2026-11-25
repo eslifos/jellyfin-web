@@ -2,6 +2,7 @@ import icon from '@jellyfin/ux-web/icon-transparent.png';
 
 import { PluginType } from 'constants/pluginType';
 import { randomInt } from 'utils/number';
+import { motionDuration, prefersReducedMotion } from 'utils/reducedMotion';
 
 export default function () {
     const self = this;
@@ -27,7 +28,8 @@ export default function () {
 
         const elem = document.querySelector('.logoScreenSaverImage');
 
-        if (elem?.animate) {
+        // Less motion asked by the system: the logo stays still
+        if (elem?.animate && !prefersReducedMotion()) {
             const random = randomInt(0, animations.length - 1);
 
             animations[random](elem, 1);
@@ -115,7 +117,7 @@ export default function () {
         const keyframes = [
             { opacity: '1', offset: 0 },
             { opacity: '0', offset: 1 }];
-        const timing = { duration: 400, iterations: iterations };
+        const timing = { duration: motionDuration(400), iterations: iterations };
         return elem.animate(keyframes, timing);
     }
 

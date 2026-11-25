@@ -34,6 +34,7 @@ import { getLibraryIcon } from 'utils/image';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard, ToggleRow } from '../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const CONFIG_KEY = 'xbmcmetadata';
 
@@ -210,7 +211,7 @@ export const Component = () => {
                                                 </Box>
                                                 <Box sx={{ flex: 1, minWidth: 0 }}>
                                                     <Typography noWrap sx={{ fontSize: '0.9rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>{lib.Name}</Typography>
-                                                    <Typography noWrap sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>
+                                                    <Typography noWrap sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY }}>
                                                         {readsNfo ? globalize.translate('LibNfoReads') : globalize.translate('LibNfoNotReads')}
                                                     </Typography>
                                                 </Box>

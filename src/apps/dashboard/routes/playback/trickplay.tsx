@@ -35,6 +35,7 @@ import { formatNumber } from 'utils/localeNumber';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard, ToggleRow } from '../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const COLORS = {
     accel: '#ff9800',
@@ -228,7 +229,7 @@ export const Component = () => {
                                                 </Box>
                                             );
                                         })}
-                                        <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', mt: 0.5 }}>{globalize.translate('PbTrickplayLibrariesHelp')}</Typography>
+                                        <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY, mt: 0.5 }}>{globalize.translate('PbTrickplayLibrariesHelp')}</Typography>
                                     </Box>
                                 </TaskCard>
                             </Column>
@@ -310,7 +311,7 @@ export const Component = () => {
                                             </Box>
                                         ))}
                                     </Box>
-                                    <Typography sx={{ mt: 1.5, fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)' }}>
+                                    <Typography sx={{ mt: 1.5, fontSize: '0.75rem', color: TEXT_TERTIARY }}>
                                         {globalize.translate('PbEstimateNote', intervalSec)}
                                     </Typography>
                                 </SectionCard>

@@ -1019,3 +1019,39 @@
     .submit { background: linear-gradient(135deg, #00a4dc, #0077b6) !important; color: #fff !important; border: none !important; border-radius: 12px !important; &:hover { transform: translateY(-2px) !important; } }
     .cancel { background: rgba(255,255,255,0.06) !important; border: 1px solid rgba(255,255,255,0.13) !important; border-radius: 12px !important; color: rgba(255,255,255,0.6) !important; &:hover { border-color: rgba(0,164,220,0.35) !important; color: #00a4dc !important; } }
 }
+
+/* ---------- Setup wizard on phones (apps/wizard: WizardLayout and its pages) ---------- */
+
+@media (max-width: 599.95px) {
+    // Buttons a finger hits: at least 44 px
+    .wizardTouch .MuiButton-root,
+    .wizardTouch .MuiIconButton-root {
+        min-height: 44px;
+    }
+
+    .wizardTouch .MuiIconButton-root {
+        min-width: 44px;
+    }
+
+    // Previous / Next stay at the bottom of the screen while the step scrolls, so Next is always in reach
+    .wizardRoot .wizardNav {
+        position: sticky;
+        bottom: 0;
+        z-index: 3;
+        gap: 12px;
+        // Edge to edge of the card (its padding is 24 px on phones)
+        margin: 24px -24px -24px;
+        padding: 12px 24px calc(12px + env(safe-area-inset-bottom));
+        border-top: 1px solid rgba(0, 164, 220, 0.18);
+        border-radius: 0 0 12px 12px;
+        background: rgba(10, 12, 22, 0.96);
+        backdrop-filter: blur(16px);
+    }
+
+    // Both buttons share the row: a long translation never pushes Next out of the screen
+    .wizardRoot .wizardNav .MuiButton-root {
+        flex: 1 1 0;
+        min-width: 0;
+        white-space: normal;
+    }
+}

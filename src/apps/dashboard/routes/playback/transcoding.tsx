@@ -43,6 +43,7 @@ import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard, ToggleRow } from '../../components/cosmic';
 import Tooltip from '@mui/material/Tooltip';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const CONFIG_KEY = 'encoding';
 
@@ -484,7 +485,7 @@ export const Component = () => {
 
                                 <TaskCard taskKey='DeleteTranscodeFiles' title={globalize.translate('PbCleanTranscodes')} icon={<CleaningServicesIcon />} accentColor={COLORS.paths} description={globalize.translate('PbCleanTranscodesHelp')} />
 
-                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: 'rgba(255,255,255,0.4)' }}>
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, color: TEXT_TERTIARY }}>
                                     <MovieFilterIcon sx={{ fontSize: '1rem' }} />
                                     <Typography sx={{ fontSize: '0.74rem' }}>{globalize.translate('PbTranscodingFooter')}</Typography>
                                 </Box>

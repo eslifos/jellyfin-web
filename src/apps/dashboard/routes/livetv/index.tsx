@@ -39,6 +39,7 @@ import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader } from '../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const CONFIG_KEY = 'livetv';
 
@@ -161,7 +162,7 @@ export const Component = () => {
 
                         <SectionTitle title={globalize.translate('HeaderTunerDevices')} count={tuners.length} action={addTunerButton} />
                         {tuners.length === 0 ? (
-                            <Typography sx={{ fontSize: '0.84rem', color: 'rgba(255,255,255,0.45)', mb: 3 }}>{globalize.translate('LtvNoTuners')}</Typography>
+                            <Typography sx={{ fontSize: '0.84rem', color: TEXT_TERTIARY, mb: 3 }}>{globalize.translate('LtvNoTuners')}</Typography>
                         ) : (
                             <Box sx={{ mb: 3 }}>
                                 <CardGrid>
@@ -172,7 +173,7 @@ export const Component = () => {
 
                         <SectionTitle title={globalize.translate('HeaderGuideProviders')} count={providers.length} action={addProviderButton} />
                         {providers.length === 0 ? (
-                            <Typography sx={{ fontSize: '0.84rem', color: 'rgba(255,255,255,0.45)', mb: 3 }}>{globalize.translate('LtvNoGuides')}</Typography>
+                            <Typography sx={{ fontSize: '0.84rem', color: TEXT_TERTIARY, mb: 3 }}>{globalize.translate('LtvNoGuides')}</Typography>
                         ) : (
                             <Box sx={{ mb: 3 }}>
                                 <CardGrid>

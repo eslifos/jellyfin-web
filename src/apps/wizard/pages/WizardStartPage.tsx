@@ -55,7 +55,7 @@ const WizardStartPage = () => {
                     >
                         {globalize.translate('WelcomeToProject')}
                     </Typography>
-                    <Button
+                    <Button variant='text'
                         href='https://jellyfin.org/docs/general/post-install/setup-wizard/'
                         target='_blank'
                         rel='noopener noreferrer'
@@ -111,7 +111,7 @@ const WizardStartPage = () => {
                     </>
                 )}
 
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
+                <Box className='wizardNav' sx={{ display: 'flex', justifyContent: 'flex-end', mt: 3 }}>
                     <Button
                         type='submit'
                         variant='contained'

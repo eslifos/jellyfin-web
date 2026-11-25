@@ -28,6 +28,7 @@ import globalize from 'lib/globalize';
 
 import { PageHeader } from '../../components/cosmic';
 import { toggleSx } from 'apps/dashboard/features/plugins/components/PluginCosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const PAGE = 50;
 const METHOD_COLORS: Record<string, string> = { DirectPlay: '#4caf50', DirectStream: '#26c6da', Transcode: '#ff7043' };
@@ -77,7 +78,7 @@ const Row: FC<{ e: HistoryEntry }> = ({ e }) => {
             <Box sx={{ display: { xs: 'none', sm: 'block' }, width: 170, flexShrink: 0, minWidth: 0 }}>
                 <Typography noWrap sx={{ fontSize: '0.8rem', fontWeight: 600 }}>{e.UserName}</Typography>
                 <Typography noWrap sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.5)' }}>{e.Client}{e.DeviceName ? ` · ${e.DeviceName}` : ''}</Typography>
-                {e.RemoteAddress && <Typography noWrap sx={{ fontSize: '0.66rem', color: 'rgba(255,255,255,0.35)', fontFamily: 'monospace' }}>{e.RemoteAddress}</Typography>}
+                {e.RemoteAddress && <Typography noWrap sx={{ fontSize: '0.66rem', color: TEXT_TERTIARY, fontFamily: 'monospace' }}>{e.RemoteAddress}</Typography>}
             </Box>
             <Box sx={{ width: 120, flexShrink: 0, textAlign: 'right' }}>
                 <Typography sx={{ fontSize: '0.84rem', fontWeight: 700 }}>{formatDuration(e.WatchedSeconds)}</Typography>

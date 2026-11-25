@@ -44,6 +44,7 @@ import { LibraryRoutes } from 'apps/modern/features/libraries/constants/libraryR
 import useCurrentTab from 'hooks/useCurrentTab';
 import globalize from 'lib/globalize';
 import { LibraryTab } from 'types/libraryTab';
+import { ambientAnimation } from 'utils/reducedMotion';
 
 const COMPACT_AFTER = 140;
 
@@ -141,7 +142,7 @@ const LibraryTabsBar: FC<LibraryTabsBarProps> = ({ fallback = null, floating = f
                     border: `1px solid ${rgba(accent, 0.2)}`,
                     borderRadius: '50px',
                     boxShadow: `0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset, 0 0 24px ${rgba(accent, 0.1)}`,
-                    animation: settings.glow ? 'jf-glow-pulse 4s ease-in-out infinite' : 'none',
+                    ...(settings.glow ? ambientAnimation('jf-glow-pulse 4s ease-in-out infinite') : { animation: 'none' }),
                     transition: 'padding 0.25s'
                 }}
             >

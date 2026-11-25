@@ -8,6 +8,7 @@ import React, { type FC } from 'react';
 
 import { useLocale } from 'hooks/useLocale';
 import { toDecimalString } from 'utils/number';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 interface Metric {
     label: string
@@ -56,7 +57,7 @@ const MetricCard: FC<MetricCardProps> = ({
             >
                 {metrics.map(({ label, value }) => (
                     <Box key={label}>
-                        <Typography sx={{ fontSize: '0.68rem', letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>
+                        <Typography sx={{ fontSize: '0.68rem', letterSpacing: '1px', textTransform: 'uppercase', color: TEXT_TERTIARY }}>
                             {label}
                         </Typography>
                         <Typography

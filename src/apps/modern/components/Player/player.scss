@@ -1729,10 +1729,11 @@ html.abp-open body {
     to { opacity: 1; }
 }
 
+// Less motion: the fade is instant but still ends, since the cover waits for its animationend to drop the old one
 @media (prefers-reduced-motion: reduce) {
     .abp-layer.is-new,
     .abp-text-in {
-        animation: none;
+        animation-duration: 0.01ms;
     }
 }
 

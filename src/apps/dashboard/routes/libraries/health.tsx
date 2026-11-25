@@ -48,6 +48,7 @@ import globalize from 'lib/globalize';
 
 import { PageHeader, SectionCard } from '../../components/cosmic';
 import { readPref, writePref } from 'utils/syncedPrefs';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const VIDEO_TYPES = [ BaseItemKind.Movie, BaseItemKind.Episode, BaseItemKind.Video, BaseItemKind.MusicVideo ];
 const IGNORE_KEY = 'dashboardDamagedIgnored';
@@ -162,7 +163,7 @@ const DamagedCard: FC<{ item: BaseItemDto; issue?: ProbeIssue; ignored: boolean;
                     <Typography sx={{ fontWeight: 700, fontSize: '0.9rem', color: '#fff', lineHeight: 1.3 }}>{episodeLabel(item)}</Typography>
                     <Box sx={{ display: 'flex', gap: 0.75, mt: 0.5, flexWrap: 'wrap', alignItems: 'center' }}>
                         <Badge label={globalize.translate(reason.labelKey)} color={reason.color} icon={reason.icon} />
-                        {issue && <Typography sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)' }}>{relativeTime(issue.date.replace(' ', 'T').replace(/ ([+-]\d\d:\d\d)$/, '$1'))}</Typography>}
+                        {issue && <Typography sx={{ fontSize: '0.7rem', color: TEXT_TERTIARY }}>{relativeTime(issue.date.replace(' ', 'T').replace(/ ([+-]\d\d:\d\d)$/, '$1'))}</Typography>}
                         {ignored && <Badge label={globalize.translate('HlthIgnored')} color='#90a4ae' />}
                     </Box>
                 </Box>
@@ -386,7 +387,7 @@ export const Component = () => {
                                                 <Switch size='small' checked={keepBackup} onChange={(_, v) => setKeepBackup(v)} disabled={!!bulk && bulk.done < bulk.total} />
                                                 {globalize.translate('HlthKeepBackup')}
                                             </Box>
-                                            <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', ml: 'auto' }}>{tools.version}</Typography>
+                                            <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY, ml: 'auto' }}>{tools.version}</Typography>
                                         </Box>
                                         {bulk && (
                                             <Box>
@@ -463,7 +464,7 @@ export const Component = () => {
                                     </Box>
                                 )}
                                 {logIssues && (
-                                    <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>{globalize.translate('HlthLogsScanned', logIssues.scannedFiles.join(', '))}</Typography>
+                                    <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY }}>{globalize.translate('HlthLogsScanned', logIssues.scannedFiles.join(', '))}</Typography>
                                 )}
                             </Stack>
                         </SectionCard>

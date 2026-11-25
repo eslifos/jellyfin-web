@@ -36,6 +36,7 @@ import { readPref, writePref } from 'utils/syncedPrefs';
 import { type WithTmdbImage, tmdbImageUrl } from '../components/HomeFeed/tmdbImage';
 import { touchGroupSx } from '../components/touchTarget';
 import { useLiveLibraryRefresh } from '../components/HomeFeed/useLiveLibraryRefresh';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 type View = 'calendar' | 'list';
 type Filter = 'all' | 'shows' | 'movies';
@@ -135,8 +136,8 @@ const entryLine = (e: Entry) => {
     const i = e.item;
     if (i.Type !== BaseItemKind.Episode) return i.Saga ? globalize.translate('UpcSagaRelease', i.Saga) : globalize.translate('UpcMovieRelease');
     const ep = e.count > 1 ? `E${i.IndexNumber}–${e.lastIndex}` : `E${i.IndexNumber}`;
-    const time = i.PremiereDate && !i.PremiereDate.endsWith('T00:00:00.0000000Z')
-        ? ` · ${new Date(i.PremiereDate).toLocaleTimeString(locale(), { hour: 'numeric', minute: '2-digit' })}` : '';
+    const time = i.PremiereDate && !i.PremiereDate.endsWith('T00:00:00.0000000Z') ?
+        ` · ${new Date(i.PremiereDate).toLocaleTimeString(locale(), { hour: 'numeric', minute: '2-digit' })}` : '';
     return `${e.count > 1 ? `${globalize.translate('UpcEps', e.count)} ` : ''}S${i.ParentIndexNumber}·${ep}${time}`;
 };
 
@@ -206,7 +207,7 @@ const EntryChip: FC<{ e: Entry; compact?: boolean }> = ({ e, compact }) => {
             <Box sx={{ minWidth: 0, flex: 1 }}>
                 <Typography noWrap sx={{ fontSize: compact ? '0.68rem' : '0.86rem', fontWeight: 700, color: '#fff', lineHeight: 1.25 }}>{i.SeriesName || i.Name}</Typography>
                 <Typography noWrap sx={{ fontSize: compact ? '0.6rem' : '0.74rem', color: 'rgba(255,255,255,0.55)' }}>{entryLine(e)}</Typography>
-                {!compact && i.Type === BaseItemKind.Episode && i.Name && <Typography noWrap sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>{i.Name}</Typography>}
+                {!compact && i.Type === BaseItemKind.Episode && i.Name && <Typography noWrap sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY }}>{i.Name}</Typography>}
             </Box>
             {isNew && <Box sx={{ px: 0.6, borderRadius: '6px', fontSize: '0.56rem', fontWeight: 800, color: '#fff', background: '#aa5cc3', flexShrink: 0 }}>{globalize.translate('UpcNew')}</Box>}
             {e.available && <Typography sx={{ color: '#4caf50', fontSize: compact ? '0.7rem' : '0.9rem', flexShrink: 0 }} title={globalize.translate('UpcAvailable')}>✓</Typography>}
@@ -406,9 +407,9 @@ const UpcomingPage: FC = () => {
                                             outline: isToday ? '1px solid rgba(0,164,220,0.6)' : 'none', outlineOffset: -1
                                         }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
-                                                <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: inMonth ? '#fff' : 'rgba(255,255,255,0.3)' }}>{d.getDate()}</Typography>
+                                                <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: inMonth ? '#fff' : TEXT_TERTIARY }}>{d.getDate()}</Typography>
                                                 {isToday && <Box sx={{ px: 0.75, borderRadius: '6px', fontSize: '0.6rem', fontWeight: 800, color: '#fff', background: '#00a4dc' }}>{globalize.translate('StsToday')}</Box>}
-                                                {entries.length > 0 && <Typography sx={{ ml: 'auto', fontSize: '0.62rem', color: 'rgba(255,255,255,0.4)' }}>{entries.length}</Typography>}
+                                                {entries.length > 0 && <Typography sx={{ ml: 'auto', fontSize: '0.62rem', color: TEXT_TERTIARY }}>{entries.length}</Typography>}
                                             </Box>
                                             <Stack spacing={0.5}>
                                                 {shown.map(e => <EntryChip key={e.key} e={e} compact />)}
@@ -449,7 +450,7 @@ const UpcomingPage: FC = () => {
                         <Typography sx={{ fontSize: '0.84rem', color: 'rgba(255,255,255,0.8)' }}>{globalize.translate('UpcEnableHint')}</Typography>
                     </Paper>
                 )}
-                <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', mt: 2 }}>{globalize.translate('UpcNote')}</Typography>
+                <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY, mt: 2 }}>{globalize.translate('UpcNote')}</Typography>
             </Box>
         </Page>
     );

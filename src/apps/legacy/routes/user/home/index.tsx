@@ -34,6 +34,7 @@ import HomeSectionsEditor from 'apps/modern/components/HomeFeed/HomeSectionsEdit
 import { loadHomeSections, orderSections, saveHomeSections } from 'apps/modern/components/HomeFeed/homeSections';
 
 import { Card, Check, SaveButton, SavedSnackbar, Sel } from '../components/PreferencesUi';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 /** Default landing tab is always the first entry. */
 const LANDING_OPTIONS: Record<string, { value: string; label: string }[]> = {
@@ -344,7 +345,7 @@ const HomePreferencesPage: FC = () => {
                                 <Check key={folder.Id} label={folder.Name} checked={groupedFolders.includes(folder.Id)} color='#607d8b'
                                     onChange={v => toggleInList(setGroupedFolders, folder.Id, v)} />
                             ))}
-                            <Typography sx={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4, mt: 1 }}>
+                            <Typography sx={{ fontSize: '0.73rem', color: TEXT_TERTIARY, lineHeight: 1.4, mt: 1 }}>
                                 {globalize.translate('LabelSelectFolderGroupsHelp')}
                             </Typography>
                         </Card>

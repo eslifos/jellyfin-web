@@ -43,6 +43,7 @@ import shell from 'scripts/shell';
 import keyboardNavigation from 'scripts/keyboardNavigation';
 import { downloadsAvailable } from 'apps/modern/features/downloads/support';
 import OfflinePinIcon from '@mui/icons-material/OfflinePin';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 interface SettingsItemProps {
     icon: React.ReactNode;
@@ -71,9 +72,9 @@ const SettingsItem: FC<SettingsItemProps> = ({ icon, label, color = '#00a4dc', o
                 py: 1.2,
                 transition: 'all 0.18s',
                 '&:hover': {
-                    background: danger
-                        ? 'rgba(239,83,80,0.1)'
-                        : 'rgba(0,164,220,0.1)',
+                    background: danger ?
+                        'rgba(239,83,80,0.1)' :
+                        'rgba(0,164,220,0.1)',
                     '& .item-icon-box': { transform: 'scale(1.05)' }
                 }
             }}
@@ -88,9 +89,9 @@ const SettingsItem: FC<SettingsItemProps> = ({ icon, label, color = '#00a4dc', o
                         display: 'flex',
                         alignItems: 'center',
                         justifyContent: 'center',
-                        background: danger
-                            ? 'rgba(239,83,80,0.18)'
-                            : `rgba(${color === '#00a4dc' ? '0,164,220' : color === '#aa5cc3' ? '170,92,195' : '0,119,182'},0.18)`,
+                        background: danger ?
+                            'rgba(239,83,80,0.18)' :
+                            `rgba(${color === '#00a4dc' ? '0,164,220' : color === '#aa5cc3' ? '170,92,195' : '0,119,182'},0.18)`,
                         border: `1px solid ${danger ? 'rgba(239,83,80,0.3)' : `${color}33`}`,
                         transition: 'transform 0.18s',
                         '& svg': { fontSize: '1.1rem', color: danger ? '#ef5350' : color }
@@ -217,7 +218,7 @@ const UserSettingsPage: FC = () => {
                         <Typography sx={{ fontWeight: 700, fontSize: '1.3rem', background: 'linear-gradient(135deg, #fff 30%, #00a4dc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
                             {user.Name}
                         </Typography>
-                        <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.4)' }}>
+                        <Typography sx={{ fontSize: '0.78rem', color: TEXT_TERTIARY }}>
                             {user.Policy?.IsAdministrator ? globalize.translate('Administrator') : globalize.translate('User')}
                         </Typography>
                     </Box>

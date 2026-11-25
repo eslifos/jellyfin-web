@@ -15,6 +15,7 @@ import keyboardNavigation from 'scripts/keyboardNavigation';
 import rawAppSettings from 'scripts/settings/appSettings';
 
 import { type Accessors, Card, Check, SaveButton, SavedSnackbar } from '../components/PreferencesUi';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const appSettings = rawAppSettings as unknown as Accessors;
 
@@ -42,7 +43,7 @@ const ControlsPreferencesPage: FC = () => {
                     <Card id='gamepad' title={globalize.translate('LabelEnableGamepad')} icon={<SportsEsportsIcon />} accentColor='#4caf50' open={expanded.gamepad} onToggle={toggle}>
                         <Check label={globalize.translate('LabelEnableGamepad')} desc={globalize.translate('EnableGamepadHelp')}
                             checked={gamepad} onChange={setGamepad} color='#4caf50' />
-                        <Typography sx={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.35)', pl: 4 }}>{globalize.translate('LabelPleaseRestart')}</Typography>
+                        <Typography sx={{ fontSize: '0.73rem', color: TEXT_TERTIARY, pl: 4 }}>{globalize.translate('LabelPleaseRestart')}</Typography>
                     </Card>
                 )}
 

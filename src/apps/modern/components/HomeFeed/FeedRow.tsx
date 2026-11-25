@@ -11,6 +11,7 @@ import React, { type FC, type ReactNode, useCallback, useRef } from 'react';
 import { Link } from 'react-router-dom';
 
 import globalize from 'lib/globalize';
+import { scrollBehavior } from 'utils/reducedMotion';
 
 const arrowSx = (side: 'left' | 'right') => ({
     position: 'absolute', top: '42%', [side]: -6, zIndex: 3, transform: 'translateY(-50%)',
@@ -22,7 +23,7 @@ const arrowSx = (side: 'left' | 'right') => ({
 /** Horizontal row of cards (or anything) with scroll arrows on desktop. */
 export const ScrollRow: FC<{ children: ReactNode, gap?: number }> = ({ children, gap }) => {
     const ref = useRef<HTMLDivElement>(null);
-    const scroll = (dir: number) => ref.current?.scrollBy({ left: dir * ref.current.clientWidth * 0.85, behavior: 'smooth' });
+    const scroll = (dir: number) => ref.current?.scrollBy({ left: dir * ref.current.clientWidth * 0.85, behavior: scrollBehavior() });
     const left = useCallback(() => scroll(-1), []);
     const right = useCallback(() => scroll(1), []);
 

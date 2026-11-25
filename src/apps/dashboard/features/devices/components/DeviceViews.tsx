@@ -30,6 +30,7 @@ import playmethodhelper from 'components/playback/playmethodhelper';
 import globalize from 'lib/globalize';
 import { getLocaleWithSuffix } from 'utils/dateFnsLocale';
 import { getDeviceIcon } from 'utils/image';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 export const DAY_MS = 24 * 60 * 60 * 1000;
 export const INACTIVE_DAYS = 30;
@@ -71,7 +72,7 @@ const StatusBadge: FC<{ status: DeviceStatus }> = ({ status }) => {
     const map = {
         playing: { color: PLAYING_COLOR, label: globalize.translate('DevPlaying') },
         online: { color: ONLINE_COLOR, label: globalize.translate('DevOnline') },
-        idle: { color: 'rgba(255,255,255,0.45)', label: globalize.translate('DevOffline') },
+        idle: { color: TEXT_TERTIARY, label: globalize.translate('DevOffline') },
         inactive: { color: INACTIVE_COLOR, label: globalize.translate('DevInactive', INACTIVE_DAYS) }
     }[status];
 
@@ -155,7 +156,7 @@ const DeviceIcon: FC<{ device: DeviceInfoDto; size?: number }> = ({ device, size
 
 const InfoRow: FC<{ label: string; children: React.ReactNode; tooltip?: string }> = ({ label, children, tooltip }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}>{label}</Typography>
+        <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY, flexShrink: 0 }}>{label}</Typography>
         <Tooltip title={tooltip || ''} disableHoverListener={!tooltip} placement='top'>
             <Box sx={{ ml: 'auto', minWidth: 0, display: 'flex', alignItems: 'center', gap: 0.75, fontSize: '0.8rem', color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                 {children}

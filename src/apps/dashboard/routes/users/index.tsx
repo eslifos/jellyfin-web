@@ -41,6 +41,7 @@ import globalize from 'lib/globalize';
 
 import { PageHeader } from '../../components/cosmic';
 import { readPref, writePref } from 'utils/syncedPrefs';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 type ViewMode = 'cards' | 'table' | 'profiles';
 type Filter = 'all' | 'admins' | 'disabled' | 'hidden' | 'accounts' | 'profiles';
@@ -76,7 +77,7 @@ const StatTile: FC<{ icon: React.ReactNode; label: string; value: number; color:
         </Box>
         <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ fontSize: '1.45rem', fontWeight: 700, color: '#fff', lineHeight: 1.1 }}>{value}</Typography>
-            <Typography noWrap sx={{ fontSize: '0.7rem', letterSpacing: '0.8px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>{label}</Typography>
+            <Typography noWrap sx={{ fontSize: '0.7rem', letterSpacing: '0.8px', textTransform: 'uppercase', color: TEXT_TERTIARY }}>{label}</Typography>
         </Box>
     </Paper>
 );
@@ -293,7 +294,7 @@ const UserProfiles = () => {
                 </Paper>
 
                 {(search || filter !== 'all') && (
-                    <Typography sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)', mb: 1.5, px: 0.5 }}>
+                    <Typography sx={{ fontSize: '0.8rem', color: TEXT_TERTIARY, mb: 1.5, px: 0.5 }}>
                         {globalize.translate('UsersShowing', visibleUsers.length, stats.total)}
                     </Typography>
                 )}

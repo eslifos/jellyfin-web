@@ -22,6 +22,7 @@ import ConfirmDialog from 'components/ConfirmDialog';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 /** Lists the .bak copies left by repairs and lets the admin delete them. */
 const RepairBackupsCard: FC<{ enabled: boolean }> = ({ enabled }) => {
@@ -86,7 +87,7 @@ const RepairBackupsCard: FC<{ enabled: boolean }> = ({ enabled }) => {
                                         </Box>
                                         <Box sx={{ textAlign: 'right', flexShrink: 0 }}>
                                             <Typography sx={{ fontSize: '0.78rem' }}>{formatSize(b.Size)}</Typography>
-                                            <Typography sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.45)' }}>{relativeTime(b.DateModified)}</Typography>
+                                            <Typography sx={{ fontSize: '0.68rem', color: TEXT_TERTIARY }}>{relativeTime(b.DateModified)}</Typography>
                                         </Box>
                                         <Tooltip title={globalize.translate('Delete')}>
                                             <span>

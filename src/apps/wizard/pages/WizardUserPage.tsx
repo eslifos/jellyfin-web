@@ -11,6 +11,7 @@ import { useNavigate } from 'react-router-dom';
 import globalize from 'lib/globalize';
 import { useUpdateStartupUser } from '../api/useStartupConfig';
 import WizardLayout from '../components/WizardLayout';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const WizardUserPage = () => {
     const navigate = useNavigate();
@@ -51,12 +52,12 @@ const WizardUserPage = () => {
                 <TextField label={globalize.translate('LabelPasswordConfirm')} type='password' value={passwordConfirm} onChange={e => setPasswordConfirm(e.target.value)}
                     required fullWidth variant='filled' error={!!error} helperText={error || ' '} sx={{ mb: 1 }} />
 
-                <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.8rem', mb: 2 }}>
+                <Typography sx={{ color: TEXT_TERTIARY, fontSize: '0.8rem', mb: 2 }}>
                     {globalize.translate('MoreUsersCanBeAddedLater')}
                 </Typography>
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
-                    <Button onClick={() => navigate('/wizard/start')} startIcon={<ArrowBackIcon />}
+                <Box className='wizardNav' sx={{ display: 'flex', justifyContent: 'space-between', mt: 2 }}>
+                    <Button variant='text' onClick={() => navigate('/wizard/start')} startIcon={<ArrowBackIcon />}
                         sx={{ ...btnSx, color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.14)', '&:hover': { borderColor: 'rgba(0,164,220,0.35)', color: '#00a4dc', bgcolor: 'rgba(0,164,220,0.08)' } }}>
                         {globalize.translate('Previous')}
                     </Button>

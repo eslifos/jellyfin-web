@@ -23,6 +23,7 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import globalize from 'lib/globalize';
 
 import { ACCENTS, BACKGROUNDS, DEFAULT_SETTINGS, type LabelMode, type NavSettings, backgroundCss } from './navSettings';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 export interface NavEntry {
     key: string;
@@ -132,7 +133,7 @@ const NavCustomizeDialog: FC<Props> = ({ open, settings, entries, onChange, onSa
                                     border: '1px solid rgba(255,255,255,0.08)', opacity: hidden ? 0.45 : 1, cursor: 'grab'
                                 }}
                             >
-                                <DragIndicatorIcon sx={{ color: 'rgba(255,255,255,0.35)' }} />
+                                <DragIndicatorIcon sx={{ color: TEXT_TERTIARY }} />
                                 <Box sx={{ display: 'flex', '& svg': { fontSize: '1.3rem' } }}>{e.icon}</Box>
                                 <Typography sx={{ flex: 1, fontWeight: 600, minWidth: 0 }} noWrap>{e.name}</Typography>
                                 <IconButton size='small' aria-label={globalize.translate('NavMoveUp')} disabled={i === 0} onClick={() => move(i, i - 1)}><ArrowUpwardIcon fontSize='small' /></IconButton>

@@ -36,6 +36,7 @@ import globalize from 'lib/globalize';
 import { getLocaleWithSuffix } from 'utils/dateFnsLocale';
 
 import { PageHeader, SectionCard } from '../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const DAY = 24 * 3600 * 1000;
 const ACTIVE_DAYS = 7;
@@ -114,7 +115,7 @@ const KeyCard: FC<{ apiKey: AuthenticationInfo; isNew: boolean; onRevoke: (token
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, p: 1, pl: 1.25, borderRadius: '10px', background: 'rgba(0,0,0,0.25)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                <KeyIcon sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.4)', mr: 0.5 }} />
+                <KeyIcon sx={{ fontSize: '1rem', color: TEXT_TERTIARY, mr: 0.5 }} />
                 <Typography sx={{ flex: 1, minWidth: 0, fontFamily: 'monospace', fontSize: '0.78rem', color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                     {visible ? token : mask(token)}
                 </Typography>
@@ -128,11 +129,11 @@ const KeyCard: FC<{ apiKey: AuthenticationInfo; isNew: boolean; onRevoke: (token
 
             <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 1 }}>
                 <Box>
-                    <Typography sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>{globalize.translate('HeaderDateIssued')}</Typography>
+                    <Typography sx={{ fontSize: '0.68rem', color: TEXT_TERTIARY, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{globalize.translate('HeaderDateIssued')}</Typography>
                     <Typography sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)' }}>{fullDate(apiKey.DateCreated)}</Typography>
                 </Box>
                 <Box>
-                    <Typography sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>{globalize.translate('KeyLastUsed')}</Typography>
+                    <Typography sx={{ fontSize: '0.68rem', color: TEXT_TERTIARY, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{globalize.translate('KeyLastUsed')}</Typography>
                     <Tooltip title={used ? fullDate(new Date(used).toISOString()) : ''}>
                         <Typography sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.8)' }}>{used ? relative(used) : globalize.translate('KeyNeverUsed')}</Typography>
                     </Tooltip>

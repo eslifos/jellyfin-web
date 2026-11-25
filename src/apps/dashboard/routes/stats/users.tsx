@@ -33,6 +33,7 @@ import { useUsers } from 'hooks/useUsers';
 import globalize from 'lib/globalize';
 
 import { PageHeader } from '../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 type Sort = 'seen' | 'time' | 'plays' | 'recent' | 'name';
 const DAY_MS = 24 * 3600 * 1000;
@@ -121,16 +122,16 @@ const UserCard: FC<{ row: Row; share: number }> = ({ row, share }) => {
                     <>
                         <Box component='img' src={img} alt='' loading='lazy' onError={hideBrokenImage} sx={{ width: 36, height: 54, objectFit: 'cover', borderRadius: '6px', flexShrink: 0, background: 'rgba(255,255,255,0.05)' }} />
                         <Box sx={{ minWidth: 0 }}>
-                            <Typography sx={{ fontSize: '0.64rem', letterSpacing: '1px', textTransform: 'uppercase', color: watching ? '#4caf50' : 'rgba(255,255,255,0.45)', fontWeight: 700 }}>
+                            <Typography sx={{ fontSize: '0.64rem', letterSpacing: '1px', textTransform: 'uppercase', color: watching ? '#4caf50' : TEXT_TERTIARY, fontWeight: 700 }}>
                                 {globalize.translate(watching ? 'PvuNowPlaying' : 'PvuLastPlayed')}
                             </Typography>
                             <Typography noWrap sx={{ fontSize: '0.86rem', fontWeight: 700, color: '#fff' }}>{media.title}</Typography>
                             {media.sub && <Typography noWrap sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.6)' }}>{media.sub}</Typography>}
-                            <Typography noWrap sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.45)' }}>{media.device}</Typography>
+                            <Typography noWrap sx={{ fontSize: '0.68rem', color: TEXT_TERTIARY }}>{media.device}</Typography>
                         </Box>
                     </>
                 ) : (
-                    <Typography sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)', px: 0.5 }}>{globalize.translate('PvuNothingYet')}</Typography>
+                    <Typography sx={{ fontSize: '0.8rem', color: TEXT_TERTIARY, px: 0.5 }}>{globalize.translate('PvuNothingYet')}</Typography>
                 )}
             </Box>
 

@@ -24,6 +24,7 @@ import { useCustomLogo } from 'utils/customLogo';
 import DrawerSections from './DrawerSections';
 import { NavCollapsedContext } from './navContext';
 import { readPref, writePref } from 'utils/syncedPrefs';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 export const NAV_GAP = 12;
 export const NAV_COLLAPSED_WIDTH = 72;
@@ -132,7 +133,7 @@ const FloatingDashboardNav: FC<FloatingDashboardNavProps> = ({ pinned, onToggleP
                         '& .MuiListItemIcon-root svg': { color: '#00a4dc', filter: 'drop-shadow(0 0 6px rgba(0,164,220,0.7))' },
                         '& .MuiListItemText-primary': { fontWeight: 600 }
                     },
-                    '& > svg': { color: 'rgba(255,255,255,0.4)', fontSize: '1.1rem' }
+                    '& > svg': { color: TEXT_TERTIARY, fontSize: '1.1rem' }
                 },
                 '& .MuiListItemIcon-root': {
                     minWidth: 40, color: 'rgba(255,255,255,0.55)',
@@ -176,7 +177,7 @@ const FloatingDashboardNav: FC<FloatingDashboardNavProps> = ({ pinned, onToggleP
                         }}>
                             {systemInfo?.ServerName || 'Jellyfin'}
                         </Typography>
-                        <Typography noWrap sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)' }}>
+                        <Typography noWrap sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY }}>
                             {getDisplayVersion(systemInfo?.Version)}
                         </Typography>
                     </Box>

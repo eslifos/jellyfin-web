@@ -20,7 +20,12 @@ import { useLibraryScans } from '../api/useLibraryScans';
 import { activityLabelKey, useLibraryActivity } from '../api/useLibraryActivity';
 import { ScanActivityList } from './LibraryScansPanel';
 
-const LibraryScanIndicator: FC = () => {
+interface LibraryScanIndicatorProps {
+    /** Narrow phones: less padding, so the bar keeps every button inside. */
+    compact?: boolean;
+}
+
+const LibraryScanIndicator: FC<LibraryScanIndicatorProps> = ({ compact = false }) => {
     const scans = useLibraryScans();
     const [ anchor, setAnchor ] = useState<HTMLElement | null>(null);
     const activity = useLibraryActivity(scans.length > 0);
@@ -61,7 +66,7 @@ const LibraryScanIndicator: FC = () => {
                     aria-label={percent ? `${summary}. ${detail}` : detail}
                     sx={{
                         // 30 px ring + padding: the same height as the other buttons of the bar
-                        display: 'grid', placeItems: 'center', p: '5px 10px', border: 0, borderRadius: '14px',
+                        display: 'grid', placeItems: 'center', p: compact ? '5px 6px' : '5px 10px', border: 0, borderRadius: '14px',
                         background: 'transparent', color: '#fff', cursor: 'pointer',
                         '&:hover': { background: 'rgba(0,164,220,0.12)' }
                     }}

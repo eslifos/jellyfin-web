@@ -32,6 +32,7 @@ import type { PlayTarget } from 'types/playTarget';
 
 import PlayTargetIcon from '../../PlayTargetIcon';
 import { glassPaperSx, popoverPlacement } from './menuStyles';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 interface RemotePlayMenuProps extends Omit<PopoverProps, 'open' | 'anchorEl'> {
     open: boolean
@@ -53,7 +54,7 @@ const Section: FC<{ title: string, children: ReactNode }> = ({ title, children }
     <>
         <Typography
             component='div'
-            sx={{ px: 2, pt: 1.5, pb: 0.5, fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}
+            sx={{ px: 2, pt: 1.5, pb: 0.5, fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_TERTIARY }}
         >
             {title}
         </Typography>
@@ -221,7 +222,7 @@ const RemotePlayMenu: FC<RemotePlayMenuProps> = ({ anchorEl, open, onMenuClose }
                 </Section>
 
                 <Box sx={{ mx: 2, mt: 1.25, pt: 1.25, borderTop: '1px solid rgba(255,255,255,0.08)' }}>
-                    <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)', lineHeight: 1.5 }}>
+                    <Typography sx={{ fontSize: '0.75rem', color: TEXT_TERTIARY, lineHeight: 1.5 }}>
                         {globalize.translate('RpMissingDevice')}
                     </Typography>
                 </Box>

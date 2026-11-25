@@ -60,6 +60,7 @@ import {
     getLibraryAccent,
     getMainStats
 } from '../utils/libraryUi';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 type LibraryCardProps = {
     virtualFolder: VirtualFolderInfo;
@@ -72,7 +73,7 @@ const MAX_LOCATIONS = 2;
 const InfoRow = ({ icon, label, value, tooltip, color }: { icon: React.ReactNode; label: string; value: React.ReactNode; tooltip?: string; color: string }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, minWidth: 0 }}>
         <Box sx={{ color, display: 'flex', '& svg': { fontSize: '1rem' } }}>{icon}</Box>
-        <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}>{label}</Typography>
+        <Typography sx={{ fontSize: '0.75rem', color: TEXT_TERTIARY, flexShrink: 0 }}>{label}</Typography>
         <Tooltip title={tooltip || ''} placement='top' disableHoverListener={!tooltip}>
             <Typography noWrap sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.85)', ml: 'auto', minWidth: 0, textAlign: 'right' }}>
                 {value}
@@ -376,13 +377,13 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
 
                     {/* ── Locations ── */}
                     <Box>
-                        <Typography sx={{ fontSize: '0.66rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', mb: 0.75 }}>
+                        <Typography sx={{ fontSize: '0.66rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: TEXT_TERTIARY, mb: 0.75 }}>
                             {globalize.translate('LibLocations')} ({locations.length})
                         </Typography>
                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5 }}>
                             {visibleLocations.map(path => (
                                 <Box key={path} sx={{ display: 'flex', alignItems: 'center', gap: 0.75, minWidth: 0 }}>
-                                    <FolderOpenIcon sx={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.35)' }} />
+                                    <FolderOpenIcon sx={{ fontSize: '0.9rem', color: TEXT_TERTIARY }} />
                                     <Tooltip title={path} placement='top'>
                                         <Typography noWrap sx={{ fontSize: '0.75rem', fontFamily: 'monospace', color: 'rgba(255,255,255,0.7)', minWidth: 0 }}>
                                             {path}

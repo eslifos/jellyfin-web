@@ -28,6 +28,7 @@ import useLiveTasks from 'apps/dashboard/features/tasks/hooks/useLiveTasks';
 import playmethodhelper from 'components/playback/playmethodhelper';
 import globalize from 'lib/globalize';
 import { getLocaleWithSuffix } from 'utils/dateFnsLocale';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 /** Small stat tile used in the header row of the playback pages. */
 export const InfoTile: FC<{ icon: React.ReactNode; label: string; value: React.ReactNode; color: string; secondary?: React.ReactNode }> = ({ icon, label, value, color, secondary }) => (
@@ -46,7 +47,7 @@ export const InfoTile: FC<{ icon: React.ReactNode; label: string; value: React.R
             <Typography noWrap component='div' sx={{ fontSize: '1.15rem', fontWeight: 800, color: '#fff', lineHeight: 1.25 }}>{value}</Typography>
             <Typography noWrap sx={{ fontSize: '0.66rem', letterSpacing: '0.8px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)' }}>{label}</Typography>
             {secondary && (
-                <Typography noWrap component='div' sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }}>{secondary}</Typography>
+                <Typography noWrap component='div' sx={{ fontSize: '0.7rem', color: TEXT_TERTIARY }}>{secondary}</Typography>
             )}
         </Box>
     </Paper>
@@ -115,7 +116,7 @@ export const ActiveStreamsCard: FC<ActiveStreamsCardProps> = ({ title, icon, acc
     return (
         <SectionCard title={`${title} (${streams.length})`} icon={icon} accentColor={accentColor} description={description}>
             {streams.length === 0 ? (
-                <Typography sx={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.45)', textAlign: 'center', py: 2 }}>
+                <Typography sx={{ fontSize: '0.85rem', color: TEXT_TERTIARY, textAlign: 'center', py: 2 }}>
                     {globalize.translate(transcodesOnly ? 'PbNoTranscodes' : 'ResourceNoStreams')}
                 </Typography>
             ) : (
@@ -158,7 +159,7 @@ export const TaskCard: FC<TaskCardProps> = ({ taskKey, title, icon, accentColor,
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, p: 1.5, borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
                 <Box sx={{ flex: 1, minWidth: 0 }}>
                     <Typography noWrap sx={{ fontSize: '0.88rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)' }}>{task?.Name || taskKey}</Typography>
-                    <Typography noWrap sx={{ fontSize: '0.74rem', color: 'rgba(255,255,255,0.45)' }}>
+                    <Typography noWrap sx={{ fontSize: '0.74rem', color: TEXT_TERTIARY }}>
                         {globalize.translate('PbLastRun')}: {lastRun}
                         {lastStatus && lastStatus !== 'Completed' ? ` · ${lastStatus}` : ''}
                     </Typography>

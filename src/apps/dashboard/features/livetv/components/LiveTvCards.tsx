@@ -44,6 +44,7 @@ import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import { queryClient } from 'utils/query/queryClient';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const TUNER_COLORS: Record<string, string> = { m3u: '#00a4dc', hdhomerun: '#4caf50', hauppauge: '#ff9800', satip: '#aa5cc3' };
 const tunerColor = (type?: string | null) => TUNER_COLORS[(type || '').toLowerCase()] || '#90a4ae';
@@ -68,7 +69,7 @@ const IconBox: FC<{ color: string; children: React.ReactNode; size?: number }> =
 
 const InfoRow: FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, minWidth: 0 }}>
-        <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}>{label}</Typography>
+        <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY, flexShrink: 0 }}>{label}</Typography>
         <Box sx={{ ml: 'auto', minWidth: 0, fontSize: '0.8rem', color: 'rgba(255,255,255,0.85)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', textAlign: 'right' }}>
             {children}
         </Box>
@@ -339,7 +340,7 @@ export const WatchingNowCard: FC = () => {
     return (
         <SectionCard title={globalize.translate('LtvWatchingNow')} icon={<LiveTvIcon />} accentColor='#00a4dc'>
             {watching.length === 0 ? (
-                <Typography sx={{ fontSize: '0.84rem', color: 'rgba(255,255,255,0.45)' }}>{globalize.translate('LtvNobodyWatching')}</Typography>
+                <Typography sx={{ fontSize: '0.84rem', color: TEXT_TERTIARY }}>{globalize.translate('LtvNobodyWatching')}</Typography>
             ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                     {watching.map(s => (
@@ -393,7 +394,7 @@ export const UpcomingRecordingsCard: FC<{ timers: TimerInfoDto[] }> = ({ timers 
     return (
         <SectionCard title={globalize.translate('LtvUpcoming')} icon={<EventIcon />} accentColor='#ef5350'>
             {upcoming.length === 0 ? (
-                <Typography sx={{ fontSize: '0.84rem', color: 'rgba(255,255,255,0.45)' }}>{globalize.translate('LtvNoUpcoming')}</Typography>
+                <Typography sx={{ fontSize: '0.84rem', color: TEXT_TERTIARY }}>{globalize.translate('LtvNoUpcoming')}</Typography>
             ) : (
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
                     {upcoming.map(t => {

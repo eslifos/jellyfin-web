@@ -51,6 +51,7 @@ import { KIND_COLORS, type HistoryEntry, type StatsDay, type StatsRank, daySegme
 import BarChart, { type BarDatum } from 'apps/dashboard/features/stats/components/BarChart';
 import KindSplit from 'apps/dashboard/features/stats/components/KindSplit';
 import { relativeTime } from 'apps/dashboard/features/tasks/components/TaskCosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 interface PersonalStats {
     WatchedSeconds30: number;
@@ -241,7 +242,7 @@ const RecentList: FC<{ rows: HistoryEntry[] }> = ({ rows }) => {
                                 {r.Completed && <CheckCircleIcon sx={{ fontSize: '0.85rem', color: '#4caf50' }} />}
                                 {formatDuration(r.WatchedSeconds)}
                             </Typography>
-                            <Typography sx={{ fontSize: '0.66rem', color: 'rgba(255,255,255,0.45)' }}>{relativeTime(r.StartedUtc)}</Typography>
+                            <Typography sx={{ fontSize: '0.66rem', color: TEXT_TERTIARY }}>{relativeTime(r.StartedUtc)}</Typography>
                         </Box>
                     </Box>
                 );
@@ -500,9 +501,9 @@ const UserProfile: FC = () => {
 
     if (isUserPending || !user) return <Loading />;
 
-    const imageUrl = user.PrimaryImageTag && user.Id
-        ? window.ApiClient.getUserImageUrl(user.Id, { tag: user.PrimaryImageTag, type: 'Primary' })
-        : null;
+    const imageUrl = user.PrimaryImageTag && user.Id ?
+        window.ApiClient.getUserImageUrl(user.Id, { tag: user.PrimaryImageTag, type: 'Primary' }) :
+        null;
     const initial = (user.Name || '?').trim().charAt(0).toUpperCase() || '?';
     const canChangePassword = isProfileUser === false && (!!loggedInUser?.Policy?.IsAdministrator || !!user.Policy?.EnableUserPreferenceAccess);
     const canResetPassword = !!loggedInUser?.Policy?.IsAdministrator && !user.Policy?.IsAdministrator;
@@ -574,9 +575,9 @@ const UserProfile: FC = () => {
                             {stats && (
                                 <Typography sx={{ fontSize: '0.82rem', color: 'rgba(255,255,255,0.65)', mt: 0.75, display: 'flex', alignItems: 'center', gap: 0.75 }}>
                                     <Box component='span' sx={{ width: 8, height: 8, borderRadius: '50%', background: '#4caf50', boxShadow: '0 0 8px #4caf50', flexShrink: 0 }} />
-                                    {stats.OthersWatching
-                                        ? globalize.translate(stats.OthersWatching === 1 ? 'HomeOnlineOne' : 'HomeOnlineMany', stats.OthersWatching)
-                                        : globalize.translate('HomeOnline')}
+                                    {stats.OthersWatching ?
+                                        globalize.translate(stats.OthersWatching === 1 ? 'HomeOnlineOne' : 'HomeOnlineMany', stats.OthersWatching) :
+                                        globalize.translate('HomeOnline')}
                                 </Typography>
                             )}
                             <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mt: 1.5 }}>

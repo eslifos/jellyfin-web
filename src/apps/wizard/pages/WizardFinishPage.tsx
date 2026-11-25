@@ -51,8 +51,8 @@ const WizardFinishPage = () => {
                     {after}
                 </Typography>
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                    <Button
+                <Box className='wizardNav' sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                    <Button variant='text'
                         onClick={() => navigate('/wizard/remoteaccess')}
                         startIcon={<ArrowBackIcon />}
                         sx={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 2, '&:hover': { borderColor: 'rgba(0,164,220,0.35)', color: '#00a4dc', bgcolor: 'rgba(0,164,220,0.08)' } }}

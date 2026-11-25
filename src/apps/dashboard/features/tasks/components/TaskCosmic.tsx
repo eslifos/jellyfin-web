@@ -30,6 +30,7 @@ import { getLocaleWithSuffix } from 'utils/dateFnsLocale';
 
 import { useStartTask } from '../api/useStartTask';
 import { useStopTask } from '../api/useStopTask';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const TICKS_PER_MS = 1e4;
 const DAY_MS = 24 * 3600 * 1000;
@@ -207,7 +208,7 @@ export const TaskTile: FC<{ task: TaskInfo }> = ({ task }) => {
                     <Typography noWrap sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.55)' }}>
                         {last?.EndTimeUtc ? `${globalize.translate('TskLast')}: ${relativeTime(last.EndTimeUtc)} · ${duration(last.StartTimeUtc, last.EndTimeUtc)}` : globalize.translate('TskNeverRan')}
                     </Typography>
-                    <Typography noWrap sx={{ fontSize: '0.72rem', color: next ? 'rgba(255,255,255,0.55)' : 'rgba(255,255,255,0.35)' }}>
+                    <Typography noWrap sx={{ fontSize: '0.72rem', color: next ? 'rgba(255,255,255,0.55)' : TEXT_TERTIARY }}>
                         {next ? `${globalize.translate('TskNext')}: ${relativeTime(next)}` : globalize.translate(task.Triggers?.length ? 'TskOnStartupOnly' : 'TskManualOnly')}
                     </Typography>
                 </Box>

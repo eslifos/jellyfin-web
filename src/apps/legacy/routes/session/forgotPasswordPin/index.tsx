@@ -16,6 +16,7 @@ import { useCustomLogo } from 'utils/customLogo';
 import globalize from 'lib/globalize';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import WizardBackground from 'apps/wizard/components/WizardBackground';
+import { ambientAnimation } from 'utils/reducedMotion';
 
 const ForgotPasswordPinPage = () => {
     const { bannerUrl: bannerLight } = useCustomLogo();
@@ -62,14 +63,14 @@ const ForgotPasswordPinPage = () => {
                 width: 220, height: 56, mb: 2.5, zIndex: 2, position: 'relative',
                 backgroundImage: `url(${bannerLight as string})`,
                 backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-                animation: 'jf-logo-glow 3s ease-in-out infinite, jf-float-logo 4s ease-in-out infinite'
+                ...ambientAnimation('jf-logo-glow 3s ease-in-out infinite, jf-float-logo 4s ease-in-out infinite')
             }} />
 
             <Paper elevation={0} sx={{
                 width: '100%', maxWidth: 440, zIndex: 2, position: 'relative',
                 background: 'rgba(10,12,22,0.80)', backdropFilter: 'blur(28px) saturate(1.5)',
                 WebkitBackdropFilter: 'blur(28px) saturate(1.5)', border: '1px solid rgba(0,164,220,0.2)',
-                borderRadius: 3, p: { xs: 3, sm: 4 }, animation: 'jf-glow-pulse 4s ease-in-out infinite',
+                borderRadius: 3, p: { xs: 3, sm: 4 }, ...ambientAnimation('jf-glow-pulse 4s ease-in-out infinite'),
                 '&::before': { content: '""', position: 'absolute', top: 0, left: '2rem', right: '2rem', height: '2px', background: 'linear-gradient(90deg, transparent, #aa5cc3 40%, #00a4dc 60%, transparent)', borderRadius: '0 0 4px 4px' }
             }}>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>

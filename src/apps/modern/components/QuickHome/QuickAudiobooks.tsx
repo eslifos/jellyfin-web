@@ -13,9 +13,10 @@ import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
 
 import { GenresSection } from '../HomeFeed/feedParts';
-import { Card, type HomeCard, Lazy, Row, Spotlight, get, href, imageUrl, reducedMotion } from './parts';
+import { Card, type HomeCard, Lazy, Row, Spotlight, get, href, imageUrl } from './parts';
 
 import './quickAudiobooks.scss';
+import { prefersReducedMotion, scrollBehavior } from 'utils/reducedMotion';
 
 interface AbProgress {
     ItemId: string;
@@ -178,7 +179,7 @@ const AbHero: FC<{ slides: Slide[], home: AbHome, serverId?: string }> = ({ slid
     const slide = slides[index % Math.max(1, count)];
 
     useEffect(() => {
-        if (paused || count < 2 || reducedMotion()) return;
+        if (paused || count < 2 || prefersReducedMotion()) return;
         const timer = window.setInterval(() => {
             if (document.visibilityState === 'visible') setIndex(i => (i + 1) % count);
         }, HERO_DELAY);
@@ -377,7 +378,7 @@ const QuickAudiobooks: FC<{ libraryId: string, name?: string }> = ({ libraryId, 
 
     const onJump = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
         const target = e.currentTarget.dataset.target;
-        if (target) document.getElementById(target)?.scrollIntoView({ behavior: reducedMotion() ? 'auto' : 'smooth', block: 'start' });
+        if (target) document.getElementById(target)?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
     }, []);
 
     if (!api || !home) {

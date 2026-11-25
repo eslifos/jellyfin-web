@@ -24,6 +24,7 @@ import { ActionData } from 'types/actionData';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard } from '../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const COLORS = {
     video: '#00a4dc',
@@ -84,7 +85,7 @@ const ResumeBar = ({ min, max }: { min: number; max: number }) => {
                     <Box key={z.label} sx={{ width: `${z.width}%`, background: z.color, transition: 'width 0.25s' }} />
                 ))}
             </Box>
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5, fontSize: '0.68rem', color: 'rgba(255,255,255,0.45)' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 0.5, fontSize: '0.68rem', color: TEXT_TERTIARY }}>
                 <span>0%</span><span>{lo}%</span><span>{hi}%</span><span>100%</span>
             </Box>
             <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5, mt: 1 }}>

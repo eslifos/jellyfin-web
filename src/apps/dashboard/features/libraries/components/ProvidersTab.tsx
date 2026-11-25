@@ -25,6 +25,7 @@ import React, { type Dispatch, type FC, type SetStateAction, useCallback, useEff
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 import { providerLabel } from 'utils/metadataProviders';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 interface ProvidersTabProps {
     collectionType: string;
@@ -124,7 +125,7 @@ const ProviderList: FC<{
                                 <Box sx={{
                                     width: 26, height: 26, borderRadius: '8px', flexShrink: 0, display: 'grid', placeItems: 'center',
                                     fontSize: '0.75rem', fontWeight: 800,
-                                    color: on ? '#fff' : 'rgba(255,255,255,0.4)',
+                                    color: on ? '#fff' : TEXT_TERTIARY,
                                     background: on ? `linear-gradient(135deg, ${accent}, #aa5cc3)` : 'rgba(255,255,255,0.06)'
                                 }}>
                                     {on ? rank : '–'}
@@ -224,7 +225,7 @@ const ProvidersTab: FC<ProvidersTabProps> = ({ collectionType, draft, setDraft, 
         <>
             {kinds.length > 0 && (
                 <Box sx={{ mb: 2.5 }}>
-                    <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', mb: 1 }}>
+                    <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '1.2px', textTransform: 'uppercase', color: TEXT_TERTIARY, mb: 1 }}>
                         {globalize.translate('MngProvKind')}
                     </Typography>
                     <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
@@ -326,7 +327,7 @@ const ProvidersTab: FC<ProvidersTabProps> = ({ collectionType, draft, setDraft, 
             )}
 
             {(subtitleItems.length + segmentItems.length + lyricItems.length + readerItems.length + saverItems.length) > 0 && (
-                <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', mb: 1.25 }}>
+                <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '1.2px', textTransform: 'uppercase', color: TEXT_TERTIARY, mb: 1.25 }}>
                     {globalize.translate('MngProvWholeLibrary')}
                 </Typography>
             )}

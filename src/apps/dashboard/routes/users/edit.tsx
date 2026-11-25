@@ -19,6 +19,7 @@ import AccountProfiles from 'apps/dashboard/features/users/components/AccountPro
 import { formatRelative, UserAvatar, UserChips } from 'apps/dashboard/features/users/components/UserViews';
 import Alert from '@mui/material/Alert';
 import { useIsProfileUser } from 'components/profiles/useProfiles';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 export const Component = () => {
     const navigate = useNavigate();
@@ -60,7 +61,7 @@ export const Component = () => {
                                 </Typography>
                                 <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5, mt: 0.75 }}>
                                     <UserChips user={user} />
-                                    <Typography sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)' }}>
+                                    <Typography sx={{ fontSize: '0.8rem', color: TEXT_TERTIARY }}>
                                         {globalize.translate('UsersSortActivity')}: {formatRelative(user.LastActivityDate)}
                                     </Typography>
                                 </Box>

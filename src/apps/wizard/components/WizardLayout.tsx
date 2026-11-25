@@ -5,6 +5,7 @@ import Paper from '@mui/material/Paper';
 import { useCustomLogo } from 'utils/customLogo';
 
 import WizardBackground from './WizardBackground';
+import { ambientAnimation } from 'utils/reducedMotion';
 
 interface WizardLayoutProps {
     children: React.ReactNode;
@@ -19,7 +20,9 @@ interface WizardLayoutProps {
  */
 const WizardLayout = ({ children, maxWidth = 640 }: WizardLayoutProps) => {
     const { bannerUrl: bannerLight } = useCustomLogo();
+    // wizardRoot / wizardTouch / wizardNav: phone rules in styles/wizard-modern.scss
     return (<Box
+        className='wizardRoot wizardTouch'
         sx={{
             minHeight: '100vh',
             display: 'flex',
@@ -46,7 +49,7 @@ const WizardLayout = ({ children, maxWidth = 640 }: WizardLayoutProps) => {
                 flexShrink: 0,
                 position: 'relative',
                 zIndex: 2,
-                animation: 'jf-logo-glow 3s ease-in-out infinite, jf-float-logo 4s ease-in-out infinite'
+                ...ambientAnimation('jf-logo-glow 3s ease-in-out infinite, jf-float-logo 4s ease-in-out infinite')
             }}
         />
 
@@ -55,6 +58,8 @@ const WizardLayout = ({ children, maxWidth = 640 }: WizardLayoutProps) => {
             sx={{
                 width: '100%',
                 maxWidth,
+                // Padding and border inside the width: on a 360 px phone the card was 378 px and scrolled sideways
+                boxSizing: 'border-box',
                 position: 'relative',
                 zIndex: 2,
                 background: 'rgba(10,12,22,0.78)',
@@ -63,7 +68,7 @@ const WizardLayout = ({ children, maxWidth = 640 }: WizardLayoutProps) => {
                 border: '1px solid rgba(0,164,220,0.2)',
                 borderRadius: 3,
                 p: { xs: 3, sm: 4 },
-                animation: 'jf-glow-pulse 4s ease-in-out infinite',
+                ...ambientAnimation('jf-glow-pulse 4s ease-in-out infinite'),
                 overflow: 'visible',
                 '&::before': {
                     content: '""',

@@ -20,6 +20,8 @@ import { getReadableSize } from 'utils/file';
 
 import StreamMediaInfo from './StreamMediaInfo';
 import Widget from './Widget';
+import { ambientAnimation } from 'utils/reducedMotion';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const HISTORY_LENGTH = 40;
 
@@ -115,7 +117,7 @@ const Tile: FC<TileProps> = ({ icon, label, color, value, secondary, percent, hi
         <Typography component='div' sx={{ fontSize: '1.55rem', fontWeight: 700, color: '#fff', lineHeight: 1.25, mt: 0.5 }}>
             {value ?? <Skeleton width={60} />}
         </Typography>
-        <Typography component='div' sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', minHeight: '1.1em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <Typography component='div' sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY, minHeight: '1.1em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
             {secondary}
         </Typography>
         {percent != null && (
@@ -152,7 +154,7 @@ export const StreamRow: FC<{ session: SessionInfoDto }> = ({ session }) => {
                     <Typography sx={{ fontSize: '0.88rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {title}
                     </Typography>
-                    <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                    <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {[ session.UserName, session.DeviceName, session.Client ].filter(Boolean).join(' · ')}
                         {session.PlayState?.IsPaused ? ` · ${globalize.translate('ButtonPause')}` : ''}
                     </Typography>
@@ -166,7 +168,7 @@ export const StreamRow: FC<{ session: SessionInfoDto }> = ({ session }) => {
             </Box>
             <StreamMediaInfo session={session} />
             {details && (
-                <Typography sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)', mt: 0.5 }}>{details}</Typography>
+                <Typography sx={{ fontSize: '0.7rem', color: TEXT_TERTIARY, mt: 0.5 }}>{details}</Typography>
             )}
             {method === 'Transcode' && reasons.length > 0 && (
                 <Box sx={{ mt: 0.75 }}>
@@ -232,7 +234,7 @@ const ResourceMonitorWidget = () => {
             <Box sx={{
                 width: 8, height: 8, borderRadius: '50%', background: isError ? '#ef5350' : '#4caf50',
                 boxShadow: `0 0 8px ${isError ? '#ef5350' : '#4caf50'}`,
-                animation: isError ? 'none' : 'resourcePulse 2s ease-in-out infinite',
+                ...(isError ? { animation: 'none' } : ambientAnimation('resourcePulse 2s ease-in-out infinite')),
                 '@keyframes resourcePulse': { '0%, 100%': { opacity: 1 }, '50%': { opacity: 0.35 } }
             }} />
             <Typography sx={{ fontSize: '0.68rem', fontWeight: 700, letterSpacing: '1px', color: isError ? '#ef5350' : '#4caf50', textTransform: 'uppercase' }}>
@@ -319,7 +321,7 @@ const ResourceMonitorWidget = () => {
                     </Box>
                 )}
 
-                <Typography sx={{ fontSize: '0.68rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 700, color: 'rgba(255,255,255,0.45)', mt: 2, mb: 1 }}>
+                <Typography sx={{ fontSize: '0.68rem', letterSpacing: '1px', textTransform: 'uppercase', fontWeight: 700, color: TEXT_TERTIARY, mt: 2, mb: 1 }}>
                     {globalize.translate('ResourceActiveStreams')} ({streams.length})
                 </Typography>
                 {streams.length > 0 ? (
@@ -327,7 +329,7 @@ const ResourceMonitorWidget = () => {
                         {streams.map(s => <StreamRow key={s.Id} session={s} />)}
                     </Box>
                 ) : (
-                    <Typography sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.35)', pb: 0.5 }}>
+                    <Typography sx={{ fontSize: '0.8rem', color: TEXT_TERTIARY, pb: 0.5 }}>
                         {globalize.translate('ResourceNoStreams')}
                     </Typography>
                 )}

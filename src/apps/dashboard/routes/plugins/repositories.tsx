@@ -34,6 +34,7 @@ import Page from 'components/Page';
 import globalize from 'lib/globalize';
 
 import { PageHeader } from '../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const OFFICIAL_REPO: RepositoryInfo = { Name: 'Jellyfin Stable', Url: 'https://repo.jellyfin.org/files/plugin/manifest.json', Enabled: true };
 
@@ -99,7 +100,7 @@ const RepositoryCard: FC<{ repository: RepositoryInfo; pluginCount: number; busy
             </Box>
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                <ExtensionIcon sx={{ fontSize: '1rem', color: 'rgba(255,255,255,0.4)' }} />
+                <ExtensionIcon sx={{ fontSize: '1rem', color: TEXT_TERTIARY }} />
                 <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.6)', flex: 1 }}>
                     {enabled ? globalize.translate('PlgRepoPlugins', pluginCount) : globalize.translate('PlgRepoDisabledHelp')}
                 </Typography>

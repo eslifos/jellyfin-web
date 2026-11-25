@@ -1544,7 +1544,8 @@ export default function (view) {
         let html = '<div class="chapterThumbContainer chapterBubblePosition">';
 
         if (src) {
-            html += '<img class="chapterThumb" src="' + src + '" />';
+            // The name of the chapter for screen readers (empty when it has none: then the picture is decoration)
+            html += '<img class="chapterThumb" src="' + escapeHtml(src) + '" alt="' + escapeHtml(chapter.Name || '') + '" />';
             html += '<div class="chapterThumbTextContainer">';
         } else {
             html += '<div class="chapterThumbTextContainer chapterBubblePosition">';

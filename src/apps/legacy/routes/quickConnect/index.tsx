@@ -25,6 +25,7 @@ import Page from 'components/Page';
 import { useApi } from 'hooks/useApi';
 import { useUsers } from 'hooks/useUsers';
 import globalize from 'lib/globalize';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const menuPaper = {
     background: 'rgba(8,10,22,0.96)',
@@ -48,10 +49,10 @@ const fieldSx = {
         '&:hover': { background: 'rgba(0,164,220,0.07)', borderColor: 'rgba(0,164,220,0.35)' },
         '&.Mui-focused': { background: 'rgba(0,164,220,0.08)', borderColor: '#00a4dc', boxShadow: '0 0 0 3px rgba(0,164,220,0.12)' }
     },
-    '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem', letterSpacing: '0.6px', textTransform: 'uppercase' },
+    '& .MuiInputLabel-root': { color: TEXT_TERTIARY, fontSize: '0.72rem', letterSpacing: '0.6px', textTransform: 'uppercase' },
     '& .MuiInputLabel-root.Mui-focused': { color: '#00a4dc' },
     '& .MuiSelect-select, & .MuiInputBase-input': { color: 'rgba(255,255,255,0.9)' },
-    '& .MuiSvgIcon-root': { color: 'rgba(255,255,255,0.4)' }
+    '& .MuiSvgIcon-root': { color: TEXT_TERTIARY }
 };
 
 const primaryButtonSx = {

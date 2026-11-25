@@ -60,6 +60,7 @@ import { formatSize, getLibraryAccent } from '../utils/libraryUi';
 import ChangeLibraryTypeDialog from './ChangeLibraryTypeDialog';
 import { ManagedFolderType, guessFolderType, setFolderContentTypes } from './FolderContentType';
 import ProvidersTab from './ProvidersTab';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 interface LibraryManageDialogProps {
     open: boolean;
@@ -77,7 +78,7 @@ const SUBTITLE_TYPES = [ 'movies', 'tvshows', 'musicvideos', 'mixed' ];
 
 const Section: FC<{ title: string; children: ReactNode }> = ({ title, children }) => (
     <Box sx={{ mb: 2.5 }}>
-        <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '1.2px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', mb: 1 }}>
+        <Typography sx={{ fontSize: '0.7rem', fontWeight: 800, letterSpacing: '1.2px', textTransform: 'uppercase', color: TEXT_TERTIARY, mb: 1 }}>
             {title}
         </Typography>
         <Box sx={{ borderRadius: '14px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.07)', overflow: 'hidden' }}>
@@ -654,7 +655,7 @@ const LibraryManageDialog: FC<LibraryManageDialogProps> = ({ open, virtualFolder
                     flexShrink: 0, display: 'flex', alignItems: 'center', gap: 1, px: 3, py: 1.75,
                     borderTop: '1px solid rgba(255,255,255,0.08)', background: 'rgba(8,10,20,0.9)'
                 }}>
-                    <Typography sx={{ flex: 1, fontSize: '0.8rem', color: dirty ? accent : 'rgba(255,255,255,0.4)' }}>
+                    <Typography sx={{ flex: 1, fontSize: '0.8rem', color: dirty ? accent : TEXT_TERTIARY }}>
                         {dirty ? globalize.translate('MngUnsaved') : globalize.translate('MngNoChanges')}
                     </Typography>
                     <Button onClick={onClose} sx={{ textTransform: 'none', color: 'rgba(255,255,255,0.7)' }}>

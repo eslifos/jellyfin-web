@@ -33,6 +33,7 @@ import { downloadsAvailable } from '../../features/downloads/support';
 import BarMoreMenu, { type MoreEntry, type MoreTool } from './BarMoreMenu';
 import { hiddenBarSx, useBottomSpace, useHideOnScroll } from './bottomSpace';
 import { isSettingsSubPath } from './settingsPaths';
+import { ambientAnimation } from 'utils/reducedMotion';
 
 /** Below this width the bar keeps the main buttons and puts the rest in "More". */
 export const NARROW_BAR = '(max-width: 419.98px)';
@@ -40,7 +41,8 @@ export const NARROW_BAR = '(max-width: 419.98px)';
 export const barBtnSx = (active: boolean, narrow: boolean) => ({
     color: active ? '#00a4dc' : 'rgba(255,255,255,0.55)',
     borderRadius: '14px',
-    padding: narrow ? '10px 11px' : '10px 14px',
+    // Narrow phones: tighter, so the tasks ring and the profile picture still fit inside the pill
+    padding: narrow ? '10px 9px' : '10px 14px',
     transition: 'all 0.2s',
     position: 'relative',
     flexShrink: 0,
@@ -75,7 +77,7 @@ export const barSx = {
     border: '1px solid rgba(0, 164, 220, 0.2)',
     borderRadius: '50px',
     boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset, 0 0 24px rgba(0,164,220,0.1)',
-    animation: 'jf-glow-pulse 4s ease-in-out infinite'
+    ...ambientAnimation('jf-glow-pulse 4s ease-in-out infinite')
 } as const;
 
 export const BarDivider = () => <Box sx={{ width: '1px', height: '28px', background: 'rgba(255,255,255,0.1)', mx: 0.5, flexShrink: 0 }} />;
@@ -227,7 +229,7 @@ const FloatingNav = () => {
             )}
 
             {/* Library scans and tasks in progress (administrators): a small ring that opens the detail */}
-            <LibraryScanIndicator />
+            <LibraryScanIndicator compact={narrow} />
 
             {/* Profile */}
             {isLoggedIn && (

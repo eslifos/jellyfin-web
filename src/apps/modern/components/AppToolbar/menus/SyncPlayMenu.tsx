@@ -36,6 +36,7 @@ import { useUsers } from 'hooks/useUsers';
 import globalize from 'lib/globalize';
 
 import { glassPaperSx, popoverPlacement } from './menuStyles';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 export const ID = 'app-sync-play-menu';
 
@@ -118,7 +119,7 @@ const copyText = async (text: string) => {
     }
 };
 
-const sectionTitleSx = { px: 2, pt: 1.5, pb: 0.75, fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' };
+const sectionTitleSx = { px: 2, pt: 1.5, pb: 0.75, fontSize: '0.7rem', fontWeight: 700, letterSpacing: '0.1em', textTransform: 'uppercase', color: TEXT_TERTIARY };
 const actionSx = { justifyContent: 'flex-start', textTransform: 'none', fontWeight: 600, borderRadius: '10px', color: '#fff', px: 1.5 };
 
 const SyncPlayMenu: FC<SyncPlayMenuProps> = ({ anchorEl, open, onMenuClose }) => {

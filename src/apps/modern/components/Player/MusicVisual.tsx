@@ -7,6 +7,7 @@ import React, { type FC, useCallback, useEffect, useMemo, useRef, useState } fro
 
 import { getAnalyser } from './audioEngine';
 import { createSoundMotion } from './soundMotion';
+import { prefersReducedMotion, scrollBehavior } from 'utils/reducedMotion';
 
 const BARS = 88;
 const MAX_SPARKS = 36;
@@ -21,8 +22,6 @@ const GRAY_COVER = 0.05;
 /** The movement is measured in frames: a 90 or 120 Hz phone is drawn at 60 so it moves like everywhere else. */
 const MIN_FRAME_MS = 15;
 const knownColors = new Map<string, SongColors>();
-
-const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
 
 export const decodeWave = (waveform?: string | null) => {
     if (!waveform) return [];
@@ -49,7 +48,7 @@ export const centerInside = (scroller: Element | null | undefined, target: Eleme
     if (!scroller || !target) return;
     const box = scroller.getBoundingClientRect();
     const place = target.getBoundingClientRect();
-    scroller.scrollTo({ top: scroller.scrollTop + place.top - box.top - ((box.height - place.height) / 2), behavior: 'smooth' });
+    scroller.scrollTo({ top: scroller.scrollTop + place.top - box.top - ((box.height - place.height) / 2), behavior: scrollBehavior() });
 };
 
 const toHsl = (r: number, g: number, b: number) => {
@@ -233,7 +232,7 @@ export const SongVisualizer: FC<VisualizerProps> = ({ player, playing, remote, b
         const context = canvas?.getContext('2d');
         const stage = canvas?.parentElement;
         if (!canvas || !context || !stage) return;
-        if (!playing || reducedMotion()) {
+        if (!playing || prefersReducedMotion()) {
             context.clearRect(0, 0, canvas.width, canvas.height);
             stage.style.setProperty('--abp-beat', '0');
             return;

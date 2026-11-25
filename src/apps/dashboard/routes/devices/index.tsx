@@ -48,6 +48,7 @@ import globalize from 'lib/globalize';
 
 import { PageHeader } from '../../components/cosmic';
 import { readPref, writePref } from 'utils/syncedPrefs';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 type ViewMode = 'cards' | 'table';
 type Filter = 'all' | 'online' | 'playing' | 'today' | 'inactive';
@@ -82,7 +83,7 @@ const StatTile: FC<{ icon: React.ReactNode; label: string; value: number; color:
         </Box>
         <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ fontSize: '1.45rem', fontWeight: 700, color: '#fff', lineHeight: 1.1 }}>{value}</Typography>
-            <Typography noWrap sx={{ fontSize: '0.7rem', letterSpacing: '0.8px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>{label}</Typography>
+            <Typography noWrap sx={{ fontSize: '0.7rem', letterSpacing: '0.8px', textTransform: 'uppercase', color: TEXT_TERTIARY }}>{label}</Typography>
         </Box>
     </Paper>
 );
@@ -276,7 +277,7 @@ export const Component = () => {
                                 sx={{ flex: '1 1 240px' }}
                                 slotProps={{
                                     input: {
-                                        startAdornment: <InputAdornment position='start'><SearchIcon sx={{ color: 'rgba(255,255,255,0.4)' }} /></InputAdornment>,
+                                        startAdornment: <InputAdornment position='start'><SearchIcon sx={{ color: TEXT_TERTIARY }} /></InputAdornment>,
                                         endAdornment: search ? <InputAdornment position='end'><IconButton aria-label={globalize.translate('ClearSearch')} size='small' onClick={clearSearch}><CloseIcon fontSize='small' /></IconButton></InputAdornment> : undefined
                                     }
                                 }}
@@ -301,7 +302,7 @@ export const Component = () => {
                             </ToggleButtonGroup>
                         </Paper>
 
-                        <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', mb: 1.5 }}>
+                        <Typography sx={{ fontSize: '0.78rem', color: TEXT_TERTIARY, mb: 1.5 }}>
                             {globalize.translate('DevShowing', visibleDevices.length, devices.length)}
                         </Typography>
 

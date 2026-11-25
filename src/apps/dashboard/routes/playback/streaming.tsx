@@ -28,6 +28,7 @@ import { formatNumber } from 'utils/localeNumber';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard } from '../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const COLORS = {
     limit: '#00a4dc',
@@ -182,8 +183,8 @@ export const Component = () => {
                                                     background: ok ? `${COLORS.quality}14` : 'rgba(255,255,255,0.02)',
                                                     border: `1px solid ${ok ? COLORS.quality + '40' : 'rgba(255,255,255,0.05)'}`
                                                 }}>
-                                                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: ok ? '#fff' : 'rgba(255,255,255,0.35)', flex: 1 }}>{q.label}</Typography>
-                                                    <Typography sx={{ fontSize: '0.78rem', color: ok ? COLORS.quality : 'rgba(255,255,255,0.3)' }}>≈ {q.mbps} Mbps</Typography>
+                                                    <Typography sx={{ fontSize: '0.85rem', fontWeight: 600, color: ok ? '#fff' : TEXT_TERTIARY, flex: 1 }}>{q.label}</Typography>
+                                                    <Typography sx={{ fontSize: '0.78rem', color: ok ? COLORS.quality : TEXT_TERTIARY }}>≈ {q.mbps} Mbps</Typography>
                                                 </Box>
                                             );
                                         })}
@@ -196,7 +197,7 @@ export const Component = () => {
 
                                 <SectionCard title={globalize.translate('PbUsersWithLimit')} icon={<GroupIcon />} accentColor={COLORS.users} description={globalize.translate('PbUsersWithLimitHelp')}>
                                     {usersWithLimit.length === 0 ? (
-                                        <Typography sx={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.45)' }}>{globalize.translate('PbNoUsersWithLimit')}</Typography>
+                                        <Typography sx={{ fontSize: '0.85rem', color: TEXT_TERTIARY }}>{globalize.translate('PbNoUsersWithLimit')}</Typography>
                                     ) : (
                                         <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.75 }}>
                                             {usersWithLimit.map(u => (

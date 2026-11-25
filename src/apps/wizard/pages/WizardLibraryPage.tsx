@@ -29,6 +29,7 @@ import globalize from 'lib/globalize';
 
 import { useVirtualFolders, useAddVirtualFolder, useDeleteVirtualFolder } from '../api/useVirtualFolders';
 import WizardLayout from '../components/WizardLayout';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 /** The value goes to the server; the label key is translated when shown (the language can change). */
 const COLLECTION_TYPES = [
@@ -84,7 +85,7 @@ const WizardLibraryPage = () => {
                 >
                     {globalize.translate('HeaderSetupLibrary')}
                 </Typography>
-                <Button
+                <Button variant='text'
                     href='https://jellyfin.org/docs/general/server/libraries'
                     target='_blank'
                     rel='noopener noreferrer'
@@ -138,7 +139,7 @@ const WizardLibraryPage = () => {
                                 <Typography sx={{ fontSize: '0.85rem', fontWeight: 700, color: '#fff', mb: 0.25 }} noWrap>
                                     {folder.Name}
                                 </Typography>
-                                <Typography sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }} noWrap>
+                                <Typography sx={{ fontSize: '0.7rem', color: TEXT_TERTIARY }} noWrap>
                                     {folder.Locations?.[0] ?? ''}
                                 </Typography>
                                 <IconButton
@@ -146,7 +147,7 @@ const WizardLibraryPage = () => {
                                     aria-label={globalize.translate('Delete')}
                                     title={globalize.translate('Delete')}
                                     onClick={() => void deleteFolder(folder.Name ?? '')}
-                                    sx={{ color: 'rgba(255,255,255,0.3)', mt: 0.5, '&:hover': { color: '#ef5350' } }}
+                                    sx={{ color: TEXT_TERTIARY, mt: 0.5, '&:hover': { color: '#ef5350' } }}
                                 >
                                     <DeleteIcon fontSize='small' />
                                 </IconButton>
@@ -180,8 +181,8 @@ const WizardLibraryPage = () => {
             )}
 
             {/* Navigation */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
-                <Button
+            <Box className='wizardNav' sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                <Button variant='text'
                     onClick={() => navigate('/wizard/user')}
                     startIcon={<ArrowBackIcon />}
                     sx={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 2, '&:hover': { borderColor: 'rgba(0,164,220,0.35)', color: '#00a4dc', bgcolor: 'rgba(0,164,220,0.08)' } }}
@@ -200,6 +201,7 @@ const WizardLibraryPage = () => {
 
             {/* Dialog to add a library */}
             <Dialog
+                className='wizardTouch'
                 open={open}
                 onClose={() => setOpen(false)}
                 maxWidth='sm'
@@ -252,7 +254,7 @@ const WizardLibraryPage = () => {
                     </Box>
                 </DialogContent>
                 <DialogActions sx={{ background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(0,164,220,0.1)', p: 2 }}>
-                    <Button onClick={() => setOpen(false)} sx={{ color: 'rgba(255,255,255,0.6)' }}>{globalize.translate('ButtonCancel')}</Button>
+                    <Button variant='text' onClick={() => setOpen(false)} sx={{ color: 'rgba(255,255,255,0.6)' }}>{globalize.translate('ButtonCancel')}</Button>
                     <Button
                         type='submit'
                         form='add-library-form'

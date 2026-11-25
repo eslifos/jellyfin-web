@@ -1,3 +1,13 @@
+/*
+ * Text that is not the main one, readable on the dark background from a sofa (TV) and in the sun (phone):
+ * secondary for labels and descriptions, tertiary for hints, dates and counts (at least 4.5:1 on #080810).
+ * Disabled text may stay dimmer. The same values are in themes/cosmic/textColors.ts for MUI sx.
+ */
+:root {
+    --jf-text-secondary: rgba(255, 255, 255, 0.72);
+    --jf-text-tertiary: rgba(255, 255, 255, 0.6);
+}
+
 html,
 .dialog {
     background-color: #080810;
@@ -56,7 +66,7 @@ html {
 .listItem .secondary,
 .programSecondaryTitle,
 .secondaryText {
-    color: rgba(255, 255, 255, 0.5);
+    color: var(--jf-text-tertiary);
 }
 
 .selectLabel,
@@ -65,7 +75,7 @@ html {
 .inputLabelUnfocused,
 .paperListLabel,
 .textareaLabelUnfocused {
-    color: rgba(255, 255, 255, 0.45);
+    color: var(--jf-text-secondary);
 }
 
 .inputLabelFocused,
@@ -357,4 +367,76 @@ a[data-role=button]:hover {
 .ratingbutton-icon-withrating,
 .playstatebutton-icon-played {
     color: #aa5cc3;
+}
+
+/* ---------- The system asks for less motion (prefers-reduced-motion) ---------- */
+
+/*
+ * Every animation and transition ends at once and the endless ones (glows, floating logos, pulses) play once, so the
+ * page holds still. The durations are near zero, never zero, so animationend / transitionend still fire for the code
+ * that waits for them (covers that fade over the previous one, lazy images).
+ * :not(#jf-motion) gives the rule the weight of an id: it wins over the class rules that set their transitions with
+ * !important (wizard-modern.scss) and over the MUI sx classes.
+ */
+$jf-still: ':not(#jf-motion)';
+
+@media (prefers-reduced-motion: reduce) {
+    html {
+        scroll-behavior: auto !important;
+    }
+
+    *#{$jf-still},
+    *#{$jf-still}::before,
+    *#{$jf-still}::after {
+        animation-duration: 0.01ms !important;
+        animation-delay: 0s !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        transition-delay: 0s !important;
+    }
+
+    /* Loading indicators keep turning: they tell the app is working (WCAG counts them as essential motion) */
+    .MuiCircularProgress-indeterminate#{$jf-still},
+    .MuiCircularProgress-circleIndeterminate#{$jf-still} {
+        animation-duration: 1.4s !important;
+        animation-iteration-count: infinite !important;
+    }
+
+    .MuiLinearProgress-bar1Indeterminate#{$jf-still} {
+        animation-duration: 2.1s !important;
+        animation-iteration-count: infinite !important;
+    }
+
+    .MuiLinearProgress-bar2Indeterminate#{$jf-still} {
+        animation-duration: 2.1s !important;
+        animation-delay: 1.15s !important;
+        animation-iteration-count: infinite !important;
+    }
+
+    .mdlSpinnerActive#{$jf-still} {
+        animation-duration: 1568.23529412ms !important;
+        animation-iteration-count: infinite !important;
+    }
+
+    .mdlSpinnerActive .mdl-spinner__layer#{$jf-still} {
+        animation-duration: 5332ms !important;
+        animation-iteration-count: infinite !important;
+    }
+
+    .mdlSpinnerActive .mdl-spinner__circleLeft#{$jf-still},
+    .mdlSpinnerActive .mdl-spinner__circleRight#{$jf-still} {
+        animation-duration: 1333ms !important;
+        animation-iteration-count: infinite !important;
+    }
+
+    .jf-busy-spin#{$jf-still} {
+        animation-duration: 1.4s !important;
+        animation-iteration-count: infinite !important;
+    }
+
+    .rotatingCircle#{$jf-still},
+    .primary-icon.spin#{$jf-still} {
+        animation-duration: 2s !important;
+        animation-iteration-count: infinite !important;
+    }
 }

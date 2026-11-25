@@ -39,6 +39,7 @@ import { useApi } from 'hooks/useApi';
 
 import SearchStart from '../SearchStart';
 import { addRecentSearch } from '../SearchStart/recentSearches';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 type SearchResult = BaseItemDto;
 
@@ -181,7 +182,7 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
                     {item.Name}
                 </Typography>
                 {item.ProductionYear && (
-                    <Typography sx={{ fontSize: '0.58rem', color: 'rgba(255,255,255,0.3)' }}>{item.ProductionYear}</Typography>
+                    <Typography sx={{ fontSize: '0.58rem', color: TEXT_TERTIARY }}>{item.ProductionYear}</Typography>
                 )}
             </Box>
         </Box>
@@ -248,7 +249,7 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
                 >
                     {/* Search field */}
                     <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Box sx={{ display: 'flex', alignItems: 'center', color: loading ? '#00a4dc' : 'rgba(255,255,255,0.35)', mr: 0.5 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', color: loading ? '#00a4dc' : TEXT_TERTIARY, mr: 0.5 }}>
                             {loading ? <CircularProgress size={16} sx={{ color: '#00a4dc' }} /> : <SearchIcon sx={{ fontSize: '1.2rem' }} />}
                         </Box>
                         <TextField
@@ -262,16 +263,16 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
                             autoComplete='off'
                             InputProps={{
                                 disableUnderline: true,
-                                sx: { color: '#fff', fontSize: '1rem', '& input::placeholder': { color: 'rgba(255,255,255,0.3)', opacity: 1 } }
+                                sx: { color: '#fff', fontSize: '1rem', '& input::placeholder': { color: TEXT_TERTIARY, opacity: 1 } }
                             }}
                         />
                         {query && (
-                            <IconButton aria-label={globalize.translate('ClearSearch')} size='small' onClick={() => setQuery('')} sx={{ color: 'rgba(255,255,255,0.35)', p: 0.5, '&:hover': { color: '#fff' } }}>
+                            <IconButton aria-label={globalize.translate('ClearSearch')} size='small' onClick={() => setQuery('')} sx={{ color: TEXT_TERTIARY, p: 0.5, '&:hover': { color: '#fff' } }}>
                                 <CloseIcon sx={{ fontSize: '1rem' }} />
                             </IconButton>
                         )}
                         <Box sx={{ width: '1px', height: '20px', background: 'rgba(255,255,255,0.1)', mx: 0.5 }} />
-                        <IconButton aria-label={globalize.translate('ButtonClose')} size='small' onClick={onClose} sx={{ color: 'rgba(255,255,255,0.35)', p: 0.5, '&:hover': { color: '#fff' } }}>
+                        <IconButton aria-label={globalize.translate('ButtonClose')} size='small' onClick={onClose} sx={{ color: TEXT_TERTIARY, p: 0.5, '&:hover': { color: '#fff' } }}>
                             <CloseIcon sx={{ fontSize: '1.1rem' }} />
                         </IconButton>
                     </Box>
@@ -318,7 +319,7 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
                             </Box>
                         ) : !hasResults && !loading ? (
                             <Box sx={{ py: 2, textAlign: 'center' }}>
-                                <Typography sx={{ color: 'rgba(255,255,255,0.3)', fontSize: '0.85rem' }}>
+                                <Typography sx={{ color: TEXT_TERTIARY, fontSize: '0.85rem' }}>
                                     {globalize.translate('SearchResultsEmpty').replace('{0}', query)}
                                 </Typography>
                             </Box>

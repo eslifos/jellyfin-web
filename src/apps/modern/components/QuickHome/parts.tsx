@@ -17,6 +17,7 @@ import { itemRoute } from '../HomeFeed/feedUtils';
 import { tmdbImageUrl } from '../HomeFeed/tmdbImage';
 
 import './quickHome.scss';
+import { prefersReducedMotion, scrollBehavior } from 'utils/reducedMotion';
 
 /* ---------- Data ---------- */
 
@@ -208,8 +209,6 @@ export const hashColor = (text: string) => {
 
 export const accentOf = (type?: string | null, name = '') => (type && ACCENTS[type]) || hashColor(name);
 
-export const reducedMotion = () => typeof window !== 'undefined' && window.matchMedia?.('(prefers-reduced-motion: reduce)').matches;
-
 export const remaining = (ticks?: number | null) => {
     if (!ticks) return undefined;
     const total = Math.max(1, Math.round(ticks / 600000000));
@@ -299,7 +298,7 @@ export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ a
     }, []);
 
     useEffect(() => {
-        if (paused || !inView || count < 2 || reducedMotion()) return;
+        if (paused || !inView || count < 2 || prefersReducedMotion()) return;
         const timer = window.setInterval(() => {
             if (document.visibilityState === 'visible') setIndex(i => (i + 1) % count);
         }, HERO_DELAY);
@@ -403,7 +402,7 @@ export const Row: FC<{ id?: string, title: string, hint?: string, accent?: strin
         const el = scroller.current;
         if (!el) return;
         const dir = e.currentTarget.dataset.dir === 'left' ? -1 : 1;
-        el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: reducedMotion() ? 'auto' : 'smooth' });
+        el.scrollBy({ left: dir * el.clientWidth * 0.85, behavior: scrollBehavior() });
     }, []);
 
     return (

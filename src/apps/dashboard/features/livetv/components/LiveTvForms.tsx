@@ -28,6 +28,7 @@ import { ToggleRow } from 'apps/dashboard/components/cosmic';
 import getTunerName from 'apps/dashboard/features/livetv/utils/getTunerName';
 import DirectoryBrowser from 'components/directorybrowser/directorybrowser';
 import globalize from 'lib/globalize';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const TUNER_COLORS: Record<string, string> = { m3u: '#00a4dc', nextpvr: '#26c6da', hdhomerun: '#4caf50', hauppauge: '#ff9800', satip: '#aa5cc3' };
 export const tunerColor = (type?: string | null) => TUNER_COLORS[(type || '').toLowerCase()] || '#90a4ae';
@@ -156,7 +157,7 @@ export const TunerSelector: FC<{ tuners: TunerHostInfo[]; all: boolean; selected
                         <IconBox color={color} size={34}><TunerTypeIcon type={t.Type} /></IconBox>
                         <Box sx={{ minWidth: 0 }}>
                             <Typography sx={{ fontSize: '0.86rem', color: 'rgba(255,255,255,0.9)' }}>{t.FriendlyName || getTunerName(t.Type || '')}</Typography>
-                            <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.Url}</Typography>
+                            <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY, fontFamily: 'monospace', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{t.Url}</Typography>
                         </Box>
                     </Box>
                 );

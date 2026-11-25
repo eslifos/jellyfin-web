@@ -54,7 +54,8 @@ const KIND_LABELS: Record<LibraryActivityKind, string> = {
 
 /** Colour of each kind of work, so the live log can be scanned at a glance. */
 export const KIND_COLORS: Record<LibraryActivityKind, string> = {
-    Checking: 'rgba(255,255,255,0.45)',
+    // A light grey as hex: readable as text, and its badge can add transparency to it (`${color}1f`)
+    Checking: '#a4a9bb',
     Scanning: '#26c6da',
     Metadata: '#00a4dc',
     Images: '#aa5cc3',

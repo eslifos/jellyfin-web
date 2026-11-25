@@ -5,6 +5,7 @@ import { appRouter } from '../../components/router/appRouter';
 import loading from '../../components/loading/loading';
 import { setBackdropTransparency, TRANSPARENCY_LEVEL } from '../../components/backdrop/backdrop';
 import Events from '../../utils/events.ts';
+import { motionDuration } from 'utils/reducedMotion';
 
 /* globals YT */
 
@@ -22,7 +23,7 @@ function zoomIn(elem, iterations) {
         { transform: 'none', opacity: '1', offset: 1 }
     ];
 
-    const timing = { duration: 240, iterations: iterations };
+    const timing = { duration: motionDuration(240), iterations: iterations };
     return elem.animate(keyframes, timing);
 }
 

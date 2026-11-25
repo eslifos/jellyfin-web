@@ -23,6 +23,7 @@ import globalize from 'lib/globalize';
 import LibraryIcon from '../LibraryIcon';
 import { libraryAccent } from './libraryAccent';
 import { SECTION_LABELS, isLibKey } from './homeSections';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const ICONS: Record<string, [ReactNode, string]> = {
     resume: [ <HistoryRoundedIcon key='i' />, '#00a4dc' ],
@@ -59,7 +60,7 @@ const SectionRow: FC<RowProps> = ({ sectionKey, label, icon, color, index, count
             background: visible ? 'rgba(255,255,255,0.04)' : 'rgba(255,255,255,0.015)', border: '1px solid ' + (visible ? color + '33' : 'rgba(255,255,255,0.05)'),
             opacity: visible ? 1 : 0.55, transition: 'all 0.2s'
         }}>
-            <Typography sx={{ width: { xs: 16, sm: 20 }, textAlign: 'center', fontSize: '0.75rem', fontWeight: 800, color: 'rgba(255,255,255,0.35)' }}>{index + 1}</Typography>
+            <Typography sx={{ width: { xs: 16, sm: 20 }, textAlign: 'center', fontSize: '0.75rem', fontWeight: 800, color: TEXT_TERTIARY }}>{index + 1}</Typography>
             <Box sx={{ display: 'flex', color, '& svg': { fontSize: '1.2rem' } }}>{icon}</Box>
             {/* A long name wraps instead of pushing the switch and arrows off the screen */}
             <Typography className='jfSectionName' sx={{ flex: 1, minWidth: 0, overflowWrap: 'anywhere', lineHeight: 1.25, fontSize: '0.88rem', fontWeight: 600, color: 'rgba(255,255,255,0.88)' }}>{label}</Typography>

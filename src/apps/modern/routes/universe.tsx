@@ -31,6 +31,7 @@ import { normId, useUniverse, useUniverseItems } from '../components/Universes/a
 import UniverseEditor from '../components/Universes/UniverseEditor';
 import { glassCard, MediaCard, PersonCard, RowSection } from '../components/Universes/UniverseParts';
 import { readPref, writePref } from 'utils/syncedPrefs';
+import { scrollBehavior } from 'utils/reducedMotion';
 
 const t = (key: string, ...args: (string | number)[]) => globalize.translate(key, ...args);
 const ROTATE_MS = 9000;
@@ -163,7 +164,7 @@ const Universe: FC = () => {
                     )}
                     <Box sx={{ display: 'flex', gap: 1.2, mt: 2.5, flexWrap: 'wrap' }}>
                         <Button startIcon={<TimelineRoundedIcon />} sx={glassButton}
-                            onClick={() => document.getElementById('universeTimeline')?.scrollIntoView({ behavior: 'smooth', block: 'start' })}>
+                            onClick={() => document.getElementById('universeTimeline')?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' })}>
                             {t('UniTimeline')}
                         </Button>
                         {isAdmin && (

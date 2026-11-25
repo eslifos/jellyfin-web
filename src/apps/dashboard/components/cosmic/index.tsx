@@ -7,6 +7,7 @@ import Paper from '@mui/material/Paper';
 import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
 import React, { type FC } from 'react';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 export const PageHeader: FC<{ title: string; subtitle?: React.ReactNode; actions?: React.ReactNode }> = ({ title, subtitle, actions }) => (
     <Box sx={{ display: 'flex', alignItems: 'flex-end', flexWrap: 'wrap', gap: 2, mb: 3, mt: 1 }}>
@@ -59,7 +60,7 @@ export const SectionCard: FC<SectionCardProps> = ({ title, icon, accentColor = '
             </Typography>
         </Box>
         {description && (
-            <Typography sx={{ fontSize: '0.8rem', color: 'rgba(255,255,255,0.45)', mb: 2, lineHeight: 1.5 }}>{description}</Typography>
+            <Typography sx={{ fontSize: '0.8rem', color: TEXT_TERTIARY, mb: 2, lineHeight: 1.5 }}>{description}</Typography>
         )}
         {children}
     </Paper>
@@ -85,7 +86,7 @@ export const ToggleRow: FC<ToggleRowProps> = ({ name, label, description, checke
         <Box sx={{ flex: 1, minWidth: 0 }}>
             <Typography sx={{ fontSize: '0.9rem', color: 'rgba(255,255,255,0.88)', fontWeight: 500 }}>{label}</Typography>
             {description && (
-                <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)', lineHeight: 1.45, mt: 0.25 }}>{description}</Typography>
+                <Typography sx={{ fontSize: '0.75rem', color: TEXT_TERTIARY, lineHeight: 1.45, mt: 0.25 }}>{description}</Typography>
             )}
         </Box>
         <Switch

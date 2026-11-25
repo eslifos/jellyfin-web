@@ -14,6 +14,7 @@ import React, { FC, useCallback, useState } from 'react';
 import { openPlayer } from 'apps/modern/components/Player/events';
 import { enable, isEnabled } from 'scripts/autocast';
 import globalize from 'lib/globalize';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 interface RemotePlayActiveMenuProps extends MenuProps {
     onMenuClose: () => void
@@ -104,7 +105,7 @@ const RemotePlayActiveMenu: FC<RemotePlayActiveMenuProps> = ({
             color: 'rgba(255,255,255,0.75)', transition: 'all 0.15s',
             '&:hover': { background: 'rgba(0,164,220,0.12)', color: '#00a4dc',
                 '& .MuiListItemIcon-root': { color: '#00a4dc' } },
-            '& .MuiListItemIcon-root': { color: 'rgba(255,255,255,0.45)', minWidth: 36 },
+            '& .MuiListItemIcon-root': { color: TEXT_TERTIARY, minWidth: 36 },
             '& .MuiListItemText-primary': { fontSize: '0.9rem', fontWeight: 500 }
         },
         '& .MuiListSubheader-root': { background: 'transparent', color: '#00a4dc', fontSize: '0.72rem', letterSpacing: '0.8px', textTransform: 'uppercase', lineHeight: '2rem' },

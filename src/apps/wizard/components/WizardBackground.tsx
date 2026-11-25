@@ -1,5 +1,6 @@
 import React from 'react';
 import Box from '@mui/material/Box';
+import { ambientAnimation } from 'utils/reducedMotion';
 
 /**
  * Full-viewport animated SVG background with blob gradients and floating particles.
@@ -65,14 +66,14 @@ const WizardBackground = () => (
 
         <Box aria-hidden sx={{ position: 'fixed', inset: 0, zIndex: 0, pointerEvents: 'none', overflow: 'hidden' }}>
             {[
-                { w: 4,  l: '10%', t: '20%', d: '4s',   bg: 'rgba(0,164,220,0.35)' },
-                { w: 6,  l: '25%', t: '70%', d: '5s',   delay: '1s',   bg: 'rgba(170,92,195,0.4)' },
-                { w: 3,  l: '40%', t: '15%', d: '3.5s', delay: '0.5s', bg: 'rgba(0,164,220,0.35)' },
-                { w: 5,  l: '60%', t: '80%', d: '6s',   delay: '2s',   bg: 'rgba(170,92,195,0.3)' },
-                { w: 4,  l: '75%', t: '35%', d: '4.5s', delay: '1.5s', bg: 'rgba(0,164,220,0.35)' },
-                { w: 7,  l: '85%', t: '60%', d: '5.5s', delay: '0.8s', bg: 'rgba(0,164,220,0.35)' },
-                { w: 3,  l: '50%', t: '45%', d: '3s',   delay: '2.5s', bg: 'rgba(0,164,220,0.35)' },
-                { w: 5,  l: '15%', t: '55%', d: '7s',   delay: '1s',   bg: 'rgba(170,92,195,0.35)' }
+                { w: 4, l: '10%', t: '20%', d: '4s', bg: 'rgba(0,164,220,0.35)' },
+                { w: 6, l: '25%', t: '70%', d: '5s', delay: '1s', bg: 'rgba(170,92,195,0.4)' },
+                { w: 3, l: '40%', t: '15%', d: '3.5s', delay: '0.5s', bg: 'rgba(0,164,220,0.35)' },
+                { w: 5, l: '60%', t: '80%', d: '6s', delay: '2s', bg: 'rgba(170,92,195,0.3)' },
+                { w: 4, l: '75%', t: '35%', d: '4.5s', delay: '1.5s', bg: 'rgba(0,164,220,0.35)' },
+                { w: 7, l: '85%', t: '60%', d: '5.5s', delay: '0.8s', bg: 'rgba(0,164,220,0.35)' },
+                { w: 3, l: '50%', t: '45%', d: '3s', delay: '2.5s', bg: 'rgba(0,164,220,0.35)' },
+                { w: 5, l: '15%', t: '55%', d: '7s', delay: '1s', bg: 'rgba(170,92,195,0.35)' }
             ].map((p, i) => (
                 <Box
                     key={i}
@@ -84,7 +85,7 @@ const WizardBackground = () => (
                         top: p.t,
                         borderRadius: '50%',
                         background: p.bg,
-                        animation: `jf-float-particle ${p.d} ease-in-out infinite`,
+                        ...ambientAnimation(`jf-float-particle ${p.d} ease-in-out infinite`),
                         animationDelay: p.delay ?? '0s'
                     }}
                 />

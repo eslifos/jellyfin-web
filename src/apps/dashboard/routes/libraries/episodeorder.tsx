@@ -42,6 +42,7 @@ import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard } from '../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 /** Friendly names for display order values (both TVDB season types and TMDb episode groups). */
 const ORDER_KEYS: Record<string, string> = {
@@ -164,7 +165,7 @@ const EpisodeLine: FC<{ e: OrderEpisode; color: string; detail?: string }> = ({ 
     <Box sx={{ display: 'flex', gap: 1, alignItems: 'baseline', minWidth: 0 }}>
         <Typography sx={{ fontFamily: 'monospace', fontSize: '0.76rem', color, flexShrink: 0 }}>{code(e.Season, e.Number, e.NumberEnd)}</Typography>
         <Typography sx={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.75)', minWidth: 0, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={e.FileName || e.Name}>
-            {e.Name}{detail ? <Box component='span' sx={{ color: 'rgba(255,255,255,0.45)' }}> · {detail}</Box> : null}
+            {e.Name}{detail ? <Box component='span' sx={{ color: TEXT_TERTIARY }}> · {detail}</Box> : null}
         </Typography>
     </Box>
 );
@@ -439,7 +440,7 @@ const SeriesCard: FC<{ row: SeriesRow }> = ({ row }) => {
             <Box sx={{ position: 'absolute', top: 0, left: '1.25rem', right: '1.25rem', height: '2px', background: `linear-gradient(90deg, transparent, ${accent}, transparent)` }} />
             <Box sx={{ display: 'flex', gap: 1.75, p: 2 }}>
                 <Box sx={{ width: 64, height: 96, borderRadius: '10px', overflow: 'hidden', flexShrink: 0, background: 'rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    {imageUrl ? <Box component='img' src={imageUrl} alt='' loading='lazy' sx={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <TvIcon sx={{ color: 'rgba(255,255,255,0.3)' }} />}
+                    {imageUrl ? <Box component='img' src={imageUrl} alt='' loading='lazy' sx={{ width: '100%', height: '100%', objectFit: 'cover' }} /> : <TvIcon sx={{ color: TEXT_TERTIARY }} />}
                 </Box>
                 <Box sx={{ flex: 1, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.75 }}>
                     <Typography sx={{ fontWeight: 700, color: '#fff', lineHeight: 1.3 }}>
@@ -459,7 +460,7 @@ const SeriesCard: FC<{ row: SeriesRow }> = ({ row }) => {
                         ) : (
                             <Badge label={globalize.translate('EpoUnidentified')} color='#ef5350' dot />
                         )}
-                        <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>{globalize.translate('EpoEpisodes', series.RecursiveItemCount ?? 0)}</Typography>
+                        <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY }}>{globalize.translate('EpoEpisodes', series.RecursiveItemCount ?? 0)}</Typography>
                     </Box>
                     {!identified && <Typography sx={{ fontSize: '0.74rem', color: 'rgba(255,255,255,0.6)' }}>{globalize.translate('EpoUnidentifiedHelp')}</Typography>}
                     <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', alignItems: 'center', mt: 0.5 }}>

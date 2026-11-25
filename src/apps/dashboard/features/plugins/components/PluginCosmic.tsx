@@ -27,6 +27,7 @@ import { useInstallPackage } from '../api/useInstallPackage';
 import { CATEGORY_LABELS } from '../constants/categoryLabels';
 import { PluginCategory } from '../constants/pluginCategory';
 import type { PluginDetails } from '../types/PluginDetails';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 export const TRUSTED_REPO_URL = 'https://repo.jellyfin.org/';
 
@@ -94,7 +95,7 @@ export const StatTile: FC<{ icon: React.ReactNode; label: string; value: React.R
         </Box>
         <Box sx={{ minWidth: 0 }}>
             <Typography sx={{ fontSize: '1.45rem', fontWeight: 700, color: '#fff', lineHeight: 1.1 }}>{value}</Typography>
-            <Typography noWrap sx={{ fontSize: '0.7rem', letterSpacing: '0.8px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>{label}</Typography>
+            <Typography noWrap sx={{ fontSize: '0.7rem', letterSpacing: '0.8px', textTransform: 'uppercase', color: TEXT_TERTIARY }}>{label}</Typography>
         </Box>
     </Paper>
 );
@@ -188,9 +189,9 @@ export const PluginTile: FC<{ plugin: PluginDetails; update?: VersionInfo }> = (
             <Box sx={{ p: 1.75, display: 'flex', flexDirection: 'column', gap: 0.75, flex: 1 }}>
                 <Box sx={{ display: 'flex', alignItems: 'baseline', gap: 1, minWidth: 0 }}>
                     <Typography noWrap sx={{ fontWeight: 700, fontSize: '0.98rem', color: '#fff', flex: 1, minWidth: 0 }}>{plugin.name}</Typography>
-                    {plugin.version?.version && <Typography sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.45)', fontFamily: 'monospace', flexShrink: 0 }}>v{plugin.version.version}</Typography>}
+                    {plugin.version?.version && <Typography sx={{ fontSize: '0.7rem', color: TEXT_TERTIARY, fontFamily: 'monospace', flexShrink: 0 }}>v{plugin.version.version}</Typography>}
                 </Box>
-                <Typography noWrap sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>
+                <Typography noWrap sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY }}>
                     {categoryLabel(plugin.category)}{plugin.owner ? ` · ${plugin.owner}` : ''}
                 </Typography>
                 <Typography sx={{

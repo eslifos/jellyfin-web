@@ -48,6 +48,7 @@ import { useSystemInfo } from 'hooks/useSystemInfo';
 import globalize from 'lib/globalize';
 import { getDisplayDateTime } from 'scripts/datetime';
 import { getPluginUrl } from 'utils/dashboard';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 interface AlertMessage {
     severity?: 'success' | 'info' | 'warning' | 'error'
@@ -56,7 +57,7 @@ interface AlertMessage {
 
 const InfoRow: FC<{ label: string; children: React.ReactNode }> = ({ label, children }) => (
     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, py: 1, borderBottom: '1px solid rgba(255,255,255,0.05)', '&:last-child': { borderBottom: 0 } }}>
-        <Typography sx={{ fontSize: '0.76rem', color: 'rgba(255,255,255,0.45)', flexShrink: 0 }}>{label}</Typography>
+        <Typography sx={{ fontSize: '0.76rem', color: TEXT_TERTIARY, flexShrink: 0 }}>{label}</Typography>
         <Box sx={{ ml: 'auto', minWidth: 0, fontSize: '0.84rem', color: 'rgba(255,255,255,0.88)', textAlign: 'right', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
             {children}
         </Box>
@@ -78,7 +79,7 @@ const RevisionItem: FC<{ version: VersionInfo; installed: boolean; compatible: b
                     {latest && <Badge label={globalize.translate('PlgLatest')} color='#00a4dc' />}
                     {installed && <Badge label={globalize.translate('LabelInstalled')} color='#4caf50' dot />}
                     {!compatible && <Badge label={globalize.translate('PlgIncompatible')} color='#ef5350' />}
-                    <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.45)' }}>
+                    <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY }}>
                         {version.timestamp ? getDisplayDateTime(version.timestamp) : ''}
                         {version.targetAbi ? ` · ABI ${version.targetAbi}` : ''}
                     </Typography>

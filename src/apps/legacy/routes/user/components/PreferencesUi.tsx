@@ -18,6 +18,7 @@ import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import SaveIcon from '@mui/icons-material/Save';
 
 import globalize from 'lib/globalize';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 /**
  * appSettings / UserSettings are untyped JS whose accessors take an optional
@@ -48,11 +49,11 @@ export const fieldSx = {
         '&:hover': { background: 'rgba(0,164,220,0.07)', borderColor: 'rgba(0,164,220,0.35)' },
         '&.Mui-focused': { background: 'rgba(0,164,220,0.08)', borderColor: '#00a4dc', boxShadow: '0 0 0 3px rgba(0,164,220,0.12)' }
     },
-    '& .MuiInputLabel-root': { color: 'rgba(255,255,255,0.4)', fontSize: '0.72rem', letterSpacing: '0.6px', textTransform: 'uppercase' },
+    '& .MuiInputLabel-root': { color: TEXT_TERTIARY, fontSize: '0.72rem', letterSpacing: '0.6px', textTransform: 'uppercase' },
     '& .MuiInputLabel-root.Mui-focused': { color: '#00a4dc' },
     '& .MuiSelect-select, & .MuiInputBase-input': { color: 'rgba(255,255,255,0.9)' },
-    '& .MuiSvgIcon-root': { color: 'rgba(255,255,255,0.4)' },
-    '& .MuiFormHelperText-root': { color: 'rgba(255,255,255,0.35)', fontSize: '0.72rem', lineHeight: 1.4 }
+    '& .MuiSvgIcon-root': { color: TEXT_TERTIARY },
+    '& .MuiFormHelperText-root': { color: TEXT_TERTIARY, fontSize: '0.72rem', lineHeight: 1.4 }
 };
 
 /** displayEmpty: options whose value is '' (Auto, Any language...) must still render as selected. */
@@ -113,8 +114,8 @@ export const Check: FC<{ label: string; desc?: string; checked: boolean; onChang
             {/* The text wraps next to the box instead of pushing the card wider */}
             <FormControlLabel
                 sx={{ mr: 0, maxWidth: '100%' }}
-                control={<Checkbox checked={checked} onChange={e => onChange(e.target.checked)} sx={{ flexShrink: 0, color: 'rgba(255,255,255,0.3)', '&.Mui-checked': { color } }} />}
-                label={<Box sx={{ minWidth: 0, overflowWrap: 'anywhere' }}><Typography sx={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.82)' }}>{label}</Typography>{desc && <Typography sx={{ fontSize: '0.73rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4 }}>{desc}</Typography>}</Box>}
+                control={<Checkbox checked={checked} onChange={e => onChange(e.target.checked)} sx={{ flexShrink: 0, color: TEXT_TERTIARY, '&.Mui-checked': { color } }} />}
+                label={<Box sx={{ minWidth: 0, overflowWrap: 'anywhere' }}><Typography sx={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.82)' }}>{label}</Typography>{desc && <Typography sx={{ fontSize: '0.73rem', color: TEXT_TERTIARY, lineHeight: 1.4 }}>{desc}</Typography>}</Box>}
             />
         </Box>
     );

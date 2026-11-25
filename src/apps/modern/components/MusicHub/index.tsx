@@ -16,6 +16,7 @@ import { GenreTile } from '../HomeFeed/FeedWidgets';
 import { get, href } from '../QuickHome/parts';
 
 import './musicHub.scss';
+import { prefersReducedMotion } from 'utils/reducedMotion';
 
 interface Items {
     Items?: BaseItemDto[];
@@ -75,15 +76,13 @@ const PlayButton: FC<{ item: BaseItemDto, label?: string }> = ({ item, label }) 
     );
 };
 
-const reducedMotion = () => window.matchMedia?.('(prefers-reduced-motion: reduce)').matches ?? false;
-
 /** A section comes in when it reaches the screen. */
 const Section: FC<{ title: string, children: ReactNode }> = ({ title, children }) => {
     const box = useRef<HTMLElement>(null);
     const [ shown, setShown ] = useState(false);
     useEffect(() => {
         const element = box.current;
-        if (!element || !('IntersectionObserver' in window) || reducedMotion()) {
+        if (!element || !('IntersectionObserver' in window) || prefersReducedMotion()) {
             setShown(true);
             return;
         }
@@ -193,7 +192,7 @@ const Spotlight: FC<{ api: Api, items?: BaseItemDto[], serverId?: string }> = ({
     const picks = useMemo(() => (items ?? []).filter(i => imageOf(api, i)).slice(0, 6), [ api, items ]);
     const [ index, setIndex ] = useState(0);
     useEffect(() => {
-        if (picks.length < 2 || reducedMotion()) return;
+        if (picks.length < 2 || prefersReducedMotion()) return;
         const timer = window.setInterval(() => setIndex(i => (i + 1) % picks.length), 7000);
         return () => window.clearInterval(timer);
     }, [ picks.length ]);

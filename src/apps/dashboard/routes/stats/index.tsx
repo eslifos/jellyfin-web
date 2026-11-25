@@ -43,6 +43,7 @@ import globalize from 'lib/globalize';
 
 import { PageHeader, SectionCard } from '../../components/cosmic';
 import { readPref, writePref } from 'utils/syncedPrefs';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const RANGES = [ 7, 30, 90, 365 ];
 const RANGE_KEY = 'dashboardStatsRange';
@@ -112,7 +113,7 @@ const RankList: FC<{ rows: StatsRank[]; kind: RankKind; emptyKey: string }> = ({
                 const link = rankLink(kind, r);
                 const content = (
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, p: 1, borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)', '&:hover': link ? { borderColor: 'rgba(0,164,220,0.4)' } : undefined }}>
-                        <Typography sx={{ width: 18, textAlign: 'center', fontSize: '0.8rem', fontWeight: 700, color: i < 3 ? '#ffca28' : 'rgba(255,255,255,0.4)' }}>{i + 1}</Typography>
+                        <Typography sx={{ width: 18, textAlign: 'center', fontSize: '0.8rem', fontWeight: 700, color: i < 3 ? '#ffca28' : TEXT_TERTIARY }}>{i + 1}</Typography>
                         {img && <Box component='img' src={img} alt='' loading='lazy' onError={hideBrokenImage} sx={{ width: kind === 'media' ? 40 : 30, height: kind === 'media' ? 40 : 45, objectFit: 'cover', borderRadius: '6px', flexShrink: 0, background: 'rgba(255,255,255,0.05)' }} />}
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Typography noWrap sx={{ fontSize: '0.86rem', fontWeight: 600, color: '#fff' }}>{r.Name || '—'}</Typography>
@@ -229,7 +230,7 @@ export const Component = () => {
                             <KpiTile icon={<DoneAllIcon />} color='#4caf50' value={`${cur.CompletedPercent}%`} label={globalize.translate('StsFinished')} />
                             <KpiTile icon={<MemoryIcon />} color='#ff7043' value={`${cur.TranscodePercent}%`} label={globalize.translate('StsTranscoded')} />
                         </Box>
-                        <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.4)', mb: 2.5 }}>{globalize.translate('StsCompareNote', days)}</Typography>
+                        <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY, mb: 2.5 }}>{globalize.translate('StsCompareNote', days)}</Typography>
 
                         {!hasData && <Alert severity='info' sx={{ mb: 2.5 }}>{globalize.translate('StsNoData')}</Alert>}
 

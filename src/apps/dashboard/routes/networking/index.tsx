@@ -46,6 +46,7 @@ import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard, ToggleRow } from '../../components/cosmic';
 import LimitedHtmlText from '../../components/LimitedHtmlText';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const CONFIG_KEY = 'network';
 /** Settings that only apply after a restart. */
@@ -66,7 +67,7 @@ const CopyLine: FC<{ label: string; value: string; color: string; icon: React.Re
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.25, p: 1, pl: 1.25, borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
             <Box sx={{ color, display: 'flex', '& svg': { fontSize: '1.2rem' } }}>{icon}</Box>
             <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography sx={{ fontSize: '0.68rem', color: 'rgba(255,255,255,0.45)', textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</Typography>
+                <Typography sx={{ fontSize: '0.68rem', color: TEXT_TERTIARY, textTransform: 'uppercase', letterSpacing: '0.6px' }}>{label}</Typography>
                 <Typography noWrap sx={{ fontFamily: 'monospace', fontSize: '0.84rem', color: 'rgba(255,255,255,0.9)' }}>{value}</Typography>
             </Box>
             <Tooltip title={globalize.translate(copied ? 'LtvCopied' : 'NetCopy')}>
@@ -252,7 +253,7 @@ export const Component = () => {
                                                         <ToggleButton value='whitelist'>{globalize.translate('Whitelist')}</ToggleButton>
                                                         <ToggleButton value='blacklist'>{globalize.translate('Blacklist')}</ToggleButton>
                                                     </ToggleButtonGroup>
-                                                    <Typography sx={{ fontSize: '0.74rem', color: 'rgba(255,255,255,0.45)', mt: 1 }}>
+                                                    <Typography sx={{ fontSize: '0.74rem', color: TEXT_TERTIARY, mt: 1 }}>
                                                         {globalize.translate(config.IsRemoteIPFilterBlacklist ? 'NetBlacklistHelp' : 'NetWhitelistHelp')}
                                                     </Typography>
                                                 </Box>

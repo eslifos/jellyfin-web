@@ -13,6 +13,7 @@ import globalize from 'lib/globalize';
 
 import { useSetRemoteAccess } from '../api/useStartupConfig';
 import WizardLayout from '../components/WizardLayout';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const WizardRemotePage = () => {
     const navigate = useNavigate();
@@ -67,7 +68,7 @@ const WizardRemotePage = () => {
                                 <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.9rem' }}>
                                     {globalize.translate('AllowRemoteAccess')}
                                 </Typography>
-                                <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>
+                                <Typography sx={{ color: TEXT_TERTIARY, fontSize: '0.75rem' }}>
                                     {globalize.translate('AllowRemoteAccessHelp')}
                                 </Typography>
                             </Box>
@@ -96,7 +97,7 @@ const WizardRemotePage = () => {
                                 <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.9rem' }}>
                                     {globalize.translate('WizardUpnp')}
                                 </Typography>
-                                <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>
+                                <Typography sx={{ color: TEXT_TERTIARY, fontSize: '0.75rem' }}>
                                     {globalize.translate('WizardUpnpHelp')}
                                 </Typography>
                             </Box>
@@ -104,8 +105,8 @@ const WizardRemotePage = () => {
                     />
                 </Box>
 
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
-                    <Button
+                <Box className='wizardNav' sx={{ display: 'flex', justifyContent: 'space-between', mt: 3 }}>
+                    <Button variant='text'
                         onClick={() => navigate('/wizard/settings')}
                         startIcon={<ArrowBackIcon />}
                         sx={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 2, '&:hover': { borderColor: 'rgba(0,164,220,0.35)', color: '#00a4dc', bgcolor: 'rgba(0,164,220,0.08)' } }}

@@ -34,6 +34,7 @@ import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard } from '../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const XMLTV_COLOR = '#aa5cc3';
 const SD_COLOR = '#26c6da';
@@ -292,7 +293,7 @@ const SchedulesDirectPage: FC<{ id: string | null; config: LiveTvOptions }> = ({
                                     value={info.Country || ''}
                                     onChange={e => { update({ Country: e.target.value }); setLineups(null); }}
                                     fullWidth
-                                    slotProps={{ input: { startAdornment: <PlaceIcon sx={{ mr: 1, color: 'rgba(255,255,255,0.4)' }} /> }, ...fieldSlot }}
+                                    slotProps={{ input: { startAdornment: <PlaceIcon sx={{ mr: 1, color: TEXT_TERTIARY }} /> }, ...fieldSlot }}
                                 >
                                     {(countries || []).map(c => <MenuItem key={c.value} value={c.value}>{c.name}</MenuItem>)}
                                 </TextField>
@@ -318,7 +319,7 @@ const SchedulesDirectPage: FC<{ id: string | null; config: LiveTvOptions }> = ({
                                     disabled={!lineupOptions.length}
                                     helperText={lineups && !lineups.length ? globalize.translate('LtfNoLineups') : undefined}
                                     fullWidth
-                                    slotProps={{ input: { startAdornment: <CalendarMonthIcon sx={{ mr: 1, color: 'rgba(255,255,255,0.4)' }} /> }, ...fieldSlot }}
+                                    slotProps={{ input: { startAdornment: <CalendarMonthIcon sx={{ mr: 1, color: TEXT_TERTIARY }} /> }, ...fieldSlot }}
                                 >
                                     {lineupOptions.map(l => <MenuItem key={l.Id} value={l.Id || ''}>{l.Name}</MenuItem>)}
                                 </TextField>

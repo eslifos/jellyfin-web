@@ -29,6 +29,7 @@ import * as userSettings from 'scripts/settings/userSettings';
 import { queryClient } from 'utils/query/queryClient';
 
 import { type Accessors, Card, Check, SaveButton, SavedSnackbar, Sel, fieldSx } from '../components/PreferencesUi';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const appSettings = rawAppSettings as unknown as Accessors;
 
@@ -86,7 +87,7 @@ const toStyle = (list: { name: string; value: string }[]): CSSProperties => (
     Object.fromEntries(list.filter(s => s.value !== '').map(s => [ s.name.replace(/-([a-z])/g, (_, c: string) => c.toUpperCase()), s.value ]))
 );
 
-const helpSx = { fontSize: '0.73rem', color: 'rgba(255,255,255,0.35)', lineHeight: 1.4, mt: -0.75, mb: 1.5, px: 0.5 };
+const helpSx = { fontSize: '0.73rem', color: TEXT_TERTIARY, lineHeight: 1.4, mt: -0.75, mb: 1.5, px: 0.5 };
 
 const SubtitlePreferencesPage: FC = () => {
     const { user: currentUser, __legacyApiClient__: apiClient } = useApi();

@@ -20,6 +20,7 @@ import dom from '../../utils/dom';
 import './style.scss';
 import 'material-design-icons-iconfont';
 import '../../elements/emby-button/paper-icon-button-light';
+import { motionDuration } from 'utils/reducedMotion';
 
 /**
  * Name of transition event.
@@ -682,7 +683,7 @@ export default function (options) {
 
         requestAnimationFrame(function () {
             const keyframes = keyframesSlide(slideFrom, false, element);
-            const timing = { duration: 300, iterations: 1, easing: 'ease-out' };
+            const timing = { duration: motionDuration(300), iterations: 1, easing: 'ease-out' };
             element.animate(keyframes, timing).onfinish = onFinish;
         });
     }
@@ -708,7 +709,7 @@ export default function (options) {
 
         requestAnimationFrame(function () {
             const keyframes = keyframesSlide(slideInto, true, element);
-            const timing = { duration: 300, iterations: 1, easing: 'ease-out' };
+            const timing = { duration: motionDuration(300), iterations: 1, easing: 'ease-out' };
             element.animate(keyframes, timing).onfinish = onFinish;
         });
     }

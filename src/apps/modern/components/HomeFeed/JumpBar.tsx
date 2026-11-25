@@ -4,6 +4,7 @@
 import Box from '@mui/material/Box';
 import Chip from '@mui/material/Chip';
 import React, { type FC, type ReactNode, useCallback } from 'react';
+import { scrollBehavior } from 'utils/reducedMotion';
 
 export const JumpChip: FC<{ id: string, label: string, color: string, onJump: (id: string) => void }> = ({ id, label, color, onJump }) => {
     const onClick = useCallback(() => onJump(id), [ onJump, id ]);
@@ -17,7 +18,7 @@ export const JumpChip: FC<{ id: string, label: string, color: string, onJump: (i
 
 export const JumpBar: FC<{ chips: { id: string, label: string, color: string }[], extra?: ReactNode }> = ({ chips, extra }) => {
     const jump = useCallback((id: string) => {
-        document.getElementById(id)?.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        document.getElementById(id)?.scrollIntoView({ behavior: scrollBehavior(), block: 'start' });
     }, []);
     if (chips.length < 2 && !extra) return null;
     return (

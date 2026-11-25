@@ -28,6 +28,8 @@ import appSettings from 'scripts/settings/appSettings';
 import Dashboard from 'utils/dashboard';
 import { getPostLoginUrl } from 'utils/profiles';
 import WizardBackground from 'apps/wizard/components/WizardBackground';
+import { ambientAnimation } from 'utils/reducedMotion';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 interface PublicUser {
     Id?: string | null;
@@ -266,7 +268,7 @@ const LoginPage = () => {
                     </Box>
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center', mb: 2 }}>
                         <CircularProgress size={14} sx={{ color: '#00a4dc' }} />
-                        <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>
+                        <Typography sx={{ color: TEXT_TERTIARY, fontSize: '0.78rem' }}>
                             {globalize.translate('LoginWaitingAuthorization')}
                         </Typography>
                     </Box>
@@ -286,7 +288,7 @@ const LoginPage = () => {
                         width: 220, height: 56, mb: 2.5, flexShrink: 0, zIndex: 9999, position: 'relative',
                         backgroundImage: `url(${bannerLight as string})`,
                         backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-                        animation: 'jf-logo-glow 3s ease-in-out infinite, jf-float-logo 4s ease-in-out infinite'
+                        ...ambientAnimation('jf-logo-glow 3s ease-in-out infinite, jf-float-logo 4s ease-in-out infinite')
                     }}
                     aria-label='Jellyfin'
                 />
@@ -302,7 +304,7 @@ const LoginPage = () => {
                         border: '1px solid rgba(0,164,220,0.2)',
                         borderRadius: 3,
                         p: { xs: 3, sm: 4 },
-                        animation: 'jf-glow-pulse 4s ease-in-out infinite',
+                        ...ambientAnimation('jf-glow-pulse 4s ease-in-out infinite'),
                         '&::before': { content: '""', position: 'absolute', top: 0, left: '2rem', right: '2rem', height: '2px', background: 'linear-gradient(90deg, transparent, #00a4dc 40%, #aa5cc3 60%, transparent)', borderRadius: '0 0 4px 4px' }
                     }}
                 >
@@ -378,7 +380,7 @@ const LoginPage = () => {
                                 sx={{ mb: 1 }}
                             />
                             <FormControlLabel
-                                control={<Checkbox checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} sx={{ color: 'rgba(255,255,255,0.4)', '&.Mui-checked': { color: '#00a4dc' } }} />}
+                                control={<Checkbox checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} sx={{ color: TEXT_TERTIARY, '&.Mui-checked': { color: '#00a4dc' } }} />}
                                 label={<Typography sx={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.65)' }}>{globalize.translate('RememberMe')}</Typography>}
                                 sx={{ mb: 2 }}
                             />

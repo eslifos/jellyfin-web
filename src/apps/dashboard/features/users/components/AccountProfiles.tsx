@@ -27,6 +27,7 @@ import { queryClient } from 'utils/query/queryClient';
 
 import { SectionCard } from '../../../components/cosmic';
 import { UserTab } from '../constants/userTab';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const ACCENT = '#aa5cc3';
 
@@ -134,7 +135,7 @@ const AccountProfiles: FC<{ userId: string }> = ({ userId }) => {
                         </Avatar>
                         <Box sx={{ flex: 1, minWidth: 0 }}>
                             <Typography noWrap sx={{ fontWeight: 600, color: '#fff' }}>{profile.Name}</Typography>
-                            <Typography sx={{ fontSize: '0.72rem', color: profile.IsMaster ? '#ffca28' : 'rgba(255,255,255,0.45)', display: 'flex', alignItems: 'center', gap: 0.5 }}>
+                            <Typography sx={{ fontSize: '0.72rem', color: profile.IsMaster ? '#ffca28' : TEXT_TERTIARY, display: 'flex', alignItems: 'center', gap: 0.5 }}>
                                 {profile.IsMaster && <StarIcon sx={{ fontSize: '0.85rem' }} />}
                                 {globalize.translate(profile.IsMaster ? 'ProfilesMaster' : 'ProfilesProfile')}
                             </Typography>
@@ -159,7 +160,7 @@ const AccountProfiles: FC<{ userId: string }> = ({ userId }) => {
 
             {/* Only the main account page can add profiles */}
             {isProfileUser ? (
-                <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)', mt: 2.5 }}>
+                <Typography sx={{ fontSize: '0.78rem', color: TEXT_TERTIARY, mt: 2.5 }}>
                     {globalize.translate('ProfilesLimit', list.Profiles.length, list.MaxProfiles)} · {globalize.translate('ProfilesManagedFromMaster')}
                 </Typography>
             ) : (
@@ -178,7 +179,7 @@ const AccountProfiles: FC<{ userId: string }> = ({ userId }) => {
                         disabled={!canAdd || saving || !name.trim()} onClick={() => void onCreate()} sx={{ fontWeight: 600 }}>
                         {globalize.translate('ProfilesAdd')}
                     </Button>
-                    <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)' }}>
+                    <Typography sx={{ fontSize: '0.78rem', color: TEXT_TERTIARY }}>
                         {globalize.translate('ProfilesLimit', list.Profiles.length, list.MaxProfiles)}
                     </Typography>
                 </Box>

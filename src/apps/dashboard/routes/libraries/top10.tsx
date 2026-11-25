@@ -38,6 +38,7 @@ import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader, SectionCard } from '../../components/cosmic';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 interface Top10Settings {
     MoviesManual: boolean;
@@ -187,7 +188,7 @@ const Top10Editor: FC<{ series: boolean, state: ListState, autoIds: string[], on
             {!state.manual ? (
                 <>
                     <Typography sx={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.65)', mb: 1.5 }}>{globalize.translate('Top10AutoHelp')}</Typography>
-                    <Typography sx={{ fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)', mb: 0.75 }}>
+                    <Typography sx={{ fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_TERTIARY, mb: 0.75 }}>
                         {globalize.translate('Top10CurrentAuto')}
                     </Typography>
                     <Box sx={listSx}>
@@ -200,7 +201,7 @@ const Top10Editor: FC<{ series: boolean, state: ListState, autoIds: string[], on
                 <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', lg: '1fr 1fr' }, gap: 2 }}>
                     <Box>
                         <Box sx={{ display: 'flex', alignItems: 'center', mb: 0.75 }}>
-                            <Typography sx={{ flex: 1, fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>
+                            <Typography sx={{ flex: 1, fontSize: '0.72rem', fontWeight: 800, letterSpacing: '0.08em', textTransform: 'uppercase', color: TEXT_TERTIARY }}>
                                 {globalize.translate('Top10YourList', state.ids.length, MAX)}
                             </Typography>
                             {state.ids.length > 0 && <Button size='small' onClick={onClear}>{globalize.translate('Top10Clear')}</Button>}

@@ -56,6 +56,7 @@ import { queryClient } from 'utils/query/queryClient';
 
 import { PageHeader } from '../../components/cosmic';
 import { readPref, writePref } from 'utils/syncedPrefs';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 type ViewMode = 'cards' | 'table';
 type Scope = 'all' | 'user' | 'system';
@@ -129,7 +130,7 @@ const StatTile: FC<{ icon: React.ReactNode; label: string; value?: number; color
             <Typography sx={{ fontSize: '1.45rem', fontWeight: 700, color: '#fff', lineHeight: 1.1 }}>
                 {value == null ? '—' : value.toLocaleString(globalize.getCurrentDateTimeLocale())}
             </Typography>
-            <Typography noWrap sx={{ fontSize: '0.7rem', letterSpacing: '0.8px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.45)' }}>{label}</Typography>
+            <Typography noWrap sx={{ fontSize: '0.7rem', letterSpacing: '0.8px', textTransform: 'uppercase', color: TEXT_TERTIARY }}>{label}</Typography>
         </Box>
     </Paper>
 );
@@ -447,7 +448,7 @@ export const Component = () => {
                                 sx={{ flex: '1 1 240px' }}
                                 slotProps={{
                                     input: {
-                                        startAdornment: <InputAdornment position='start'><SearchIcon sx={{ color: 'rgba(255,255,255,0.4)' }} /></InputAdornment>,
+                                        startAdornment: <InputAdornment position='start'><SearchIcon sx={{ color: TEXT_TERTIARY }} /></InputAdornment>,
                                         endAdornment: search ? <InputAdornment position='end'><IconButton aria-label={globalize.translate('ClearSearch')} size='small' onClick={clearSearch}><CloseIcon fontSize='small' /></IconButton></InputAdornment> : undefined
                                     }
                                 }}
@@ -492,7 +493,7 @@ export const Component = () => {
                         </Paper>
 
                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1.5, minHeight: 30 }}>
-                            <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)' }}>
+                            <Typography sx={{ fontSize: '0.78rem', color: TEXT_TERTIARY }}>
                                 {globalize.translate('ActShowing', formatNumber(entries.length), formatNumber(matching))}
                             </Typography>
                             {list.isFetching && <CircularProgress size={14} />}

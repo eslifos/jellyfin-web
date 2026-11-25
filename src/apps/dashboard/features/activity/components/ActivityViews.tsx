@@ -24,6 +24,7 @@ import UserAvatar from 'components/UserAvatar';
 import { getTypeInfo, getTypeLabel, severityColor } from 'apps/dashboard/features/activity/utils/activityTypes';
 import globalize from 'lib/globalize';
 import { getLocaleWithSuffix } from 'utils/dateFnsLocale';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 export interface ActivityActions {
     onDelete: (entry: ActivityLogEntry) => void;
@@ -214,7 +215,7 @@ export const ActivityTimelineView: FC<ActivityViewProps> = ({ entries, users, de
                             {group.label}
                         </Typography>
                         <Box sx={{ flex: 1, height: '1px', background: 'linear-gradient(90deg, rgba(0,164,220,0.35), transparent)' }} />
-                        <Typography sx={{ fontSize: '0.7rem', color: 'rgba(255,255,255,0.4)' }}>{group.items.length}</Typography>
+                        <Typography sx={{ fontSize: '0.7rem', color: TEXT_TERTIARY }}>{group.items.length}</Typography>
                     </Box>
                     <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 440px), 1fr))', gap: 1.25 }}>
                         {group.items.map(entry => (
@@ -270,7 +271,7 @@ export const ActivityTableView: FC<ActivityViewProps> = ({ entries, users, delet
                                             {user && <UserAvatar user={user} size={AVATAR_SIZE} />}
                                             {name}
                                         </Box>
-                                    ) : <Typography sx={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.4)' }}>{globalize.translate('LabelSystem')}</Typography>}
+                                    ) : <Typography sx={{ fontSize: '0.75rem', color: TEXT_TERTIARY }}>{globalize.translate('LabelSystem')}</Typography>}
                                 </TableCell>
                                 <TableCell sx={{ ...cellSx, maxWidth: 360 }}>{entry.Name}</TableCell>
                                 <TableCell sx={{ ...cellSx, maxWidth: 260, color: 'rgba(255,255,255,0.6)' }}>

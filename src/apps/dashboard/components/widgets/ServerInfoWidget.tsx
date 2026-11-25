@@ -14,6 +14,7 @@ import { useSystemInfo } from 'hooks/useSystemInfo';
 import globalize from 'lib/globalize';
 
 import Widget from './Widget';
+import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 type ServerInfoWidgetProps = {
     onScanLibrariesClick?: () => void;
@@ -26,7 +27,7 @@ const InfoTile = ({ label, value }: { label: string; value?: React.ReactNode }) 
     <Box sx={{
         p: 1.5, borderRadius: '12px', background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(0,164,220,0.12)', minWidth: 0
     }}>
-        <Typography sx={{ fontSize: '0.68rem', letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.4)', mb: 0.25 }}>
+        <Typography sx={{ fontSize: '0.68rem', letterSpacing: '1px', textTransform: 'uppercase', color: TEXT_TERTIARY, mb: 0.25 }}>
             {label}
         </Typography>
         <Typography sx={{ fontSize: '0.95rem', fontWeight: 600, color: 'rgba(255,255,255,0.9)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
