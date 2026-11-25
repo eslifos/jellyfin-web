@@ -14,6 +14,8 @@ import Stop from '@mui/icons-material/Stop';
 import { useStartTask } from '../api/useStartTask';
 import { useStopTask } from '../api/useStopTask';
 import ListItemLink from 'components/ListItemLink';
+import Tooltip from '@mui/material/Tooltip';
+import globalize from 'lib/globalize';
 
 const Task: FunctionComponent<TaskProps> = ({ task }: TaskProps) => {
     const startTask = useStartTask();
@@ -35,9 +37,9 @@ const Task: FunctionComponent<TaskProps> = ({ task }: TaskProps) => {
         <ListItem
             disablePadding
             secondaryAction={
-                <IconButton onClick={task.State == 'Running' ? handleStopTask : handleStartTask}>
+                <Tooltip title={globalize.translate(task.State == 'Running' ? 'ButtonStop' : 'TskRun')}><IconButton aria-label={globalize.translate(task.State == 'Running' ? 'ButtonStop' : 'TskRun')} onClick={task.State == 'Running' ? handleStopTask : handleStartTask}>
                     {task.State == 'Running' ? <Stop /> : <PlayArrow />}
-                </IconButton>
+                </IconButton></Tooltip>
             }
         >
             <ListItemLink to={`/dashboard/tasks/${task.Id}`}>

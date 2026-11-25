@@ -210,7 +210,7 @@ export const PluginTile: FC<{ plugin: PluginDetails; update?: VersionInfo }> = (
                     )}
                     {settingsUrl && (
                         <Tooltip title={globalize.translate('Settings')}>
-                            <IconButton size='small' component={Link} to={settingsUrl}><SettingsIcon fontSize='small' /></IconButton>
+                            <IconButton aria-label={globalize.translate('Settings')} size='small' component={Link} to={settingsUrl}><SettingsIcon fontSize='small' /></IconButton>
                         </Tooltip>
                     )}
                     <Box sx={{ flex: 1 }} />

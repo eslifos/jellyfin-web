@@ -128,10 +128,10 @@ const NowPlaying: FC<{ session: SessionInfoDto }> = ({ session }) => {
                 </Box>
                 {canControl && (
                     <>
-                        <IconButton size='small' onClick={playPause} sx={{ color: PLAYING_COLOR }}>
+                        <IconButton aria-label={globalize.translate(session.PlayState?.IsPaused ? 'Play' : 'ButtonPause')} size='small' onClick={playPause} sx={{ color: PLAYING_COLOR }}>
                             {session.PlayState?.IsPaused ? <PlayArrowIcon fontSize='small' /> : <PauseIcon fontSize='small' />}
                         </IconButton>
-                        <IconButton size='small' onClick={stop} sx={{ color: '#ef5350' }}>
+                        <IconButton aria-label={globalize.translate('ButtonStop')} size='small' onClick={stop} sx={{ color: '#ef5350' }}>
                             <StopIcon fontSize='small' />
                         </IconButton>
                     </>
@@ -167,16 +167,16 @@ const InfoRow: FC<{ label: string; children: React.ReactNode; tooltip?: string }
 const ActionButtons: FC<{ device: DeviceInfoDto; session?: SessionInfoDto; isCurrent: boolean } & DeviceActions> = ({ device, session, isCurrent, onRename, onDelete, onMessage }) => (
     <Box sx={{ display: 'flex', gap: 0.5 }}>
         <Tooltip title={globalize.translate('DevRename')}>
-            <IconButton size='small' onClick={() => onRename(device)} sx={{ color: 'rgba(255,255,255,0.65)' }}><EditIcon fontSize='small' /></IconButton>
+            <IconButton aria-label={globalize.translate('DevRename')} size='small' onClick={() => onRename(device)} sx={{ color: 'rgba(255,255,255,0.65)' }}><EditIcon fontSize='small' /></IconButton>
         </Tooltip>
         {session?.SupportsRemoteControl && (
             <Tooltip title={globalize.translate('HeaderSendMessage')}>
-                <IconButton size='small' onClick={() => onMessage(session)} sx={{ color: '#aa5cc3' }}><ChatIcon fontSize='small' /></IconButton>
+                <IconButton aria-label={globalize.translate('HeaderSendMessage')} size='small' onClick={() => onMessage(session)} sx={{ color: '#aa5cc3' }}><ChatIcon fontSize='small' /></IconButton>
             </Tooltip>
         )}
         <Tooltip title={isCurrent ? globalize.translate('DevCannotDeleteCurrent') : globalize.translate('Delete')}>
             <span>
-                <IconButton size='small' disabled={isCurrent} onClick={() => onDelete(device)} sx={{ color: '#ef5350' }}><DeleteIcon fontSize='small' /></IconButton>
+                <IconButton aria-label={isCurrent ? globalize.translate('DevCannotDeleteCurrent') : globalize.translate('Delete')} size='small' disabled={isCurrent} onClick={() => onDelete(device)} sx={{ color: '#ef5350' }}><DeleteIcon fontSize='small' /></IconButton>
             </span>
         </Tooltip>
     </Box>

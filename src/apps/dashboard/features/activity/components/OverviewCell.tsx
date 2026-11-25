@@ -53,7 +53,7 @@ const OverviewCell: FC<ActivityLogEntryCell> = ({ row }) => {
                         disableHoverListener
                         disableTouchListener
                     >
-                        <IconButton onClick={onTooltipOpen}>
+                        <IconButton aria-label={Overview} onClick={onTooltipOpen}>
                             <Info />
                         </IconButton>
                     </Tooltip>

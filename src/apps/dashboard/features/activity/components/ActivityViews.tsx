@@ -108,14 +108,14 @@ const EntryActions: FC<{ entry: ActivityLogEntry; deleting: boolean; onDelete: (
     <Box sx={{ display: 'flex', gap: 0.25, flexShrink: 0 }}>
         {entry.ItemId && (
             <Tooltip title={globalize.translate('LabelMediaDetails')}>
-                <IconButton size='small' component={Link} to={`/details?id=${entry.ItemId}`} sx={{ color: '#00a4dc' }}>
+                <IconButton aria-label={globalize.translate('LabelMediaDetails')} size='small' component={Link} to={`/details?id=${entry.ItemId}`} sx={{ color: '#00a4dc' }}>
                     <PermMediaIcon fontSize='small' />
                 </IconButton>
             </Tooltip>
         )}
         <Tooltip title={globalize.translate('ActDeleteEntry')}>
             <span>
-                <IconButton size='small' disabled={deleting} onClick={() => onDelete(entry)} sx={{ color: 'rgba(239,83,80,0.8)' }}>
+                <IconButton aria-label={globalize.translate('ActDeleteEntry')} size='small' disabled={deleting} onClick={() => onDelete(entry)} sx={{ color: 'rgba(239,83,80,0.8)' }}>
                     <DeleteIcon fontSize='small' />
                 </IconButton>
             </span>

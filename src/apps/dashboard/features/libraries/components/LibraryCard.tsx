@@ -272,9 +272,9 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
                     onClick={showMediaLibraryEditor}
                     sx={{
                         position: 'relative', height: 150, cursor: 'pointer', flexShrink: 0,
-                        background: imageUrl
-                            ? `url("${imageUrl}") center / cover no-repeat`
-                            : `radial-gradient(circle at 30% 20%, ${accent}55, transparent 60%), linear-gradient(135deg, ${accent}30, rgba(10,12,22,0.9))`,
+                        background: imageUrl ?
+                            `url("${imageUrl}") center / cover no-repeat` :
+                            `radial-gradient(circle at 30% 20%, ${accent}55, transparent 60%), linear-gradient(135deg, ${accent}30, rgba(10,12,22,0.9))`,
                         display: 'flex', alignItems: 'center', justifyContent: 'center'
                     }}
                 >
@@ -293,6 +293,7 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
                         }}
                     />
                     <IconButton
+                        aria-label={globalize.translate('ButtonMore')}
                         size='small'
                         onClick={(e) => { e.stopPropagation(); onActionClick(e); }}
                         sx={{

@@ -49,7 +49,7 @@ const RepositoryListItem = ({ repository, onDelete }: IProps) => {
                 disablePadding
                 secondaryAction={
                     <Tooltip disableInteractive title={globalize.translate('ButtonRemove')}>
-                        <IconButton onClick={confirmDeletePrompt}>
+                        <IconButton aria-label={globalize.translate('ButtonRemove')} onClick={confirmDeletePrompt}>
                             <Delete />
                         </IconButton>
                     </Tooltip>

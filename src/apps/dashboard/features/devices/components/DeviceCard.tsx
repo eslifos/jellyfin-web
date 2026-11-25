@@ -25,6 +25,7 @@ import { useSendPlayStateCommand } from '../../sessions/api/usePlayPauseSession'
 import { PlaystateCommand } from '@jellyfin/sdk/lib/generated-client/models/playstate-command';
 import InputDialog from 'components/InputDialog';
 import { useSendMessage } from '../../sessions/api/useSendMessage';
+import Tooltip from '@mui/material/Tooltip';
 
 type DeviceCardProps = {
     device: SessionInfoDto;
@@ -222,23 +223,23 @@ const DeviceCard = ({ device }: DeviceCardProps) => {
                 <Stack direction='row' flexGrow={1} justifyContent='center'>
                     {canControl && isPlayingMedia && (
                         <>
-                            <IconButton onClick={onPlayPauseSession}>
+                            <IconButton aria-label={globalize.translate(device.PlayState?.IsPaused ? 'Play' : 'ButtonPause')} onClick={onPlayPauseSession}>
                                 {device.PlayState?.IsPaused ? <PlayArrow /> : <Pause />}
                             </IconButton>
-                            <IconButton onClick={onStopSession}>
+                            <IconButton aria-label={globalize.translate('ButtonStop')} onClick={onStopSession}>
                                 <Stop />
                             </IconButton>
                         </>
                     )}
                     {isPlayingMedia && (
-                        <IconButton onClick={showPlaybackInfo}>
+                        <Tooltip title={globalize.translate('PlaybackData')}><IconButton aria-label={globalize.translate('PlaybackData')} onClick={showPlaybackInfo}>
                             <Info />
-                        </IconButton>
+                        </IconButton></Tooltip>
                     )}
                     {canControl && (
-                        <IconButton onClick={showMessageDialog}>
+                        <Tooltip title={globalize.translate('HeaderSendMessage')}><IconButton aria-label={globalize.translate('HeaderSendMessage')} onClick={showMessageDialog}>
                             <Comment />
-                        </IconButton>
+                        </IconButton></Tooltip>
                     )}
                 </Stack>
             </CardActions>

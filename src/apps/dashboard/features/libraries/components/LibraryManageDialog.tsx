@@ -482,7 +482,7 @@ const LibraryManageDialog: FC<LibraryManageDialogProps> = ({ open, virtualFolder
                                         </Box>
                                         <Tooltip title={globalize.translate('ButtonRemove')}>
                                             {/* eslint-disable-next-line react/jsx-no-bind */}
-                                            <IconButton onClick={() => setRemovePath(info.Path || null)} sx={{ color: 'rgba(255,255,255,0.6)', '&:hover': { color: '#ef5350' } }}>
+                                            <IconButton aria-label={globalize.translate('ButtonRemove')} onClick={() => setRemovePath(info.Path || null)} sx={{ color: 'rgba(255,255,255,0.6)', '&:hover': { color: '#ef5350' } }}>
                                                 <DeleteOutlineRoundedIcon />
                                             </IconButton>
                                         </Tooltip>

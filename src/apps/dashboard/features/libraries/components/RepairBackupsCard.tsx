@@ -90,7 +90,7 @@ const RepairBackupsCard: FC<{ enabled: boolean }> = ({ enabled }) => {
                                         </Box>
                                         <Tooltip title={globalize.translate('Delete')}>
                                             <span>
-                                                <IconButton size='small' sx={{ color: '#ef5350' }} disabled={remove.isPending}
+                                                <IconButton aria-label={globalize.translate('Delete')} size='small' sx={{ color: '#ef5350' }} disabled={remove.isPending}
                                                     onClick={() => setConfirm({ ids: [ b.ItemId ], label: globalize.translate('BakDelOneConfirm', b.Name || '', formatSize(b.Size)) })}>
                                                     <DeleteIcon fontSize='small' />
                                                 </IconButton>

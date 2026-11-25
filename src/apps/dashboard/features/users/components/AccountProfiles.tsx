@@ -141,14 +141,14 @@ const AccountProfiles: FC<{ userId: string }> = ({ userId }) => {
                         </Box>
                         {profile.Id !== userId && !isProfileUser && (
                             <Tooltip title={globalize.translate('ButtonEditUser')}>
-                                <IconButton component={Link} to={`/dashboard/users/${profile.Id}/${UserTab.Profile}`} size='small' sx={{ color: 'rgba(255,255,255,0.55)' }}>
+                                <IconButton aria-label={globalize.translate('ButtonEditUser')} component={Link} to={`/dashboard/users/${profile.Id}/${UserTab.Profile}`} size='small' sx={{ color: 'rgba(255,255,255,0.55)' }}>
                                     <EditIcon fontSize='small' />
                                 </IconButton>
                             </Tooltip>
                         )}
                         {!profile.IsMaster && !isProfileUser && (
                             <Tooltip title={globalize.translate('Delete')}>
-                                <IconButton size='small' onClick={() => setToDelete(profile)} sx={{ color: '#ef5350' }}>
+                                <IconButton aria-label={globalize.translate('Delete')} size='small' onClick={() => setToDelete(profile)} sx={{ color: '#ef5350' }}>
                                     <DeleteIcon fontSize='small' />
                                 </IconButton>
                             </Tooltip>
@@ -163,25 +163,25 @@ const AccountProfiles: FC<{ userId: string }> = ({ userId }) => {
                     {globalize.translate('ProfilesLimit', list.Profiles.length, list.MaxProfiles)} · {globalize.translate('ProfilesManagedFromMaster')}
                 </Typography>
             ) : (
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5, mt: 2.5 }}>
-                <TextField
-                    size='small'
-                    value={name}
-                    disabled={!canAdd || saving}
-                    onChange={e => setName(e.target.value)}
-                    onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void onCreate(); } }}
-                    placeholder={globalize.translate('ProfilesNamePlaceholder')}
-                    slotProps={{ htmlInput: { maxLength: 32 } }}
-                    sx={{ flex: '1 1 240px', maxWidth: 360 }}
-                />
-                <Button variant='contained' startIcon={saving ? <CircularProgress size={16} color='inherit' /> : <AddIcon />}
-                    disabled={!canAdd || saving || !name.trim()} onClick={() => void onCreate()} sx={{ fontWeight: 600 }}>
-                    {globalize.translate('ProfilesAdd')}
-                </Button>
-                <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)' }}>
-                    {globalize.translate('ProfilesLimit', list.Profiles.length, list.MaxProfiles)}
-                </Typography>
-            </Box>
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5, mt: 2.5 }}>
+                    <TextField
+                        size='small'
+                        value={name}
+                        disabled={!canAdd || saving}
+                        onChange={e => setName(e.target.value)}
+                        onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); void onCreate(); } }}
+                        placeholder={globalize.translate('ProfilesNamePlaceholder')}
+                        slotProps={{ htmlInput: { maxLength: 32 } }}
+                        sx={{ flex: '1 1 240px', maxWidth: 360 }}
+                    />
+                    <Button variant='contained' startIcon={saving ? <CircularProgress size={16} color='inherit' /> : <AddIcon />}
+                        disabled={!canAdd || saving || !name.trim()} onClick={() => void onCreate()} sx={{ fontWeight: 600 }}>
+                        {globalize.translate('ProfilesAdd')}
+                    </Button>
+                    <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.45)' }}>
+                        {globalize.translate('ProfilesLimit', list.Profiles.length, list.MaxProfiles)}
+                    </Typography>
+                </Box>
             )}
         </SectionCard>
     );

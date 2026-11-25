@@ -68,7 +68,7 @@ const StopButton: FC<{ libraryId?: string | null, taskId?: string | null }> = ({
     return (
         <Tooltip title={globalize.translate(taskId ? 'LibScanStopTask' : 'LibScanStop')}>
             <span>
-                <IconButton size='small' onClick={stop} disabled={busy} sx={{ p: 0.25, color: '#ff6b6b', '&:hover': { background: 'rgba(255,107,107,0.12)' } }}>
+                <IconButton aria-label={globalize.translate(taskId ? 'LibScanStopTask' : 'LibScanStop')} size='small' onClick={stop} disabled={busy} sx={{ p: 0.25, color: '#ff6b6b', '&:hover': { background: 'rgba(255,107,107,0.12)' } }}>
                     <StopCircleIcon sx={{ fontSize: '1.15rem' }} />
                 </IconButton>
             </span>

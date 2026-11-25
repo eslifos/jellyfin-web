@@ -17,6 +17,7 @@ import ContentCopy from '@mui/icons-material/ContentCopy';
 import IconButton from '@mui/material/IconButton';
 import { copy } from 'scripts/clipboard';
 import Toast from 'apps/dashboard/components/Toast';
+import Tooltip from '@mui/material/Tooltip';
 
 type IProps = {
     backup: BackupManifestDto;
@@ -64,9 +65,9 @@ const BackupInfoDialog: FunctionComponent<IProps> = ({ backup, open, onClose }: 
                             <Typography fontWeight='bold'>{globalize.translate('LabelPath')}</Typography>
                             <Stack direction='row'>
                                 <Typography color='text.secondary'>{backup.Path}</Typography>
-                                <IconButton size='small' onClick={copyPath}>
+                                <Tooltip title={globalize.translate('Copy')}><IconButton aria-label={globalize.translate('Copy')} size='small' onClick={copyPath}>
                                     <ContentCopy fontSize='small' />
-                                </IconButton>
+                                </IconButton></Tooltip>
                             </Stack>
                         </Stack>
                         <Stack

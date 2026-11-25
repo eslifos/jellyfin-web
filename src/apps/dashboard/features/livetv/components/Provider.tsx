@@ -87,7 +87,7 @@ const Provider = ({ provider }: ProviderProps) => {
             <ListItem
                 disablePadding key={provider.Id}
                 secondaryAction={
-                    <IconButton ref={actionsRef} onClick={showContextMenu}>
+                    <IconButton aria-label={globalize.translate('ButtonMore')} ref={actionsRef} onClick={showContextMenu}>
                         <MoreVertIcon />
                     </IconButton>
                 }

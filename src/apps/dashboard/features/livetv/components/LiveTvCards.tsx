@@ -147,7 +147,7 @@ export const TunerCard: FC<{ tuner: TunerHostInfo }> = ({ tuner }) => {
                     </Tooltip>
                     {tuner.Url && (
                         <Tooltip title={copied ? globalize.translate('LtvCopied') : globalize.translate('LtvCopyUrl')}>
-                            <IconButton size='small' onClick={copyUrl} sx={{ color: 'rgba(255,255,255,0.5)' }}><ContentCopyIcon sx={{ fontSize: '0.95rem' }} /></IconButton>
+                            <IconButton aria-label={copied ? globalize.translate('LtvCopied') : globalize.translate('LtvCopyUrl')} size='small' onClick={copyUrl} sx={{ color: 'rgba(255,255,255,0.5)' }}><ContentCopyIcon sx={{ fontSize: '0.95rem' }} /></IconButton>
                         </Tooltip>
                     )}
                 </Box>
@@ -169,10 +169,10 @@ export const TunerCard: FC<{ tuner: TunerHostInfo }> = ({ tuner }) => {
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 0.5, mt: 'auto' }}>
                 <Tooltip title={globalize.translate('Edit')}>
-                    <IconButton size='small' onClick={edit} sx={{ color: 'rgba(255,255,255,0.65)' }}><EditIcon fontSize='small' /></IconButton>
+                    <IconButton aria-label={globalize.translate('Edit')} size='small' onClick={edit} sx={{ color: 'rgba(255,255,255,0.65)' }}><EditIcon fontSize='small' /></IconButton>
                 </Tooltip>
                 <Tooltip title={globalize.translate('Delete')}>
-                    <IconButton size='small' onClick={openConfirm} sx={{ color: '#ef5350' }}><DeleteIcon fontSize='small' /></IconButton>
+                    <IconButton aria-label={globalize.translate('Delete')} size='small' onClick={openConfirm} sx={{ color: '#ef5350' }}><DeleteIcon fontSize='small' /></IconButton>
                 </Tooltip>
             </Box>
 
@@ -248,10 +248,10 @@ export const ProviderCard: FC<{ provider: ListingsProviderInfo; tunerCount: numb
                 </Button>
                 <Box sx={{ ml: 'auto' }} />
                 <Tooltip title={globalize.translate('Edit')}>
-                    <IconButton size='small' onClick={edit} sx={{ color: 'rgba(255,255,255,0.65)' }}><EditIcon fontSize='small' /></IconButton>
+                    <IconButton aria-label={globalize.translate('Edit')} size='small' onClick={edit} sx={{ color: 'rgba(255,255,255,0.65)' }}><EditIcon fontSize='small' /></IconButton>
                 </Tooltip>
                 <Tooltip title={globalize.translate('Delete')}>
-                    <IconButton size='small' onClick={openConfirm} sx={{ color: '#ef5350' }}><DeleteIcon fontSize='small' /></IconButton>
+                    <IconButton aria-label={globalize.translate('Delete')} size='small' onClick={openConfirm} sx={{ color: '#ef5350' }}><DeleteIcon fontSize='small' /></IconButton>
                 </Tooltip>
             </Box>
 
@@ -413,7 +413,7 @@ export const UpcomingRecordingsCard: FC<{ timers: TimerInfoDto[] }> = ({ timers 
                                 {isRecording && <OptionChip label={globalize.translate('LtvRecordingNow')} color='#ef5350' />}
                                 {t.SeriesTimerId && !isRecording && <OptionChip label={globalize.translate('LtvSeries')} color='#aa5cc3' />}
                                 <Tooltip title={globalize.translate('LtvCancelRecording')}>
-                                    <IconButton size='small' onClick={() => setToCancel(t)} sx={{ color: 'rgba(239,83,80,0.85)' }}><CancelIcon fontSize='small' /></IconButton>
+                                    <IconButton aria-label={globalize.translate('LtvCancelRecording')} size='small' onClick={() => setToCancel(t)} sx={{ color: 'rgba(239,83,80,0.85)' }}><CancelIcon fontSize='small' /></IconButton>
                                 </Tooltip>
                             </Box>
                         );

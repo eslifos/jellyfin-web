@@ -80,6 +80,7 @@ const StreamWithStop: FC<{ session: SessionInfoDto }> = ({ session }) => {
             <StreamRow session={session} />
             <Tooltip title={globalize.translate('PbStopPlayback')}>
                 <IconButton
+                    aria-label={globalize.translate('PbStopPlayback')}
                     size='small'
                     onClick={stop}
                     disabled={sendCommand.isPending}
@@ -146,9 +147,9 @@ export const TaskCard: FC<TaskCardProps> = ({ taskKey, title, icon, accentColor,
         if (task?.Id) startTask.mutate({ taskId: task.Id });
     }, [ task, startTask ]);
 
-    const lastRun = task?.LastExecutionResult?.EndTimeUtc
-        ? formatDistanceToNow(new Date(task.LastExecutionResult.EndTimeUtc), getLocaleWithSuffix())
-        : globalize.translate('Never');
+    const lastRun = task?.LastExecutionResult?.EndTimeUtc ?
+        formatDistanceToNow(new Date(task.LastExecutionResult.EndTimeUtc), getLocaleWithSuffix()) :
+        globalize.translate('Never');
     const lastStatus = task?.LastExecutionResult?.Status;
 
     return (

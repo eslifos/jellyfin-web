@@ -40,7 +40,7 @@ const Backup: FunctionComponent<BackupProps> = ({ backup, onRestore }) => {
                 disablePadding
                 secondaryAction={
                     <Tooltip disableInteractive title={globalize.translate('LabelRestore')}>
-                        <IconButton onClick={restore}>
+                        <IconButton aria-label={globalize.translate('LabelRestore')} onClick={restore}>
                             <Restore />
                         </IconButton>
                     </Tooltip>
