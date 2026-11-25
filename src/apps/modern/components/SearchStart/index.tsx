@@ -16,12 +16,17 @@ import { useResumeItems } from 'apps/legacy/features/libraries/api/useResumeItem
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 
-import { Card, type HomeCard, type ProgressCard, Row, Wide, toCard } from '../QuickHome/parts';
+import { Card, type HomeCard, type ProgressCard, Row, Wide, toCard, useHomePage } from '../QuickHome/parts';
 import { clearRecentSearches, removeRecentSearch, useRecentSearches } from './recentSearches';
 
 import './searchStart.scss';
 
 const TICKS_PER_PERCENT = 100;
+/** Rows of the home screen that hold what is most watched this week. */
+const MOST_WATCHED_ROWS = new Set([ 'top10movies', 'top10series' ]);
+const MOST_WATCHED_MAX = 12;
+/** Ids compared without dashes and in lower case (the server may send either form). */
+const normId = (id?: string | null) => (id || '').replace(/-/g, '').toLowerCase();
 
 /** The picture of a card to resume: its own wide art, the one of its series, or its cover. */
 const pictureOf = (item: BaseItemDto): Pick<ProgressCard, 'ImageItemId' | 'ImageType' | 'ImageTag'> => {
@@ -88,6 +93,20 @@ const SearchStart: FC<SearchStartProps> = ({ parentId, onPick, onNavigate }) => 
         enableImageTypes: [ ImageType.Primary ]
     });
 
+    // Most watched: the weekly top 10 of movies and shows the server prepares for the home screen (no new request)
+    const { data: homePage } = useHomePage();
+    const mostWatched = useMemo(() => {
+        const blocks = (homePage?.Blocks ?? []).filter(b => !parentId || normId(b.LibraryId) === normId(parentId));
+        const rows = blocks.flatMap(b => b.Rows.filter(r => MOST_WATCHED_ROWS.has(r.Key)).map(r => r.Items));
+        // One of each row in turn, so movies and shows share the row
+        const mixed: HomeCard[] = [];
+        for (let i = 0; rows.some(r => i < r.length); i++) {
+            for (const row of rows) if (row[i]) mixed.push(row[i]);
+        }
+        const seen = new Set<string>();
+        return mixed.filter(c => !seen.has(c.Id) && !!seen.add(c.Id)).slice(0, MOST_WATCHED_MAX);
+    }, [ homePage, parentId ]);
+
     const continueCards = useMemo(() => (resume?.Items ?? []).filter(i => i.Id).map(toProgress), [ resume ]);
     const latestCards = useMemo(() => {
         // Several new episodes of a series are one card
@@ -114,7 +133,7 @@ const SearchStart: FC<SearchStartProps> = ({ parentId, onPick, onNavigate }) => 
     }, [ onNavigate ]);
 
     if (!api) return null;
-    const empty = !recent.length && !continueCards.length && !latestCards.length;
+    const empty = !recent.length && !mostWatched.length && !continueCards.length && !latestCards.length;
 
     return (
         // Only listens to the links and buttons inside
@@ -139,6 +158,11 @@ const SearchStart: FC<SearchStartProps> = ({ parentId, onPick, onNavigate }) => 
                         ))}
                     </ul>
                 </section>
+            )}
+            {mostWatched.length > 0 && (
+                <Row title={globalize.translate('QhMostWatched')} hint={globalize.translate('QhTopHint')} accent='#ffca28'>
+                    {mostWatched.map(c => <Card key={c.Id} api={api} card={c} shape='poster' serverId={serverId} />)}
+                </Row>
             )}
             {continueCards.length > 0 && (
                 <Row title={globalize.translate('HeaderContinueWatching')} accent='#00a4dc'>

@@ -17,12 +17,17 @@ import { formatNumber } from 'utils/localeNumber';
 import { queryClient } from 'utils/query/queryClient';
 
 import { isLibKey, loadHomeSections, orderSections } from '../HomeFeed/homeSections';
+import ContinueRow from './ContinueRow';
+import HomeEmptyState from './HomeEmptyState';
 import {
     Card, Hero, Lazy, LibraryBlock, type ProgressCard, Recommendations, Row, Spotlight, UpcomingCard, Wide,
     hashColor, useHomePage, usePersonal
 } from './parts';
 
 /* ---------- Page ---------- */
+
+/** A stable empty list, so the row does not see new cards on every render. */
+const NO_CARDS: ProgressCard[] = [];
 
 const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
     const { api, user, __legacyApiClient__: legacy } = useApi();
@@ -53,6 +58,11 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
         return <div ref={root} className='qh qh-loading' aria-busy='true'><div className='qh-skeleton-hero' />{nav}<div className='qh-skeleton-row' /><div className='qh-skeleton-row' /></div>;
     }
 
+    // Anything to watch: the banner, a row of a library or a row of the user
+    const hasContent = page.Hero.length > 0
+        || page.Blocks.some(b => b.Rows.some(r => r.Items.length > 0))
+        || !!(personal && (personal.Continue.length || personal.NextUp.length || personal.Listening.length || personal.Favorites.length));
+
     const progressRow = (key: string, cards: ProgressCard[] | undefined, title: string, accent: string): ReactNode => (cards?.length ? (
         <Row key={key} id={`qh-${key}`} title={globalize.translate(title)} accent={accent}>
             {cards.map(c => <Wide key={c.Id} api={api} card={c} serverId={serverId} />)}
@@ -64,7 +74,11 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
         spotlight: () => (page.Spotlight?.length ? (
             <Spotlight key='spotlight' id='qh-today' api={api} items={page.Spotlight} title={globalize.translate('HfSpotlight')} accent='#ffca28' serverId={serverId} />
         ) : null),
-        resume: () => progressRow('resume', personal?.Continue, 'QhContinue', '#00a4dc'),
+        // With a menu on each card: remove it from the row (undo) or mark it as watched. Always mounted: when the
+        // last card leaves, the row hides itself but keeps its undo notice
+        resume: () => (
+            <ContinueRow key='resume' id='qh-resume' api={api} cards={personal?.Continue ?? NO_CARDS} title={globalize.translate('QhContinue')} accent='#00a4dc' serverId={serverId} />
+        ),
         nextup: () => progressRow('nextup', personal?.NextUp, 'QhNextUp', '#aa5cc3'),
         listening: () => progressRow('listening', personal?.Listening, 'QhListening', '#ff7043'),
         upcoming: () => (page.Upcoming.length ? (
@@ -118,7 +132,9 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
             {/* The banner always goes on top, edge to edge, then the one row of libraries and universes */}
             {page.Hero.length > 0 && <Hero api={api} items={page.Hero} serverId={serverId} />}
             {nav}
-            {!page.Ready && <p className='qh-preparing'>{globalize.translate('QhPreparing')}</p>}
+            {hasContent ?
+                !page.Ready && <p className='qh-preparing'>{globalize.translate('QhPreparing')}</p> :
+                <HomeEmptyState hasLibraries={page.Libraries.length > 0} ready={page.Ready} />}
             {order.map(render)}
         </div>
     );

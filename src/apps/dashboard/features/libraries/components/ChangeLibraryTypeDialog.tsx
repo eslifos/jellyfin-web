@@ -23,9 +23,15 @@ import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 import { getLibraryIcon } from 'utils/image';
 
+import { formatNumber } from 'utils/localeNumber';
+
 import { invalidateVirtualFolders } from '../api/invalidateVirtualFolders';
+import { useLibraryStats } from '../api/useLibraryStats';
 import { getLibraryKind, getLibraryKinds } from '../utils/libraryKinds';
 import { getLibraryAccent } from '../utils/libraryUi';
+
+/** Ids compared without dashes and in lower case (the server may send either form). */
+const normLibraryId = (id?: string | null) => (id || '').replace(/-/g, '').toLowerCase();
 
 interface ChangeLibraryTypeDialogProps {
     open: boolean;
@@ -67,6 +73,8 @@ const ChangeLibraryTypeDialog: FC<ChangeLibraryTypeDialogProps> = ({ open, virtu
     const [ selected, setSelected ] = useState<string>(current);
     const [ scan, setScan ] = useState(true);
     const changeType = useChangeLibraryType();
+    const { data: allStats } = useLibraryStats();
+    const itemCount = allStats?.find(s => normLibraryId(s.ItemId) === normLibraryId(virtualFolder.ItemId))?.ItemCount;
 
     useEffect(() => {
         if (open) {
@@ -137,6 +145,12 @@ const ChangeLibraryTypeDialog: FC<ChangeLibraryTypeDialogProps> = ({ open, virtu
                     })}
                 </Box>
 
+                {/* What may change and how much: its real item count */}
+                <Typography sx={{ fontSize: '0.95rem', fontWeight: 700, mb: 1.5 }}>
+                    {itemCount == null ?
+                        globalize.translate('DangerChangeTypeNoStats', virtualFolder.Name || '') :
+                        globalize.translate('DangerChangeType', virtualFolder.Name || '', formatNumber(itemCount))}
+                </Typography>
                 <Alert severity='info' sx={{ mb: 1.5, borderRadius: '12px' }}>
                     {globalize.translate('LibChangeTypeHelp')}
                 </Alert>
@@ -165,6 +179,7 @@ const ChangeLibraryTypeDialog: FC<ChangeLibraryTypeDialogProps> = ({ open, virtu
                 </Button>
                 <Button
                     variant='contained'
+                    color='error'
                     onClick={confirm}
                     disabled={selected === current || changeType.isPending}
                     startIcon={changeType.isPending ? <CircularProgress size={16} /> : undefined}

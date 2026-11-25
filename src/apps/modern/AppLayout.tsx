@@ -6,6 +6,7 @@ import AppBody from 'components/AppBody';
 import { initCardBadges } from 'components/cardbuilder/cardBadges';
 import { initCollectionCollage } from 'components/cardbuilder/collectionCollage';
 import CustomCss from 'components/CustomCss';
+import IosInstallHint from 'components/iosInstallHint/IosInstallHint';
 import ThemeCss from 'components/ThemeCss';
 import { useApi } from 'hooks/useApi';
 
@@ -65,6 +66,8 @@ export const Component = () => {
             {/* The player (small bar and full player) for everything that plays */}
             {user && <Player />}
             <FloatingNav />
+            {/* Safari on iPhone / iPad, once: how to add the app to the Home Screen */}
+            {user && <IosInstallHint />}
 
             <ThemeCss />
             <CustomCss />

@@ -454,16 +454,54 @@ export const Card: FC<{ api: Api, card: HomeCard, shape: Shape, serverId?: strin
     );
 };
 
-export const Wide: FC<{ api: Api, card: ProgressCard, serverId?: string }> = ({ api, card, serverId }) => {
+/** A press this long on a touch screen opens the menu of a card instead of playing it. */
+const LONG_PRESS_MS = 550;
+
+export const Wide: FC<{ api: Api, card: ProgressCard, serverId?: string, onMenu?: (card: ProgressCard, anchor: HTMLElement) => void }> = ({ api, card, serverId, onMenu }) => {
+    // A long press opened the menu: the click that follows it does not play
+    const pressed = useRef(false);
+    const pressTimer = useRef<number>();
     const onPlay = useCallback(() => {
+        if (pressed.current) {
+            pressed.current = false;
+            return;
+        }
         void playbackManager.play({ ids: [ card.Id ], serverId, startPositionTicks: card.PositionTicks || undefined });
     }, [ card, serverId ]);
+    const cancelPress = useCallback(() => window.clearTimeout(pressTimer.current), []);
+    const onTouchStart = useCallback((e: React.TouchEvent<HTMLButtonElement>) => {
+        if (!onMenu) return;
+        const anchor = e.currentTarget;
+        pressed.current = false;
+        cancelPress();
+        // iPhone and iPad do not fire contextmenu on a long press
+        pressTimer.current = window.setTimeout(() => {
+            pressed.current = true;
+            onMenu(card, anchor);
+        }, LONG_PRESS_MS);
+    }, [ cancelPress, card, onMenu ]);
+    // Right click, and the long press of Android
+    const onContextMenu = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        if (!onMenu) return;
+        e.preventDefault();
+        cancelPress();
+        if (!pressed.current) onMenu(card, e.currentTarget);
+        pressed.current = true;
+    }, [ cancelPress, card, onMenu ]);
+    const onMore = useCallback((e: React.MouseEvent<HTMLButtonElement>) => onMenu?.(card, e.currentTarget), [ card, onMenu ]);
+    useEffect(() => cancelPress, [ cancelPress ]);
     const left = remaining(card.RemainingTicks);
     // Audiobooks, books and songs only have their square cover: shown whole
     const cover = card.ImageType === 'Primary' && ![ 'Episode', 'Movie', 'Video' ].includes(card.Type);
 
-    return (
-        <button type='button' className='qh-wide' onClick={onPlay} title={card.Name}>
+    const button = (
+        <button
+            type='button'
+            className='qh-wide'
+            onClick={onPlay}
+            title={card.Name}
+            {...(onMenu ? { onContextMenu, onTouchStart, onTouchEnd: cancelPress, onTouchMove: cancelPress, onTouchCancel: cancelPress } : {})}
+        >
             <span className={cover ? 'qh-wide-img qh-wide-cover' : 'qh-wide-img'}>
                 {cover && <img className='qh-wide-blur' src={imageUrl(api, card.ImageItemId, card.ImageType, card.ImageTag, 80)} alt='' aria-hidden='true' loading='lazy' decoding='async' />}
                 <img
@@ -481,6 +519,17 @@ export const Wide: FC<{ api: Api, card: ProgressCard, serverId?: string }> = ({ 
             <span className='qh-card-title'>{card.Name}</span>
             <span className='qh-card-sub'>{[ card.Subtitle, left ].filter(Boolean).join(' · ')}</span>
         </button>
+    );
+    if (!onMenu) return button;
+
+    // A menu of its own (a button cannot hold another one): over the picture, top right
+    return (
+        <div className='qh-wide-wrap'>
+            {button}
+            <button type='button' className='qh-wide-more' onClick={onMore} aria-haspopup='menu' aria-label={globalize.translate('QhCardMenu', card.Name)} title={globalize.translate('QhCardMenu', card.Name)}>
+                <span aria-hidden='true'>⋮</span>
+            </button>
+        </div>
     );
 };
 

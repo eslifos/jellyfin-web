@@ -28,6 +28,7 @@ import { djStore, stopTransition } from './audioEngine';
 import { OPEN_PLAYER_EVENT } from './events';
 import { StudioChips, StudioPanel, type StudioTab, VideoSlot, useMusicEngine, useSongInfo } from './MusicStudio';
 import { type SongColors, SongVisualizer, SongWave, centerInside, decodeWave, standInWave, useCoverColors } from './MusicVisual';
+import PlayerShortcutsHelp from './PlayerShortcutsHelp';
 import { songVideoMode } from './songVideoMode';
 import { type Speech, type VoiceMeter, openVoiceMeter, simulateSpeech } from './voiceMeter';
 
@@ -1040,6 +1041,22 @@ const FullPlayer: FC<FullProps> = ({ view, state, queue, sleepLabel, sleepOn, on
     const studio = isSong ? chosenTab : null;
     const { audio, songWave, colors } = useSongShow(api, isSong, item.Id, cover);
     const onStudioClose = useCallback(() => setStudio(null), []);
+    // Keyboard help: "?" or its button opens it, Escape closes it
+    const [ keysOpen, setKeysOpen ] = useState(false);
+    const openKeys = useCallback(() => setKeysOpen(true), []);
+    const closeKeys = useCallback(() => setKeysOpen(false), []);
+    useEffect(() => {
+        const onKey = (e: KeyboardEvent) => {
+            if (e.key !== '?' || e.ctrlKey || e.altKey || e.metaKey) return;
+            const target = e.target as HTMLElement | null;
+            // Not while typing (a search, a name…)
+            if (target?.closest('input, textarea, select, [contenteditable="true"]')) return;
+            e.preventDefault();
+            setKeysOpen(value => !value);
+        };
+        document.addEventListener('keydown', onKey);
+        return () => document.removeEventListener('keydown', onKey);
+    }, []);
     const showSide = !!studio || queue;
     const extras = useSteadyHeight(`${item.Id}-${hasVideo}`);
     // Another device may not tell its queue: at least what plays is in the list
@@ -1052,6 +1069,11 @@ const FullPlayer: FC<FullProps> = ({ view, state, queue, sleepLabel, sleepOn, on
                 <header className='abp-top'>
                     <QueueButton on={queue} title={queueTitle} onClick={onToggleQueue} />
                     <span className='abp-top-label'>{state.remote ? '📡' : icon} {label}</span>
+                    {/* Keyboard help, also for those without a keyboard to press "?" */}
+                    <button type='button' className='abp-round abp-keys' onClick={openKeys} aria-label={globalize.translate('ApKeysOpen')} title={globalize.translate('ApKeysOpen')} aria-haspopup='dialog'>
+                        <span aria-hidden='true'>?</span>
+                    </button>
+                    <PlayerShortcutsHelp open={keysOpen} onClose={closeKeys} />
                     {/* Minimize: back to the small bar, playback goes on */}
                     <button type='button' className='abp-round abp-minimize' onClick={onClose} aria-label={globalize.translate('ApClose')} title={globalize.translate('ApClose')}>
                         <svg viewBox='0 0 24 24' aria-hidden='true'><path d='M6 9l6 6 6-6' /></svg>
@@ -1439,7 +1461,8 @@ const Player: FC = () => {
     useEffect(() => {
         if (!open) return;
         const onKey = (e: KeyboardEvent) => {
-            if (e.key === 'Escape') setOpen(false);
+            // Not when the keyboard help used it (it closes only itself)
+            if (e.key === 'Escape' && !e.defaultPrevented) setOpen(false);
         };
         document.addEventListener('keydown', onKey);
         return () => document.removeEventListener('keydown', onKey);

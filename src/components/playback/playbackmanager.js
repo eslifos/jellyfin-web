@@ -16,10 +16,9 @@ import itemHelper from '../itemHelper';
 import { pluginManager } from '../pluginManager';
 import PlayQueueManager from './playqueuemanager';
 import * as userSettings from '../../scripts/settings/userSettings';
-import globalize from '../../lib/globalize';
 import loading from '../loading/loading';
 import { appHost } from '../apphost';
-import alert from '../alert';
+import { showPlaybackError } from './playbackErrorDialog';
 import { includesAny } from '../../utils/container.ts';
 import { getItems } from '../../utils/jellyfin-apiclient/getItems.ts';
 import { getItemBackdropImageUrl } from '../../utils/jellyfin-apiclient/backdropImage';
@@ -703,10 +702,8 @@ function validatePlaybackInfoResult(instance, result) {
 }
 
 function showPlaybackInfoErrorMessage(instance, errorCode) {
-    alert({
-        text: globalize.translate(errorCode),
-        title: globalize.translate('HeaderPlaybackError')
-    });
+    // A simple message with one action (retry, lower quality, another version or back); details folded
+    void showPlaybackError(instance, errorCode, instance._lastPlayAttempt);
 }
 
 function normalizePlayOptions(playOptions) {
@@ -721,7 +718,9 @@ function truncatePlayOptions(playOptions) {
         forceMediaSource: playOptions.forceMediaSource,
         audioStreamIndex: playOptions.audioStreamIndex,
         subtitleStreamIndex: playOptions.subtitleStreamIndex,
-        startPositionTicks: playOptions.startPositionTicks
+        startPositionTicks: playOptions.startPositionTicks,
+        // Only for this play (an error dialog trying a lower quality): the saved quality is not changed
+        maxBitrate: playOptions.maxBitrate
     };
 }
 
@@ -2455,6 +2454,10 @@ export class PlaybackManager {
             // A song that follows another changes quietly: no loading screen over what is being used
             const followsSong = mediaType === 'Audio' && !!self._currentPlayer;
 
+            // What is being tried, so an error can offer to try it again (same way, lower quality, another version)
+            const attempt = { item, playOptions: truncatePlayOptions(playOptions), maxBitrate: null };
+            self._lastPlayAttempt = attempt;
+
             return runInterceptors(item, playOptions)
                 .catch(onInterceptorRejection)
                 .then(() => {
@@ -2462,8 +2465,9 @@ export class PlaybackManager {
                         loading.show();
                     }
                 })
-                .then(() => detectBitrate(item, mediaType))
+                .then(() => playOptions.maxBitrate || detectBitrate(item, mediaType))
                 .then((bitrate) => {
+                    attempt.maxBitrate = bitrate;
                     return playAfterBitrateDetect(bitrate, item, playOptions, onPlaybackStartedFn, prevSource)
                         .catch(onPlaybackRejection);
                 })
@@ -3724,6 +3728,15 @@ export class PlaybackManager {
             }
 
             if (errorOccurred) {
+                // Failed while playing: a new try starts where it stopped, with the version that was playing
+                const attempt = self._lastPlayAttempt;
+                if (attempt && streamInfo?.item && attempt.item?.Id === streamInfo.item.Id) {
+                    attempt.playOptions = {
+                        ...attempt.playOptions,
+                        startPositionTicks: state.PlayState?.PositionTicks || attempt.playOptions.startPositionTicks,
+                        mediaSourceId: streamInfo.mediaSource?.Id || attempt.playOptions.mediaSourceId
+                    };
+                }
                 showPlaybackInfoErrorMessage(self, 'PlaybackError' + displayErrorCode);
             } else if (newPlayer) {
                 const apiClient = ServerConnections.getApiClient(nextItem.item.ServerId);

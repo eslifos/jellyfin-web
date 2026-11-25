@@ -25,6 +25,7 @@ import { useLocation, useNavigate } from 'react-router-dom';
 
 import Toast from 'apps/dashboard/components/Toast';
 import { useDeleteUser } from 'apps/dashboard/features/users/api/useDeleteUser';
+import { useUserDataSummary } from 'apps/dashboard/features/users/api/useUserDataSummary';
 import {
     isOnline,
     type UserSort,
@@ -42,6 +43,7 @@ import globalize from 'lib/globalize';
 import { PageHeader } from '../../components/cosmic';
 import { readPref, writePref } from 'utils/syncedPrefs';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
+import { formatNumber } from 'utils/localeNumber';
 
 type ViewMode = 'cards' | 'table' | 'profiles';
 type Filter = 'all' | 'admins' | 'disabled' | 'hidden' | 'accounts' | 'profiles';
@@ -185,10 +187,16 @@ const UserProfiles = () => {
         deleteUser.mutate({ userId: id });
     }, [ deleteUser, userToDelete, profileMasters ]);
 
+    // What is lost and how much: their real history and favorites (asked only while the confirmation is open)
+    const { data: loss } = useUserDataSummary(userToDelete?.Id);
     const deleteText = useMemo(() => {
         const count = userToDelete?.Id ? Object.values(profileMasters).filter(m => m === userToDelete.Id).length : 0;
-        return globalize.translate('DeleteUserConfirmation') + (count ? `\n\n${globalize.translate('ProfilesDeleteMasterWarning', count)}` : '');
-    }, [ userToDelete, profileMasters ]);
+        const name = userToDelete?.Name || '';
+        const what = loss ?
+            globalize.translate('DangerDeleteUser', name, formatNumber(loss.played), formatNumber(loss.favorites)) :
+            globalize.translate('DangerDeleteUserNoStats', name);
+        return what + (count ? `\n\n${globalize.translate('ProfilesDeleteMasterWarning', count)}` : '');
+    }, [ userToDelete, profileMasters, loss ]);
 
     const toggleFilter = (value: Filter) => () => setFilter(current => (current === value ? 'all' : value));
 
@@ -211,7 +219,7 @@ const UserProfiles = () => {
                 open={Boolean(userToDelete)}
                 title={userToDelete?.Name ? globalize.translate('DeleteName', userToDelete.Name) : globalize.translate('DeleteUser')}
                 text={deleteText}
-                confirmButtonText={globalize.translate('Delete')}
+                confirmButtonText={globalize.translate('DangerDeleteUserButton')}
                 confirmButtonColor='error'
                 onConfirm={() => void onConfirmDelete()}
                 onCancel={() => setUserToDelete(null)}

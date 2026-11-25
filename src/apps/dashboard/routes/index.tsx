@@ -24,6 +24,7 @@ import LibraryScansPanel from '../features/libraries/components/LibraryScansPane
 import ActiveDownloadsPanel from '../features/downloads/ActiveDownloadsPanel';
 import { useStartTask } from '../features/tasks/api/useStartTask';
 import ItemCountsWidget from '../components/widgets/ItemCountsWidget';
+import SetupChecklistCard from '../features/setup/SetupChecklistCard';
 
 export const Component = () => {
     const { api } = useApi();
@@ -118,6 +119,8 @@ export const Component = () => {
                     </Typography>
                     <Box sx={{ mt: 1, width: 72, height: 3, borderRadius: 3, background: 'linear-gradient(90deg, #00a4dc, #aa5cc3)' }} />
                 </Box>
+                {/* New server: the steps still pending (administrators; it goes away once all are done or hidden) */}
+                <SetupChecklistCard tasks={tasks} />
                 <Grid container spacing={3}>
                     <Grid item xs={12} lg={7} xl={8}>
                         <Stack spacing={3}>

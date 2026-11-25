@@ -262,7 +262,7 @@ export const Component = () => {
             <CreateDialog open={isCreateOpen} onClose={closeCreate} onCreate={onCreate} />
             <SimpleAlert open={isErrorOccurred} text={globalize.translate('UnknownError')} onClose={closeError} />
             <SimpleAlert open={isRestoreSuccess} title={globalize.translate('Success')} text={globalize.translate('MessageRestoreSuccess')} onClose={closeSuccess} />
-            <RestoreConfirmationDialog open={!!backupToRestore} onClose={closeRestore} onConfirm={onRestoreConfirm} />
+            <RestoreConfirmationDialog open={!!backupToRestore} backup={backupToRestore} onClose={closeRestore} onConfirm={onRestoreConfirm} />
 
             <Box className='content-primary' sx={{ pb: 6 }}>
                 <PageHeader

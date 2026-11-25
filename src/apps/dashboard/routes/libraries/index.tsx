@@ -1,4 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { TaskState } from '@jellyfin/sdk/lib/generated-client/models/task-state';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
@@ -97,10 +98,19 @@ export const Component = () => {
         return t;
     }, [ stats ]);
 
-    // Simplified add library dialog (type, name, folders)
-    const [ isAddOpen, setIsAddOpen ] = useState(false);
+    // Simplified add library dialog (type, name, folders). ?add=1 opens it (the empty home screen links here)
+    const [ searchParams, setSearchParams ] = useSearchParams();
+    const [ isAddOpen, setIsAddOpen ] = useState(() => searchParams.get('add') === '1');
     const showMediaLibraryCreator = useCallback(() => setIsAddOpen(true), []);
-    const closeAddLibrary = useCallback(() => setIsAddOpen(false), []);
+    const closeAddLibrary = useCallback(() => {
+        setIsAddOpen(false);
+        // Not again when the page is reloaded
+        if (searchParams.has('add')) {
+            const next = new URLSearchParams(searchParams);
+            next.delete('add');
+            setSearchParams(next, { replace: true });
+        }
+    }, [ searchParams, setSearchParams ]);
 
     const onScanLibraries = useCallback(() => {
         if (librariesTask?.Id) {

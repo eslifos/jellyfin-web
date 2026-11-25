@@ -148,6 +148,8 @@ export const Component = () => {
     }, [ devices, sessions ]);
 
     const inactiveDevices = useMemo(() => devices.filter(d => d.Id !== currentDeviceId && getStatus(d, d.Id ? sessions[d.Id] : undefined) === 'inactive'), [ devices, sessions, currentDeviceId ]);
+    // "Delete all" keeps this device: how many it really signs out
+    const otherDevices = useMemo(() => devices.filter(d => d.Id && d.Id !== currentDeviceId).length, [ devices, currentDeviceId ]);
 
     const visibleDevices = useMemo(() => {
         const query = search.trim().toLocaleLowerCase();
@@ -319,22 +321,28 @@ export const Component = () => {
             <ConfirmDialog
                 open={!!deviceToDelete}
                 title={globalize.translate('HeaderDeleteDevice')}
-                text={`${globalize.translate('DeleteDeviceConfirmation')}\n\n${deviceToDelete ? deviceName(deviceToDelete) : ''}`}
+                // Which session ends, in which app, and who has to sign in again
+                text={deviceToDelete ? globalize.translate(
+                    'DangerDeleteDevice',
+                    deviceToDelete.AppName || '—',
+                    deviceName(deviceToDelete),
+                    deviceToDelete.LastUserName || globalize.translate('DangerSomeone')
+                ) : ''}
                 onCancel={closeDelete}
                 onConfirm={onConfirmDelete}
                 confirmButtonColor='error'
-                confirmButtonText={globalize.translate('Delete')}
+                confirmButtonText={globalize.translate('DangerDeleteDeviceButton')}
             />
             <ConfirmDialog
                 open={!!bulkDelete}
                 title={globalize.translate('HeaderDeleteDevices')}
                 text={bulkDelete === 'inactive' ?
                     globalize.translate('DevDeleteInactiveConfirm', inactiveDevices.length, INACTIVE_DAYS) :
-                    globalize.translate('DeleteDevicesConfirmation')}
+                    globalize.translate('DangerDeleteDevicesAll', otherDevices)}
                 onCancel={closeBulk}
                 onConfirm={onConfirmBulkDelete}
                 confirmButtonColor='error'
-                confirmButtonText={globalize.translate('Delete')}
+                confirmButtonText={globalize.translate('DangerDeleteDevicesButton', bulkDelete === 'inactive' ? inactiveDevices.length : otherDevices)}
             />
             {deviceToRename && (
                 <InputDialog

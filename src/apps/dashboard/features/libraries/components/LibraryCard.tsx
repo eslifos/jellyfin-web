@@ -251,11 +251,14 @@ const LibraryCard = ({ virtualFolder, stats, isStatsPending }: LibraryCardProps)
                 open={isConfirmDeleteDialogOpen}
                 title={globalize.translate('HeaderRemoveMediaFolder')}
                 text={
-                    globalize.translate('MessageAreYouSureYouWishToRemoveMediaFolder') + '\n\n'
+                    // What is lost and how much (its real item count and size), then the folders it stops reading
+                    (stats ?
+                        globalize.translate('DangerDeleteLibrary', virtualFolder.Name || '', formatNumber(stats.ItemCount), formatSize(stats.TotalSize)) :
+                        globalize.translate('DangerDeleteLibraryNoStats', virtualFolder.Name || '')) + '\n\n'
                     + globalize.translate('MessageTheFollowingLocationWillBeRemovedFromLibrary') + '\n\n'
                     + locations.join('\n')
                 }
-                confirmButtonText={globalize.translate('Delete')}
+                confirmButtonText={globalize.translate('DangerDeleteLibraryButton')}
                 confirmButtonColor='error'
                 onConfirm={onConfirmDeleteLibrary}
                 onCancel={onCancelDeleteLibrary}

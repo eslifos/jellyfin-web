@@ -192,6 +192,13 @@ html.abp-open body {
 }
 
 // Minimize: warm ring so it is easy to find
+// Keyboard help ("?")
+.abp-keys {
+    font-size: 1.25rem;
+    font-weight: 800;
+    line-height: 1;
+}
+
 .abp-minimize {
     border-color: rgba(255, 122, 89, 0.55);
 
@@ -288,6 +295,10 @@ html.abp-open body {
 }
 
 .abp-top-label {
+    // Takes the free room: the help and minimize buttons stay together on the right
+    flex: 1;
+    min-width: 0;
+    text-align: center;
     font-size: 0.78rem;
     font-weight: 900;
     letter-spacing: 0.12em;

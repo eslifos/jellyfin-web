@@ -422,6 +422,56 @@
     gap: 2px;
 }
 
+// A card with its own menu (Continue watching): the "⋮" button over the picture, top right
+.qh-wide-wrap {
+    position: relative;
+    flex: 0 0 auto;
+}
+
+.qh-wide-more {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    width: 44px;
+    height: 44px;
+    display: grid;
+    place-items: center;
+    padding: 0;
+    border: 0;
+    border-radius: 50%;
+    background: rgba(8, 10, 22, 0.72);
+    color: #fff;
+    font-size: 1.3rem;
+    font-weight: 800;
+    line-height: 1;
+    cursor: pointer;
+    backdrop-filter: blur(6px);
+    opacity: 0;
+    transition: opacity 0.2s, background 0.2s;
+
+    &:hover,
+    &:focus-visible {
+        background: rgba(0, 164, 220, 0.85);
+        outline: none;
+    }
+
+    &:focus-visible {
+        box-shadow: 0 0 0 3px #fff;
+    }
+}
+
+// Shown on hover or focus of its card; always on touch screens (no hover there)
+.qh-wide-wrap:hover .qh-wide-more,
+.qh-wide-wrap:focus-within .qh-wide-more {
+    opacity: 1;
+}
+
+@media (hover: none) {
+    .qh-wide-more {
+        opacity: 1;
+    }
+}
+
 .qh-wide-img {
     position: relative;
     display: block;

@@ -1,0 +1,32 @@
+// The playback error dialog (playbackErrorDialog.js): a simple message, the technical one folded below
+.playbackErrorText {
+    margin: 0 0 1em;
+    font-size: 1.05em;
+    line-height: 1.5;
+}
+
+.playbackErrorDetails {
+    color: var(--jf-text-tertiary, rgba(255, 255, 255, 0.6));
+    font-size: 0.9em;
+
+    summary {
+        cursor: pointer;
+        padding: 0.4em 0;
+        color: var(--jf-text-secondary, rgba(255, 255, 255, 0.72));
+
+        &:focus-visible {
+            outline: 2px solid #00a4dc;
+            outline-offset: 2px;
+            border-radius: 4px;
+        }
+    }
+
+    p {
+        margin: 0.4em 0;
+    }
+
+    code {
+        font-size: 0.85em;
+        word-break: break-all;
+    }
+}
