@@ -23,6 +23,7 @@ import { useCustomLogo } from 'utils/customLogo';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import Dashboard from 'utils/dashboard';
 import WizardBackground from 'apps/wizard/components/WizardBackground';
+import globalize from 'lib/globalize';
 
 interface Server {
     Id: string;
@@ -132,6 +133,7 @@ const SelectServerPage = () => {
                                         </CardContent>
                                     </CardActionArea>
                                     <IconButton
+                                        aria-label={globalize.translate('ButtonMore')}
                                         onClick={e => { setMenuAnchor(e.currentTarget); setMenuServer(server); }}
                                         sx={{ color: 'rgba(255,255,255,0.4)', mr: 1, '&:hover': { color: '#00a4dc' } }}
                                     >
