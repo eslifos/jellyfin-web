@@ -51,12 +51,12 @@ interface Category {
 }
 
 const CATEGORIES: Category[] = [
-    { id: 'movies',  label: globalize.translate('Movies'), icon: <MovieIcon />,    color: '#00a4dc', types: [ BaseItemKind.Movie ] },
-    { id: 'shows',   label: globalize.translate('Shows'),    icon: <TvIcon />,        color: '#aa5cc3', types: [ BaseItemKind.Series, BaseItemKind.Episode ] },
-    { id: 'music',   label: globalize.translate('TabMusic'),    icon: <MusicNoteIcon />, color: '#4caf50', types: [ BaseItemKind.MusicAlbum, BaseItemKind.Audio ] },
-    { id: 'books',   label: globalize.translate('Books'),    icon: <BookIcon />,      color: '#ff9800', types: [ BaseItemKind.Book, BaseItemKind.AudioBook ] },
-    { id: 'people',  label: globalize.translate('People'),  icon: <PersonIcon />,    color: '#e91e63', types: [ BaseItemKind.Person ] },
-    { id: 'all',     label: globalize.translate('All'),      icon: <GridViewIcon />,  color: '#607d8b', types: [] }
+    { id: 'movies', label: globalize.translate('Movies'), icon: <MovieIcon />, color: '#00a4dc', types: [ BaseItemKind.Movie ] },
+    { id: 'shows', label: globalize.translate('Shows'), icon: <TvIcon />, color: '#aa5cc3', types: [ BaseItemKind.Series, BaseItemKind.Episode ] },
+    { id: 'music', label: globalize.translate('TabMusic'), icon: <MusicNoteIcon />, color: '#4caf50', types: [ BaseItemKind.MusicAlbum, BaseItemKind.Audio ] },
+    { id: 'books', label: globalize.translate('Books'), icon: <BookIcon />, color: '#ff9800', types: [ BaseItemKind.Book, BaseItemKind.AudioBook ] },
+    { id: 'people', label: globalize.translate('People'), icon: <PersonIcon />, color: '#e91e63', types: [ BaseItemKind.Person ] },
+    { id: 'all', label: globalize.translate('All'), icon: <GridViewIcon />, color: '#607d8b', types: [] }
 ];
 
 const dedupe = (items: SearchResult[]) => {
@@ -246,7 +246,7 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
                         }
                     }}
                 >
-                    {/* Barra de búsqueda */}
+                    {/* Search field */}
                     <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1 }}>
                         <Box sx={{ display: 'flex', alignItems: 'center', color: loading ? '#00a4dc' : 'rgba(255,255,255,0.35)', mr: 0.5 }}>
                             {loading ? <CircularProgress size={16} sx={{ color: '#00a4dc' }} /> : <SearchIcon sx={{ fontSize: '1.2rem' }} />}
@@ -332,7 +332,7 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
                                         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 1 }}>
                                             <AutoAwesomeIcon sx={{ fontSize: '0.85rem', color: '#f9a825' }} />
                                             <Typography sx={{ fontSize: '0.72rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', color: '#f9a825' }}>
-                                                {globalize.translate('HeaderMoreLikeThis')}
+                                                {globalize.translate('YouMightAlsoLike')}
                                             </Typography>
                                         </Box>
                                         <Box sx={{ display: 'flex', gap: 1, overflowX: 'auto', pb: 0.5, '&::-webkit-scrollbar': { height: '3px' }, '&::-webkit-scrollbar-thumb': { background: 'rgba(249,168,37,0.4)', borderRadius: '4px' } }}>

@@ -9,6 +9,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
 import { useNavigate } from 'react-router-dom';
 
+import globalize from 'lib/globalize';
+
 import { useSetRemoteAccess } from '../api/useStartupConfig';
 import WizardLayout from '../components/WizardLayout';
 
@@ -38,11 +40,11 @@ const WizardRemotePage = () => {
                         backgroundClip: 'text'
                     }}
                 >
-                    Configurar acceso remoto
+                    {globalize.translate('HeaderConfigureRemoteAccess')}
                 </Typography>
 
                 <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.9rem', mb: 3 }}>
-                    Permite acceder a tu servidor Jellyfin desde fuera de tu red local.
+                    {globalize.translate('WizardRemoteAccessHelp')}
                 </Typography>
 
                 <Box sx={{
@@ -63,10 +65,10 @@ const WizardRemotePage = () => {
                         label={
                             <Box>
                                 <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.9rem' }}>
-                                    Permitir acceso remoto
+                                    {globalize.translate('AllowRemoteAccess')}
                                 </Typography>
                                 <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>
-                                    Permitir conexiones desde fuera de tu red local.
+                                    {globalize.translate('AllowRemoteAccessHelp')}
                                 </Typography>
                             </Box>
                         }
@@ -92,10 +94,10 @@ const WizardRemotePage = () => {
                         label={
                             <Box>
                                 <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.9rem' }}>
-                                    Habilitar mapeo de puertos automático (UPnP)
+                                    {globalize.translate('WizardUpnp')}
                                 </Typography>
                                 <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.75rem' }}>
-                                    Configura automáticamente el router para permitir acceso remoto.
+                                    {globalize.translate('WizardUpnpHelp')}
                                 </Typography>
                             </Box>
                         }
@@ -108,7 +110,7 @@ const WizardRemotePage = () => {
                         startIcon={<ArrowBackIcon />}
                         sx={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 2, '&:hover': { borderColor: 'rgba(0,164,220,0.35)', color: '#00a4dc', bgcolor: 'rgba(0,164,220,0.08)' } }}
                     >
-                        Anterior
+                        {globalize.translate('Previous')}
                     </Button>
                     <Button
                         type='submit'
@@ -117,7 +119,7 @@ const WizardRemotePage = () => {
                         endIcon={saving ? <CircularProgress size={16} color='inherit' /> : <ArrowForwardIcon />}
                         sx={{ background: 'linear-gradient(135deg, #00a4dc, #0077b6)', borderRadius: 2, px: 3, fontWeight: 600, '&:hover': { background: 'linear-gradient(135deg, #00b8f0, #0090d0)', transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,164,220,0.45)' } }}
                     >
-                        Siguiente
+                        {globalize.translate('Next')}
                     </Button>
                 </Box>
             </Box>

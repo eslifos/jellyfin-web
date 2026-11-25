@@ -26,22 +26,20 @@ import React, { type FC, useCallback, useEffect, useState } from 'react';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 import { getLibraryIcon } from 'utils/image';
+import { AUDIOBOOK_PROVIDER_ID } from 'utils/metadataProviders';
 
 import { invalidateVirtualFolders } from '../api/invalidateVirtualFolders';
 import { type LibraryKind, type LibraryKindOption, getLibraryKinds } from '../utils/libraryKinds';
 import { getLibraryAccent } from '../utils/libraryUi';
 import { type FolderType, FolderTypeToggle, guessFolderType, setFolderContentTypes } from './FolderContentType';
 
-/** Provider of the server for audiobooks (Audible, Apple Books, Google Books and Open Library, Spanish first). */
-const AUDIOBOOK_PROVIDER = 'Audiolibros en línea';
-
 /** Books in parts are albums and single-file books are audiobooks: both use only the audiobook catalogs. */
 const AUDIOBOOK_TYPE_OPTIONS = [ 'MusicAlbum', 'AudioBook' ].map(Type => ({
     Type,
-    MetadataFetchers: [ AUDIOBOOK_PROVIDER ],
-    MetadataFetcherOrder: [ AUDIOBOOK_PROVIDER ],
-    ImageFetchers: [ AUDIOBOOK_PROVIDER ],
-    ImageFetcherOrder: [ AUDIOBOOK_PROVIDER ],
+    MetadataFetchers: [ AUDIOBOOK_PROVIDER_ID ],
+    MetadataFetcherOrder: [ AUDIOBOOK_PROVIDER_ID ],
+    ImageFetchers: [ AUDIOBOOK_PROVIDER_ID ],
+    ImageFetcherOrder: [ AUDIOBOOK_PROVIDER_ID ],
     ImageOptions: []
 }));
 

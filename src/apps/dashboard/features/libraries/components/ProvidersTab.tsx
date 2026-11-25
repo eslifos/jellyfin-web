@@ -24,6 +24,7 @@ import React, { type Dispatch, type FC, type SetStateAction, useCallback, useEff
 
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
+import { providerLabel } from 'utils/metadataProviders';
 
 interface ProvidersTabProps {
     collectionType: string;
@@ -130,7 +131,7 @@ const ProviderList: FC<{
                                 </Box>
                             )}
                             <Box sx={{ flex: 1, minWidth: 0 }}>
-                                <Typography noWrap sx={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>{item.name}</Typography>
+                                <Typography noWrap sx={{ fontSize: '0.9rem', fontWeight: 600, color: '#fff' }}>{providerLabel(item.name)}</Typography>
                                 {description && <Typography sx={{ fontSize: '0.72rem', color: 'rgba(255,255,255,0.5)' }}>{description}</Typography>}
                             </Box>
                             {!toggleOnly && (

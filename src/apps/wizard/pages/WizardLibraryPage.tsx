@@ -25,17 +25,23 @@ import PhotoIcon from '@mui/icons-material/Photo';
 import FolderIcon from '@mui/icons-material/Folder';
 import { useNavigate } from 'react-router-dom';
 
+import globalize from 'lib/globalize';
+
 import { useVirtualFolders, useAddVirtualFolder, useDeleteVirtualFolder } from '../api/useVirtualFolders';
 import WizardLayout from '../components/WizardLayout';
 
+/** The value goes to the server; the label key is translated when shown (the language can change). */
 const COLLECTION_TYPES = [
-    { value: 'movies', label: 'Películas', icon: <MovieIcon /> },
-    { value: 'tvshows', label: 'Series', icon: <TvIcon /> },
-    { value: 'music', label: 'Música', icon: <MusicNoteIcon /> },
-    { value: 'books', label: 'Libros', icon: <BookIcon /> },
-    { value: 'homevideos', label: 'Fotos y videos personales', icon: <PhotoIcon /> },
-    { value: 'mixed', label: 'Contenido mixto', icon: <FolderIcon /> }
+    { value: 'movies', labelKey: 'Movies', icon: <MovieIcon /> },
+    { value: 'tvshows', labelKey: 'Series', icon: <TvIcon /> },
+    { value: 'music', labelKey: 'TabMusic', icon: <MusicNoteIcon /> },
+    { value: 'books', labelKey: 'Books', icon: <BookIcon /> },
+    { value: 'homevideos', labelKey: 'HomeVideosPhotos', icon: <PhotoIcon /> },
+    { value: 'mixed', labelKey: 'MixedMoviesShows', icon: <FolderIcon /> }
 ];
+
+/** Only an example of how a folder path looks. */
+const PATH_EXAMPLE = '/media/movies';
 
 const getIcon = (type?: string) => {
     const found = COLLECTION_TYPES.find(t => t.value === type);
@@ -76,7 +82,7 @@ const WizardLibraryPage = () => {
                         backgroundClip: 'text'
                     }}
                 >
-                    Configure sus bibliotecas multimedia
+                    {globalize.translate('HeaderSetupLibrary')}
                 </Typography>
                 <Button
                     href='https://jellyfin.org/docs/general/server/libraries'
@@ -91,7 +97,7 @@ const WizardLibraryPage = () => {
                         '&:hover': { borderColor: 'rgba(0,164,220,0.4)', color: '#00a4dc', bgcolor: 'rgba(0,164,220,0.08)' }
                     }}
                 >
-                    Ayuda
+                    {globalize.translate('Help')}
                 </Button>
             </Box>
 
@@ -137,6 +143,8 @@ const WizardLibraryPage = () => {
                                 </Typography>
                                 <IconButton
                                     size='small'
+                                    aria-label={globalize.translate('Delete')}
+                                    title={globalize.translate('Delete')}
                                     onClick={() => void deleteFolder(folder.Name ?? '')}
                                     sx={{ color: 'rgba(255,255,255,0.3)', mt: 0.5, '&:hover': { color: '#ef5350' } }}
                                 >
@@ -146,7 +154,7 @@ const WizardLibraryPage = () => {
                         </Card>
                     ))}
 
-                    {/* Botón Añadir */}
+                    {/* Add button */}
                     <Card
                         sx={{
                             width: 180,
@@ -164,21 +172,21 @@ const WizardLibraryPage = () => {
                         >
                             <AddCircleOutlineIcon sx={{ color: '#00a4dc', fontSize: '2rem' }} />
                             <Typography sx={{ color: 'rgba(255,255,255,0.7)', fontSize: '0.82rem', fontWeight: 500, textAlign: 'center', px: 1 }}>
-                                Añadir biblioteca de medios
+                                {globalize.translate('ButtonAddMediaLibrary')}
                             </Typography>
                         </CardActionArea>
                     </Card>
                 </Box>
             )}
 
-            {/* Navegación */}
+            {/* Navigation */}
             <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
                 <Button
                     onClick={() => navigate('/wizard/user')}
                     startIcon={<ArrowBackIcon />}
                     sx={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 2, '&:hover': { borderColor: 'rgba(0,164,220,0.35)', color: '#00a4dc', bgcolor: 'rgba(0,164,220,0.08)' } }}
                 >
-                    Anterior
+                    {globalize.translate('Previous')}
                 </Button>
                 <Button
                     onClick={() => navigate('/wizard/settings')}
@@ -186,11 +194,11 @@ const WizardLibraryPage = () => {
                     endIcon={<ArrowForwardIcon />}
                     sx={{ background: 'linear-gradient(135deg, #00a4dc, #0077b6)', borderRadius: 2, px: 3, fontWeight: 600, '&:hover': { background: 'linear-gradient(135deg, #00b8f0, #0090d0)', transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,164,220,0.45)' } }}
                 >
-                    Siguiente
+                    {globalize.translate('Next')}
                 </Button>
             </Box>
 
-            {/* Dialog para añadir biblioteca */}
+            {/* Dialog to add a library */}
             <Dialog
                 open={open}
                 onClose={() => setOpen(false)}
@@ -207,13 +215,13 @@ const WizardLibraryPage = () => {
                 }}
             >
                 <DialogTitle sx={{ bgcolor: 'rgba(0,0,0,0.25)', borderBottom: '1px solid rgba(0,164,220,0.12)', fontWeight: 700, background: 'linear-gradient(135deg, #fff 30%, #00a4dc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                    Añadir biblioteca de medios
+                    {globalize.translate('ButtonAddMediaLibrary')}
                 </DialogTitle>
                 <DialogContent sx={{ pt: 3 }}>
                     <Box component='form' id='add-library-form' onSubmit={handleAdd}>
                         <TextField
                             select
-                            label='Tipo de contenido'
+                            label={globalize.translate('LabelContentType')}
                             value={type}
                             onChange={e => setType(e.target.value)}
                             fullWidth
@@ -221,11 +229,11 @@ const WizardLibraryPage = () => {
                             sx={{ mb: 2 }}
                         >
                             {COLLECTION_TYPES.map(t => (
-                                <MenuItem key={t.value} value={t.value}>{t.label}</MenuItem>
+                                <MenuItem key={t.value} value={t.value}>{globalize.translate(t.labelKey)}</MenuItem>
                             ))}
                         </TextField>
                         <TextField
-                            label='Nombre para mostrar'
+                            label={globalize.translate('LabelDisplayName')}
                             value={name}
                             onChange={e => setName(e.target.value)}
                             required
@@ -234,17 +242,17 @@ const WizardLibraryPage = () => {
                             sx={{ mb: 2 }}
                         />
                         <TextField
-                            label='Ruta de la carpeta'
+                            label={globalize.translate('LabelFolder')}
                             value={path}
                             onChange={e => setPath(e.target.value)}
                             fullWidth
                             variant='filled'
-                            helperText='Ej: /mnt/nas/peliculas'
+                            helperText={globalize.translate('LabelFolderPathExample', PATH_EXAMPLE)}
                         />
                     </Box>
                 </DialogContent>
                 <DialogActions sx={{ background: 'rgba(0,0,0,0.2)', borderTop: '1px solid rgba(0,164,220,0.1)', p: 2 }}>
-                    <Button onClick={() => setOpen(false)} sx={{ color: 'rgba(255,255,255,0.6)' }}>Cancelar</Button>
+                    <Button onClick={() => setOpen(false)} sx={{ color: 'rgba(255,255,255,0.6)' }}>{globalize.translate('ButtonCancel')}</Button>
                     <Button
                         type='submit'
                         form='add-library-form'
@@ -253,7 +261,7 @@ const WizardLibraryPage = () => {
                         endIcon={adding ? <CircularProgress size={14} color='inherit' /> : null}
                         sx={{ background: 'linear-gradient(135deg, #00a4dc, #0077b6)', borderRadius: 2, px: 3, fontWeight: 600 }}
                     >
-                        OK
+                        {globalize.translate('ButtonOk')}
                     </Button>
                 </DialogActions>
             </Dialog>

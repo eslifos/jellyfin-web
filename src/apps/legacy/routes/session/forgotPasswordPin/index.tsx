@@ -13,6 +13,7 @@ import { useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { useCustomLogo } from 'utils/customLogo';
 
+import globalize from 'lib/globalize';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import WizardBackground from 'apps/wizard/components/WizardBackground';
 
@@ -41,13 +42,13 @@ const ForgotPasswordPinPage = () => {
 
             if (result?.Success) {
                 const users = result.UsersReset?.join(', ') ?? '';
-                alert(`Contraseña restablecida correctamente.\nUsuarios: ${users}`);
+                alert(`${globalize.translate('MessagePasswordResetForUsers')}\n${users}`);
                 navigate('/');
             } else {
-                setError('PIN inválido. Por favor intenta de nuevo.');
+                setError(globalize.translate('MessageInvalidForgotPasswordPin'));
             }
         } catch {
-            setError('No se pudo procesar la solicitud. Verifica el PIN.');
+            setError(globalize.translate('PinResetRequestFailed'));
         } finally {
             setSubmitting(false);
         }
@@ -74,17 +75,17 @@ const ForgotPasswordPinPage = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 1 }}>
                     <LockResetIcon sx={{ color: '#aa5cc3', fontSize: '2rem' }} />
                     <Typography variant='h5' sx={{ fontWeight: 700, background: 'linear-gradient(135deg, #fff 30%, #aa5cc3 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                        Restablecer contraseña
+                        {globalize.translate('HeaderPasswordReset')}
                     </Typography>
                 </Box>
 
                 <Typography sx={{ color: 'rgba(255,255,255,0.5)', fontSize: '0.88rem', mb: 3 }}>
-                    Ingresa el PIN de recuperación que recibiste.
+                    {globalize.translate('MessageForgotPasswordPinReset')}
                 </Typography>
 
                 <Box component='form' onSubmit={handleSubmit}>
                     <TextField
-                        label='Código PIN'
+                        label={globalize.translate('LabelPasswordRecoveryPinCode')}
                         value={pin}
                         onChange={e => setPin(e.target.value)}
                         required
@@ -104,14 +105,14 @@ const ForgotPasswordPinPage = () => {
                             endIcon={submitting ? <CircularProgress size={16} color='inherit' /> : undefined}
                             sx={{ background: 'linear-gradient(135deg, #aa5cc3, #7b3f92)', borderRadius: 2, py: 1.2, fontWeight: 600, '&:hover': { background: 'linear-gradient(135deg, #c47fd9, #9b5cb2)', transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(170,92,195,0.4)' } }}
                         >
-                            Enviar
+                            {globalize.translate('ButtonSubmit')}
                         </Button>
                         <Button
                             onClick={() => navigate(-1)}
                             startIcon={<ArrowBackIcon />}
                             sx={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 2, '&:hover': { borderColor: 'rgba(0,164,220,0.35)', color: '#00a4dc', bgcolor: 'rgba(0,164,220,0.08)' } }}
                         >
-                            Cancelar
+                            {globalize.translate('ButtonCancel')}
                         </Button>
                     </Box>
                 </Box>

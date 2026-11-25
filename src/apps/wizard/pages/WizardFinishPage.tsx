@@ -11,6 +11,9 @@ import { useNavigate } from 'react-router-dom';
 import { useCompleteWizard } from '../api/useStartupConfig';
 import WizardLayout from '../components/WizardLayout';
 
+/** Stands for the button name in the sentence, to draw it apart. */
+const BUTTON_MARK = '\u0000';
+
 const WizardFinishPage = () => {
     const navigate = useNavigate();
     const { mutateAsync: completeWizard, isPending: completing } = useCompleteWizard();
@@ -19,6 +22,9 @@ const WizardFinishPage = () => {
         await completeWizard();
         navigate('/');
     };
+
+    // The name of the button goes in bold inside the translated sentence, wherever each language puts it
+    const [ before, after = '' ] = globalize.translate('WizardFinishHelp', BUTTON_MARK).split(BUTTON_MARK);
 
     return (
         <WizardLayout>
@@ -40,9 +46,9 @@ const WizardFinishPage = () => {
                 </Typography>
 
                 <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.95rem', mb: 4, lineHeight: 1.7 }}>
-                    Tu servidor Jellyfin está configurado y listo para usar.
-                    Haz clic en <strong style={{ color: 'rgba(255,255,255,0.8)' }}>Finalizar</strong> para entrar al panel de control
-                    y empezar a disfrutar de tu colección multimedia.
+                    {before}
+                    <strong style={{ color: 'rgba(255,255,255,0.8)' }}>{globalize.translate('LabelFinish')}</strong>
+                    {after}
                 </Typography>
 
                 <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>

@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
+import ButtonBase, { type ButtonBaseActions } from '@mui/material/ButtonBase';
 import Checkbox from '@mui/material/Checkbox';
 import CircularProgress from '@mui/material/CircularProgress';
 import FormControlLabel from '@mui/material/FormControlLabel';
@@ -21,6 +22,7 @@ import PhonelinkLockIcon from '@mui/icons-material/PhonelinkLock';
 // @ts-ignore
 import { useCustomLogo } from 'utils/customLogo';
 
+import globalize from 'lib/globalize';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import appSettings from 'scripts/settings/appSettings';
 import Dashboard from 'utils/dashboard';
@@ -94,22 +96,41 @@ const LoginPage = () => {
             Dashboard.navigate(await getPostLoginUrl(getTargetUrl(), apiClient));
         } catch (e: unknown) {
             const status = (e as { status?: number })?.status;
-            if (status === 401) setError('Usuario o contraseña incorrectos.');
-            else if (status === 403) setError('No tienes permiso para acceder.');
-            else setError('No se pudo conectar al servidor.');
+            if (status === 401) setError(globalize.translate('MessageInvalidUser'));
+            else if (status === 403) setError(globalize.translate('MessageUnauthorizedUser'));
+            else setError(globalize.translate('MessageUnableToConnectToServer'));
         } finally {
             setSubmitting(false);
         }
     }, [ getApiClient, getTargetUrl, rememberMe ]);
 
-    const handleUserCard = (user: PublicUser) => {
+    const onUserCard = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+        const user = users.find(u => (u.Id ?? '') === e.currentTarget.dataset.userId);
+        if (!user) return;
         if (!user.HasPassword) {
             void login(user.Name ?? '', '');
         } else {
             setUsername(user.Name ?? '');
             setShowManual(true);
         }
-    };
+    }, [ login, users ]);
+
+    // On opening (and when coming back from the form) the first profile has the focus: Enter signs in with it,
+    // the arrows of a TV remote move from there. Shown as focused, since there was no pointer yet.
+    const firstCard = useRef<ButtonBaseActions>(null);
+    const showCards = !loading && !showManual && users.length > 0;
+    useEffect(() => {
+        if (showCards) firstCard.current?.focusVisible();
+    }, [ showCards ]);
+
+    // The form opened: a profile chosen leaves only its password to type, else the name comes first
+    const usernameInput = useRef<HTMLInputElement>(null);
+    const passwordInput = useRef<HTMLInputElement>(null);
+    const showForm = !loading && !showCards;
+    useEffect(() => {
+        if (!showForm) return;
+        (usernameInput.current?.value ? passwordInput.current : usernameInput.current)?.focus();
+    }, [ showForm ]);
 
     const handleSubmit = (e: React.FormEvent) => {
         e.preventDefault();
@@ -139,7 +160,7 @@ const LoginPage = () => {
                     }
                 }, 5000);
             })
-            .catch(() => setError('QuickConnect no está disponible.'));
+            .catch(() => setError(globalize.translate('QuickConnectNotActive')));
     };
 
     const buttonSx = {
@@ -152,6 +173,27 @@ const LoginPage = () => {
         '&:hover': { background: 'linear-gradient(135deg, #00b8f0, #0090d0)', transform: 'translateY(-1px)', boxShadow: '0 6px 20px rgba(0,164,220,0.4)' }
     };
 
+    // Pointer over it or keyboard / remote focus on it: the same lift, plus a bright ring seen across a room
+    const cardActive = {
+        background: 'rgba(0,164,220,0.1)', borderColor: 'rgba(0,164,220,0.5)', transform: 'translateY(-3px)', boxShadow: '0 8px 24px rgba(0,0,0,0.3)'
+    };
+    const userCardSx = {
+        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
+        cursor: 'pointer', p: 2, borderRadius: 3, minWidth: 100,
+        color: 'inherit', font: 'inherit',
+        border: '1px solid rgba(0,164,220,0.2)',
+        background: 'rgba(255,255,255,0.04)',
+        transition: 'all 0.2s',
+        '&:hover': cardActive,
+        '&:focus-visible, &.Mui-focusVisible': {
+            ...cardActive,
+            outline: 'none',
+            borderColor: '#00a4dc',
+            boxShadow: '0 0 0 3px #00a4dc, 0 0 28px 6px rgba(0,164,220,0.65), 0 8px 24px rgba(0,0,0,0.3)',
+            '& .MuiAvatar-root': { borderColor: '#00a4dc' }
+        }
+    };
+
     const ghostSx = {
         width: '100%',
         borderRadius: 2,
@@ -159,7 +201,12 @@ const LoginPage = () => {
         fontSize: '0.88rem',
         color: 'rgba(255,255,255,0.6)',
         border: '1px solid rgba(255,255,255,0.14)',
-        '&:hover': { borderColor: 'rgba(0,164,220,0.4)', color: '#00a4dc', bgcolor: 'rgba(0,164,220,0.08)' }
+        '&:hover': { borderColor: 'rgba(0,164,220,0.4)', color: '#00a4dc', bgcolor: 'rgba(0,164,220,0.08)' },
+        // Reached with Tab or the remote: as clear as the profiles
+        '&:focus-visible, &.Mui-focusVisible': {
+            outline: 'none', borderColor: '#00a4dc', color: '#fff', bgcolor: 'rgba(0,164,220,0.16)',
+            boxShadow: '0 0 0 3px #00a4dc, 0 0 22px 4px rgba(0,164,220,0.55)'
+        }
     };
 
     const bgPortal = createPortal(
@@ -207,10 +254,10 @@ const LoginPage = () => {
                 <DialogContent sx={{ textAlign: 'center', pt: 4, pb: 4, px: 4 }}>
                     <PhonelinkLockIcon sx={{ fontSize: '3rem', color: '#00a4dc', mb: 2, filter: 'drop-shadow(0 0 12px rgba(0,164,220,0.5))' }} />
                     <Typography variant='h6' sx={{ fontWeight: 700, mb: 1, background: 'linear-gradient(135deg, #fff 30%, #00a4dc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                        QuickConnect
+                        {globalize.translate('QuickConnect')}
                     </Typography>
                     <Typography sx={{ color: 'rgba(255,255,255,0.55)', fontSize: '0.88rem', mb: 2.5 }}>
-                        Ingresa este código en tu dispositivo Jellyfin para iniciar sesión:
+                        {globalize.translate('LoginQuickConnectCodeHelp')}
                     </Typography>
                     <Box sx={{ background: 'rgba(0,164,220,0.1)', border: '1px solid rgba(0,164,220,0.3)', borderRadius: 2, py: 2, px: 3, mb: 2.5 }}>
                         <Typography sx={{ fontSize: '2.2rem', fontWeight: 800, letterSpacing: '0.3em', color: '#00a4dc', fontFamily: 'monospace' }}>
@@ -220,147 +267,147 @@ const LoginPage = () => {
                     <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, justifyContent: 'center', mb: 2 }}>
                         <CircularProgress size={14} sx={{ color: '#00a4dc' }} />
                         <Typography sx={{ color: 'rgba(255,255,255,0.4)', fontSize: '0.78rem' }}>
-                            Esperando autorización...
+                            {globalize.translate('LoginWaitingAuthorization')}
                         </Typography>
                     </Box>
                     <Button
                         onClick={() => { setQcCode(null); if (quickConnectTimer.current) clearInterval(quickConnectTimer.current); }}
                         sx={{ color: 'rgba(255,255,255,0.5)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 2, fontSize: '0.82rem', '&:hover': { borderColor: 'rgba(0,164,220,0.4)', color: '#00a4dc' } }}
                     >
-                        Cancelar
+                        {globalize.translate('ButtonCancel')}
                     </Button>
                 </DialogContent>
             </Dialog>
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'fixed', inset: 0, zIndex: 9999, p: 2, overflowY: 'auto' }}>
 
-            {/* Logo */}
-            <Box
-                sx={{
-                    width: 220, height: 56, mb: 2.5, flexShrink: 0, zIndex: 9999, position: 'relative',
-                    backgroundImage: `url(${bannerLight as string})`,
-                    backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
-                    animation: 'jf-logo-glow 3s ease-in-out infinite, jf-float-logo 4s ease-in-out infinite'
-                }}
-                aria-label='Jellyfin'
-            />
+                {/* Logo */}
+                <Box
+                    sx={{
+                        width: 220, height: 56, mb: 2.5, flexShrink: 0, zIndex: 9999, position: 'relative',
+                        backgroundImage: `url(${bannerLight as string})`,
+                        backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
+                        animation: 'jf-logo-glow 3s ease-in-out infinite, jf-float-logo 4s ease-in-out infinite'
+                    }}
+                    aria-label='Jellyfin'
+                />
 
-            {/* Tarjeta */}
-            <Paper
-                elevation={0}
-                sx={{
-                    width: '100%', maxWidth: 480, zIndex: 9999, position: 'relative',
-                    background: 'rgba(10,12,22,0.80)',
-                    backdropFilter: 'blur(28px) saturate(1.5)',
-                    WebkitBackdropFilter: 'blur(28px) saturate(1.5)',
-                    border: '1px solid rgba(0,164,220,0.2)',
-                    borderRadius: 3,
-                    p: { xs: 3, sm: 4 },
-                    animation: 'jf-glow-pulse 4s ease-in-out infinite',
-                    '&::before': { content: '""', position: 'absolute', top: 0, left: '2rem', right: '2rem', height: '2px', background: 'linear-gradient(90deg, transparent, #00a4dc 40%, #aa5cc3 60%, transparent)', borderRadius: '0 0 4px 4px' }
-                }}
-            >
-                <Typography variant='h5' sx={{ fontWeight: 700, mb: 3, textAlign: 'center', background: 'linear-gradient(135deg, #fff 30%, #00a4dc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                    Por favor, inicie sesión
-                </Typography>
+                {/* Tarjeta */}
+                <Paper
+                    elevation={0}
+                    sx={{
+                        width: '100%', maxWidth: 480, zIndex: 9999, position: 'relative',
+                        background: 'rgba(10,12,22,0.80)',
+                        backdropFilter: 'blur(28px) saturate(1.5)',
+                        WebkitBackdropFilter: 'blur(28px) saturate(1.5)',
+                        border: '1px solid rgba(0,164,220,0.2)',
+                        borderRadius: 3,
+                        p: { xs: 3, sm: 4 },
+                        animation: 'jf-glow-pulse 4s ease-in-out infinite',
+                        '&::before': { content: '""', position: 'absolute', top: 0, left: '2rem', right: '2rem', height: '2px', background: 'linear-gradient(90deg, transparent, #00a4dc 40%, #aa5cc3 60%, transparent)', borderRadius: '0 0 4px 4px' }
+                    }}
+                >
+                    <Typography variant='h5' sx={{ fontWeight: 700, mb: 3, textAlign: 'center', background: 'linear-gradient(135deg, #fff 30%, #00a4dc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
+                        {globalize.translate('HeaderPleaseSignIn')}
+                    </Typography>
 
-                {loading ? (
-                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                        <CircularProgress sx={{ color: '#00a4dc' }} />
-                    </Box>
-                ) : !showManual && users.length > 0 ? (
+                    {loading ? (
+                        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                            <CircularProgress sx={{ color: '#00a4dc' }} />
+                        </Box>
+                    ) : showCards ? (
                     /* Tarjetas de usuarios */
-                    <>
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center', mb: 3 }}>
-                            {users.map(user => (
-                                <Box
-                                    key={user.Id}
-                                    onClick={() => handleUserCard(user)}
-                                    sx={{
-                                        display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1,
-                                        cursor: 'pointer', p: 2, borderRadius: 3, minWidth: 100,
-                                        border: '1px solid rgba(0,164,220,0.2)',
-                                        background: 'rgba(255,255,255,0.04)',
-                                        transition: 'all 0.2s',
-                                        '&:hover': { background: 'rgba(0,164,220,0.1)', borderColor: 'rgba(0,164,220,0.5)', transform: 'translateY(-3px)', boxShadow: '0 8px 24px rgba(0,0,0,0.3)' }
-                                    }}
-                                >
-                                    <Avatar
-                                        src={user.PrimaryImageTag && user.Id ? ServerConnections.currentApiClient()?.getUserImageUrl(user.Id, { width: 120, tag: user.PrimaryImageTag, type: 'Primary' }) : undefined}
-                                        sx={{ width: 64, height: 64, bgcolor: 'rgba(0,164,220,0.3)', border: '2px solid rgba(0,164,220,0.3)' }}
+                        <>
+                            {/* TV remote: left / right stay among the profiles, down goes to the buttons below */}
+                            <Box className='focuscontainer-x' sx={{ display: 'flex', flexWrap: 'wrap', gap: 2, justifyContent: 'center', mb: 3 }}>
+                                {users.map((user, index) => (
+                                // A real button: Tab, the arrows of a TV remote (focusManager looks for buttons) and Enter
+                                    <ButtonBase
+                                        key={user.Id}
+                                        data-user-id={user.Id ?? ''}
+                                        onClick={onUserCard}
+                                        action={index === 0 ? firstCard : undefined}
+                                        aria-label={user.Name ?? ''}
+                                        sx={userCardSx}
                                     >
-                                        <PersonIcon sx={{ fontSize: '2rem' }} />
-                                    </Avatar>
-                                    <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', fontWeight: 500 }}>
-                                        {user.Name}
-                                    </Typography>
-                                </Box>
-                            ))}
-                        </Box>
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2 }}>
-                            <Button variant='outlined' onClick={() => { setUsername(''); setShowManual(true); }} sx={ghostSx}>
-                                Inicio de sesión manual
-                            </Button>
-                            {quickConnectEnabled && (
-                                <Button variant='outlined' onClick={handleQuickConnect} sx={ghostSx}>
-                                    Usar conexión rápida
+                                        <Avatar
+                                            src={user.PrimaryImageTag && user.Id ? ServerConnections.currentApiClient()?.getUserImageUrl(user.Id, { width: 120, tag: user.PrimaryImageTag, type: 'Primary' }) : undefined}
+                                            sx={{ width: 64, height: 64, bgcolor: 'rgba(0,164,220,0.3)', border: '2px solid rgba(0,164,220,0.3)' }}
+                                        >
+                                            <PersonIcon sx={{ fontSize: '2rem' }} />
+                                        </Avatar>
+                                        <Typography sx={{ color: 'rgba(255,255,255,0.85)', fontSize: '0.85rem', fontWeight: 500 }}>
+                                            {user.Name}
+                                        </Typography>
+                                    </ButtonBase>
+                                ))}
+                            </Box>
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2 }}>
+                                <Button variant='outlined' onClick={() => { setUsername(''); setShowManual(true); }} sx={ghostSx}>
+                                    {globalize.translate('ButtonManualLogin')}
                                 </Button>
-                            )}
-                        </Box>
-                    </>
-                ) : (
+                                {quickConnectEnabled && (
+                                    <Button variant='outlined' onClick={handleQuickConnect} sx={ghostSx}>
+                                        {globalize.translate('ButtonUseQuickConnect')}
+                                    </Button>
+                                )}
+                            </Box>
+                        </>
+                    ) : (
                     /* Formulario manual */
-                    <Box component='form' onSubmit={handleSubmit}>
-                        <TextField
-                            label='Usuario'
-                            value={username}
-                            onChange={e => setUsername(e.target.value)}
-                            fullWidth variant='filled'
-                            autoComplete='username'
-                            inputProps={{ autoCapitalize: 'off' }}
-                            sx={{ mb: 2 }}
-                        />
-                        <TextField
-                            label='Contraseña'
-                            type='password'
-                            value={password}
-                            onChange={e => setPassword(e.target.value)}
-                            fullWidth variant='filled'
-                            autoComplete='current-password'
-                            error={!!error}
-                            helperText={error || ' '}
-                            sx={{ mb: 1 }}
-                        />
-                        <FormControlLabel
-                            control={<Checkbox checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} sx={{ color: 'rgba(255,255,255,0.4)', '&.Mui-checked': { color: '#00a4dc' } }} />}
-                            label={<Typography sx={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.65)' }}>Recuérdame</Typography>}
-                            sx={{ mb: 2 }}
-                        />
-                        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2 }}>
-                            <Button type='submit' variant='contained' disabled={submitting} sx={buttonSx}
-                                endIcon={submitting ? <CircularProgress size={16} color='inherit' /> : <LockIcon />}>
-                                Iniciar sesión
-                            </Button>
-                            {users.length > 0 && (
-                                <Button variant='outlined' onClick={() => setShowManual(false)} sx={ghostSx}>
-                                    Cancelar
+                        <Box component='form' onSubmit={handleSubmit}>
+                            <TextField
+                                label={globalize.translate('LabelUser')}
+                                value={username}
+                                onChange={e => setUsername(e.target.value)}
+                                fullWidth variant='filled'
+                                autoComplete='username'
+                                inputRef={usernameInput}
+                                inputProps={{ autoCapitalize: 'off' }}
+                                sx={{ mb: 2 }}
+                            />
+                            <TextField
+                                label={globalize.translate('LabelPassword')}
+                                type='password'
+                                value={password}
+                                onChange={e => setPassword(e.target.value)}
+                                fullWidth variant='filled'
+                                autoComplete='current-password'
+                                inputRef={passwordInput}
+                                error={!!error}
+                                helperText={error || ' '}
+                                sx={{ mb: 1 }}
+                            />
+                            <FormControlLabel
+                                control={<Checkbox checked={rememberMe} onChange={e => setRememberMe(e.target.checked)} sx={{ color: 'rgba(255,255,255,0.4)', '&.Mui-checked': { color: '#00a4dc' } }} />}
+                                label={<Typography sx={{ fontSize: '0.88rem', color: 'rgba(255,255,255,0.65)' }}>{globalize.translate('RememberMe')}</Typography>}
+                                sx={{ mb: 2 }}
+                            />
+                            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.2 }}>
+                                <Button type='submit' variant='contained' disabled={submitting} sx={buttonSx}
+                                    endIcon={submitting ? <CircularProgress size={16} color='inherit' /> : <LockIcon />}>
+                                    {globalize.translate('ButtonSignIn')}
                                 </Button>
-                            )}
-                            {quickConnectEnabled && (
-                                <Button variant='outlined' onClick={handleQuickConnect} sx={ghostSx}>
-                                    Usar conexión rápida
+                                {users.length > 0 && (
+                                    <Button variant='outlined' onClick={() => setShowManual(false)} sx={ghostSx}>
+                                        {globalize.translate('ButtonCancel')}
+                                    </Button>
+                                )}
+                                {quickConnectEnabled && (
+                                    <Button variant='outlined' onClick={handleQuickConnect} sx={ghostSx}>
+                                        {globalize.translate('ButtonUseQuickConnect')}
+                                    </Button>
+                                )}
+                                <Button variant='outlined' onClick={() => navigate('/forgotpassword')} sx={ghostSx}>
+                                    {globalize.translate('ButtonForgotPassword')}
                                 </Button>
-                            )}
-                            <Button variant='outlined' onClick={() => navigate('/forgotpassword')} sx={ghostSx}>
-                                Contraseña olvidada
-                            </Button>
-                            <Button variant='outlined' onClick={() => navigate('/selectserver')} sx={ghostSx}>
-                                Cambiar servidor
-                            </Button>
+                                <Button variant='outlined' onClick={() => navigate('/selectserver')} sx={ghostSx}>
+                                    {globalize.translate('ButtonChangeServer')}
+                                </Button>
+                            </Box>
                         </Box>
-                    </Box>
-                )}
-            </Paper>
-        </Box>
+                    )}
+                </Paper>
+            </Box>
         </>
     );
 };

@@ -13,9 +13,15 @@ import { useNavigate } from 'react-router-dom';
 // @ts-ignore
 import { useCustomLogo } from 'utils/customLogo';
 
+import globalize from 'lib/globalize';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import Dashboard from 'utils/dashboard';
 import WizardBackground from 'apps/wizard/components/WizardBackground';
+
+/** How a server address looks (an example in no language). */
+const URL_EXAMPLE = 'https://jellyfin.example.com:8096';
+/** Where a newer server is downloaded. */
+const DOWNLOADS_URL = 'https://jellyfin.org/downloads';
 
 const AddServerPage = () => {
     const { bannerUrl: bannerLight } = useCustomLogo();
@@ -44,13 +50,13 @@ const AddServerPage = () => {
                     navigate('/selectserver');
                     break;
                 case 'ServerUpdateNeeded':
-                    setError('El servidor requiere una actualización antes de continuar.');
+                    setError(globalize.translate('ServerUpdateNeeded', DOWNLOADS_URL));
                     break;
                 default:
-                    setError('No se pudo conectar al servidor. Verifica la URL e intenta de nuevo.');
+                    setError(globalize.translate('MessageUnableToConnectToServer'));
             }
         } catch {
-            setError('No se pudo conectar al servidor. Verifica la URL e intenta de nuevo.');
+            setError(globalize.translate('MessageUnableToConnectToServer'));
         } finally {
             setConnecting(false);
         }
@@ -77,22 +83,22 @@ const AddServerPage = () => {
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 3 }}>
                     <DnsIcon sx={{ color: '#00a4dc', fontSize: '2rem' }} />
                     <Typography variant='h5' sx={{ fontWeight: 700, background: 'linear-gradient(135deg, #fff 30%, #00a4dc 100%)', WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text' }}>
-                        Conectar a servidor
+                        {globalize.translate('HeaderConnectToServer')}
                     </Typography>
                 </Box>
 
                 <Box component='form' onSubmit={handleSubmit}>
                     <TextField
-                        label='URL del servidor'
+                        label={globalize.translate('LabelServerUrl')}
                         type='url'
                         value={serverUrl}
                         onChange={e => setServerUrl(e.target.value)}
                         required
                         fullWidth
                         variant='filled'
-                        placeholder='https://mi-servidor:8096'
+                        placeholder={URL_EXAMPLE}
                         error={!!error}
-                        helperText={error || 'Ingresa la dirección completa de tu servidor Jellyfin.'}
+                        helperText={error || globalize.translate('LabelServerUrlHelp')}
                         sx={{ mb: 3 }}
                     />
 
@@ -104,14 +110,14 @@ const AddServerPage = () => {
                             endIcon={connecting ? <CircularProgress size={16} color='inherit' /> : undefined}
                             sx={{ background: 'linear-gradient(135deg, #00a4dc, #0077b6)', borderRadius: 2, py: 1.2, fontWeight: 600, '&:hover': { background: 'linear-gradient(135deg, #00b8f0, #0090d0)', transform: 'translateY(-2px)', boxShadow: '0 8px 24px rgba(0,164,220,0.45)' } }}
                         >
-                            Conectar
+                            {globalize.translate('ButtonConnect')}
                         </Button>
                         <Button
                             onClick={() => navigate(-1)}
                             startIcon={<ArrowBackIcon />}
                             sx={{ color: 'rgba(255,255,255,0.6)', border: '1px solid rgba(255,255,255,0.14)', borderRadius: 2, '&:hover': { borderColor: 'rgba(0,164,220,0.35)', color: '#00a4dc', bgcolor: 'rgba(0,164,220,0.08)' } }}
                         >
-                            Cancelar
+                            {globalize.translate('ButtonCancel')}
                         </Button>
                     </Box>
                 </Box>

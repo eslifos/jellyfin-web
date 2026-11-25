@@ -9,6 +9,7 @@ import escapeHtml from 'escape-html';
 
 import globalize from '../../lib/globalize';
 import dom from '../../utils/dom';
+import { providerLabel } from '../../utils/metadataProviders';
 import '../../elements/emby-checkbox/emby-checkbox';
 import '../../elements/emby-select/emby-select';
 import '../../elements/emby-input/emby-input';
@@ -78,7 +79,7 @@ function renderMetadataReaders(page, plugins) {
         html += '<span class="listItemIcon material-icons live_tv" aria-hidden="true"></span>';
         html += '<div class="listItemBody">';
         html += '<h3 class="listItemBodyText">';
-        html += escapeHtml(plugin.Name);
+        html += escapeHtml(providerLabel(plugin.Name));
         html += '</h3>';
         html += '</div>';
         if (i > 0) {
@@ -110,7 +111,7 @@ function renderMetadataSavers(page, metadataSavers) {
     html += `<h3 class="checkboxListLabel">${globalize.translate('LabelMetadataSavers')}</h3>`;
     html += '<div class="checkboxList paperList checkboxList-paperList">';
     for (const plugin of metadataSavers) {
-        html += `<label><input type="checkbox" data-defaultenabled="${plugin.DefaultEnabled}" is="emby-checkbox" class="chkMetadataSaver" data-pluginname="${escapeHtml(plugin.Name)}" ${false}><span>${escapeHtml(plugin.Name)}</span></label>`;
+        html += `<label><input type="checkbox" data-defaultenabled="${plugin.DefaultEnabled}" is="emby-checkbox" class="chkMetadataSaver" data-pluginname="${escapeHtml(plugin.Name)}" ${false}><span>${escapeHtml(providerLabel(plugin.Name))}</span></label>`;
     }
     html += '</div>';
     html += `<div class="fieldDescription" style="margin-top:.25em;">${globalize.translate('LabelMetadataSaversHelp')}</div>`;
@@ -137,7 +138,7 @@ function getMetadataFetchersForTypeHtml(availableTypeOptions, libraryOptionsForT
         html += '<label class="listItemCheckboxContainer"><input type="checkbox" is="emby-checkbox" class="chkMetadataFetcher" data-pluginname="' + escapeHtml(plugin.Name) + '" ' + checkedHtml + '><span></span></label>';
         html += '<div class="listItemBody">';
         html += '<h3 class="listItemBodyText">';
-        html += escapeHtml(plugin.Name);
+        html += escapeHtml(providerLabel(plugin.Name));
         html += '</h3>';
         html += '</div>';
         if (index > 0) {
@@ -201,7 +202,7 @@ function renderSubtitleFetchers(page, availableOptions, libraryOptions) {
         html += `<label class="listItemCheckboxContainer"><input type="checkbox" is="emby-checkbox" class="chkSubtitleFetcher" data-pluginname="${escapeHtml(plugin.Name)}" ${checkedHtml}><span></span></label>`;
         html += '<div class="listItemBody">';
         html += '<h3 class="listItemBodyText">';
-        html += escapeHtml(plugin.Name);
+        html += escapeHtml(providerLabel(plugin.Name));
         html += '</h3>';
         html += '</div>';
         if (i > 0) {
@@ -234,7 +235,7 @@ function renderLyricFetchers(page, availableOptions, libraryOptions) {
         html += `<label class="listItemCheckboxContainer"><input type="checkbox" is="emby-checkbox" class="chkLyricFetcher" data-pluginname="${escapeHtml(plugin.Name)}" ${checkedHtml}><span></span></label>`;
         html += '<div class="listItemBody">';
         html += '<h3 class="listItemBodyText">';
-        html += escapeHtml(plugin.Name);
+        html += escapeHtml(providerLabel(plugin.Name));
         html += '</h3>';
         html += '</div>';
         if (i > 0) {
@@ -268,7 +269,7 @@ function renderMediaSegmentProviders(page, availableOptions, libraryOptions) {
         html += `<label class="listItemCheckboxContainer"><input type="checkbox" is="emby-checkbox" class="chkMediaSegmentProvider" data-pluginname="${escapeHtml(plugin.Name)}" ${checkedHtml}><span></span></label>`;
         html += '<div class="listItemBody">';
         html += '<h3 class="listItemBodyText">';
-        html += escapeHtml(plugin.Name);
+        html += escapeHtml(providerLabel(plugin.Name));
         html += '</h3>';
         html += '</div>';
         if (i > 0) {
@@ -307,7 +308,7 @@ function getImageFetchersForTypeHtml(availableTypeOptions, libraryOptionsForType
         html += '<label class="listItemCheckboxContainer"><input type="checkbox" is="emby-checkbox" class="chkImageFetcher" data-pluginname="' + escapeHtml(plugin.Name) + '" ' + checkedHtml + '><span></span></label>';
         html += '<div class="listItemBody">';
         html += '<h3 class="listItemBodyText">';
-        html += escapeHtml(plugin.Name);
+        html += escapeHtml(providerLabel(plugin.Name));
         html += '</h3>';
         html += '</div>';
         if (i > 0) {
@@ -341,7 +342,7 @@ function getSimilarItemProvidersForTypeHtml(availableTypeOptions, libraryOptions
         html += '<label class="listItemCheckboxContainer"><input type="checkbox" is="emby-checkbox" class="chkSimilarItemProvider" data-pluginname="' + escapeHtml(plugin.Name) + '" ' + checkedHtml + '><span></span></label>';
         html += '<div class="listItemBody">';
         html += '<h3 class="listItemBodyText">';
-        html += escapeHtml(plugin.Name);
+        html += escapeHtml(providerLabel(plugin.Name));
         html += '</h3>';
         html += '</div>';
         if (index > 0) {
