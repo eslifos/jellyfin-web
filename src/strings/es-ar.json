@@ -1603,6 +1603,7 @@
     "HeaderAddToPlaylist": "Agregar a la lista de reproducción",
     "HeaderAddToCollection": "Agregar a la colección",
     "HeaderActivity": "Actividad",
+    "ServerActivity": "Actividad del servidor",
     "HeaderActiveRecordings": "Grabaciones activas",
     "HeaderActiveDevices": "Dispositivos activos",
     "HeaderAccessScheduleHelp": "Crear un horario de acceso para limitar el acceso a ciertas horas.",

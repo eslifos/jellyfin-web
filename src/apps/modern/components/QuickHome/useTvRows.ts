@@ -54,6 +54,14 @@ const isTextField = (el: Element) => el instanceof HTMLInputElement && ![ 'butto
     || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement || (el as HTMLElement).isContentEditable;
 
 /** A dialog or menu on screen (the modern app keeps some mounted and hidden: those do not count). */
+/** Something on screen above the first row, not in the side rails of the TV layout (the tabs of a library). */
+const isAboveRows = (el: Element, firstRow: Element) => {
+    // Against its first item: a banner row may start under the tabs, at the top of the screen
+    const first = rowItems(firstRow)[0] ?? firstRow;
+    return !el.closest('[data-tv-rail], nav[data-bottom-bar]')
+        && el.getBoundingClientRect().bottom <= first.getBoundingClientRect().top + 4;
+};
+
 const dialogOpen = () => [ ...document.querySelectorAll('.dialogContainer .dialog.opened, [role="dialog"], [role="menu"], .MuiPopover-root') ]
     .some(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
 
@@ -139,6 +147,12 @@ export const useTvRows = (rootRef: RefObject<HTMLElement>) => {
             const row = active?.closest(ROW_SELECTOR);
 
             if (!row || !root.contains(row)) {
+                // Above the rows (the tabs of a library over its page): down goes into the first row
+                if (direction === 'down' && active && active !== document.body && isAboveRows(active, rows[0])) {
+                    e.preventDefault();
+                    enterRow(rows[0], rows);
+                    return;
+                }
                 // Focus lost (on nothing): back to the first row; anywhere else, the usual navigation
                 if (active && active !== document.body) return;
                 e.preventDefault();

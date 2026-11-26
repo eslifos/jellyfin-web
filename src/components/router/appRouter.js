@@ -6,7 +6,8 @@ import itemHelper from '../itemHelper';
 import loading from '../loading/loading';
 import alert from '../alert';
 
-import { focusBottomBar, isInBottomBar } from 'apps/modern/components/FloatingNav/tvBar';
+import { focusBottomBar, leaveBottomBarIfIn } from 'apps/modern/components/FloatingNav/tvBar';
+import { leaveRailIfIn } from 'apps/modern/components/HomeLibraryNav/tvRail';
 import { openPlayer } from 'apps/modern/components/Player/events';
 import { closeOpenModal } from 'scripts/tvModals';
 import layoutManager from 'components/layoutManager';
@@ -134,14 +135,16 @@ class AppRouter {
      * @returns Whether it was handled; when not (the home screen, already in the bar) the app may close.
      */
     handleBack() {
-        // A menu or dialog on screen closes first
+        // A menu or dialog on screen closes first; then the bar or the rail of the TV layout, if the focus is there
         if (closeOpenModal()) return true;
+        if (layoutManager.tv && (leaveBottomBarIfIn() || leaveRailIfIn())) return true;
         if (this.canGoBack()) {
             this.back();
             return true;
         }
-        // Home screen with the remote: Back goes to the bar first (its options are there); from the bar, it closes
-        if (layoutManager.tv && this.isStartPage() && !isInBottomBar(document.activeElement)) {
+        // Home screen with the remote: Back opens the bar (its options are there); in the bar, Back closes it (above).
+        // The app is left with the Home key of the remote
+        if (layoutManager.tv && this.isStartPage()) {
             return focusBottomBar();
         }
         return false;

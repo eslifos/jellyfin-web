@@ -47,7 +47,9 @@ export function autoFocus(container) {
 
     let candidates = [];
 
-    if (activeElement) {
+    // The element focused before only counts when it is in this screen (not the floating bars around it, or the
+    // screen that was left)
+    if (activeElement && container.contains(activeElement)) {
         // These elements are recreated
         if (activeElement.classList.contains('btnPreviousPage')) {
             candidates.push(container.querySelector('.btnPreviousPage'));

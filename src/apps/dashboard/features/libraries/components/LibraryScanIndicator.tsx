@@ -28,6 +28,11 @@ import { ScanActivityList } from './LibraryScansPanel';
 interface LibraryScanIndicatorProps {
     /** Narrow phones: less padding. */
     compact?: boolean;
+    /**
+     * TV: the remote reaches it as a fixed "Server activity" entry. Elsewhere the indicator is kept out of the focus
+     * order (its label changes with what runs; the mouse and touch open it).
+     */
+    tvEntry?: boolean;
 }
 
 const RING = 34;
@@ -129,7 +134,7 @@ const IdlePanel: FC = () => {
     );
 };
 
-const LibraryScanIndicator: FC<LibraryScanIndicatorProps> = ({ compact = false }) => {
+const LibraryScanIndicator: FC<LibraryScanIndicatorProps> = ({ compact = false, tvEntry = false }) => {
     const { user } = useApi();
     const scans = useLibraryScans();
     const [ anchor, setAnchor ] = useState<HTMLElement | null>(null);
@@ -142,6 +147,7 @@ const LibraryScanIndicator: FC<LibraryScanIndicatorProps> = ({ compact = false }
 
     const status = describe(scans, activity);
     const { busy, detail, percent, summary } = status;
+    const statusLabel = percent ? `${summary}. ${detail}` : detail;
 
     return (
         <>
@@ -158,7 +164,8 @@ const LibraryScanIndicator: FC<LibraryScanIndicatorProps> = ({ compact = false }
                     component='button'
                     type='button'
                     onClick={onOpen}
-                    aria-label={percent ? `${summary}. ${detail}` : detail}
+                    tabIndex={tvEntry ? 0 : -1}
+                    aria-label={tvEntry ? globalize.translate('ServerActivity') : statusLabel}
                     aria-haspopup='dialog'
                     data-busy={busy ? 'true' : undefined}
                     sx={{

@@ -3,7 +3,7 @@
  * icons until the focus goes into it (then it widens with the names, see HomeLibraryNav):
  *  - left when there is nothing further left on the page reaches it (on the library on screen);
  *  - up / down go through it;
- *  - right goes back to the page, where the focus was.
+ *  - right (or Back) goes back to the page, where the focus was.
  */
 import layoutManager from 'components/layoutManager';
 import { scrollBehavior } from 'utils/reducedMotion';
@@ -90,6 +90,13 @@ const onKeyDown = (e: KeyboardEvent) => {
             before.focus({ preventScroll: true });
         }
     }, 0);
+};
+
+/** Back with the focus in the rail: it closes, the focus back on the page. Returns whether it was there. */
+export const leaveRailIfIn = () => {
+    if (!isInRail(document.activeElement)) return false;
+    leaveRail();
+    return true;
 };
 
 let installed = false;

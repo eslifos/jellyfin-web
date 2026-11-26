@@ -2,14 +2,17 @@
  * The bar of options with the remote (TV layout). On a TV the bar is a rail fixed on the right of the screen, only
  * icons until the focus goes into it (then it widens with the names, see FloatingNav):
  *  - right when there is nothing further right on the page reaches it (on the button of the page on screen);
- *  - up / down go through its buttons; left goes back to the page, where the focus was;
- *  - Back on the home screen goes to it as well (see appRouter.handleBack), so it is one key away from anywhere.
+ *  - up / down go through its buttons; left, right or Back close it and give the focus back to where it was;
+ *  - Back on the home screen goes to it as well (see appRouter.handleBack), so it is one key away from anywhere;
+ *  - going to another screen closes it (and the libraries rail): the focus goes to that screen.
  */
+import { autoFocus } from 'components/autoFocuser';
 import layoutManager from 'components/layoutManager';
 import { scrollBehavior } from 'utils/reducedMotion';
 
 const BAR_SELECTOR = 'nav[data-bottom-bar]';
-const BUTTONS = 'button:not([disabled]), a[href]';
+/** Its buttons the remote goes through (not the ones kept out of reach, tabindex -1, like the scans indicator). */
+const BUTTONS = 'button:not([disabled]):not([tabindex="-1"]), a[href]:not([tabindex="-1"])';
 const ARROWS = [ 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'ArrowRight' ];
 
 /** Where the focus was on the page before going to the bar. */
@@ -83,11 +86,11 @@ const onKeyDown = (e: KeyboardEvent) => {
     if (active && isTextField(active)) return;
 
     if (active && isInBottomBar(active)) {
-        // In the bar the keys are its own: through its buttons, left back to the page, nothing further right
+        // In the bar the keys are its own: through its buttons; sideways, back to the page
         const steps: Record<string, number> = { ArrowUp: -1, ArrowDown: 1 };
         if (e.key in steps) moveInBar(active, steps[e.key]);
-        else if (e.key === 'ArrowLeft') leaveBottomBar(active);
-        else if (e.key !== 'ArrowRight') return;
+        else if (e.key === 'ArrowLeft' || e.key === 'ArrowRight') leaveBottomBar(active);
+        else return;
         e.preventDefault();
         // The rows of the page listen on the window too: they must not move the focus as well
         e.stopImmediatePropagation();
@@ -106,6 +109,52 @@ const onKeyDown = (e: KeyboardEvent) => {
             before.focus({ preventScroll: true });
         }
     }, 0);
+};
+
+/** Back with the focus in the bar: it closes, the focus back on the page. Returns whether it was there. */
+export const leaveBottomBarIfIn = () => {
+    const active = document.activeElement as HTMLElement | null;
+    if (!active || !isInBottomBar(active)) return false;
+    leaveBottomBar(active);
+    return true;
+};
+
+/** The screen on view (the one left behind may still be in the document, hidden, while the new one comes in). */
+const currentScreen = () => [ ...document.querySelectorAll<HTMLElement>('.mainAnimatedPage') ]
+    .filter(page => !page.classList.contains('hide') && page.getClientRects().length > 0)
+    .pop() ?? null;
+
+/** How long a new screen may take to draw something to focus. */
+const NEW_SCREEN_WAIT_MS = 4000;
+/** After this, with still nothing to focus in the screen, its open tab gets the focus. */
+const TABS_AFTER_MS = 1500;
+
+/**
+ * Another screen opened from the bar or the libraries rail: they close (the focus leaves them) and the focus goes to
+ * the new screen, on its first useful element (autoFocuser), once it has drawn something to focus.
+ */
+export const focusNewScreen = () => {
+    if (!layoutManager.tv) return;
+    const active = document.activeElement as HTMLElement | null;
+    if (!active || !(isInBottomBar(active) || active.closest('[data-tv-rail]'))) return;
+    returnTo = null;
+    active.blur();
+    const started = Date.now();
+    const tryFocus = () => {
+        const focused = document.activeElement;
+        // Something else already took it (a dialog, the rows of the page)
+        if (focused && focused !== document.body) return;
+        const screen = currentScreen();
+        if (screen) autoFocus(screen);
+        // A screen with nothing to focus yet (or ever, like an empty live TV) but its tabs above: the open tab
+        if ((!document.activeElement || document.activeElement === document.body) && Date.now() - started > TABS_AFTER_MS) {
+            document.querySelector<HTMLElement>('[role="tablist"] [role="tab"][aria-selected="true"]')?.focus();
+        }
+        if ((!document.activeElement || document.activeElement === document.body) && Date.now() - started < NEW_SCREEN_WAIT_MS) {
+            window.setTimeout(tryFocus, 150);
+        }
+    };
+    window.setTimeout(tryFocus, 150);
 };
 
 let installed = false;

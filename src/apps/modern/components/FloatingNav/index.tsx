@@ -35,7 +35,7 @@ import { downloadsAvailable } from '../../features/downloads/support';
 import { hiddenBarSx, useBottomSpace, useHideOnScroll } from './bottomSpace';
 import ScrollRail, { narrowBarPlacement } from './ScrollRail';
 import { isSettingsSubPath } from './settingsPaths';
-import { installTvBottomBar } from './tvBar';
+import { focusNewScreen, installTvBottomBar } from './tvBar';
 import { ambientAnimation } from 'utils/reducedMotion';
 
 /**
@@ -165,6 +165,12 @@ const FloatingNav = () => {
     const tv = layoutManager.tv;
     useBottomSpace('nav', barRef, shown && !tv);
 
+    // TV: another screen opened from the bar or the rail closes them; the focus goes to the new screen
+    const screenKey = location.pathname + location.search;
+    useEffect(() => {
+        focusNewScreen();
+    }, [ screenKey ]);
+
     // The pages leave the TV bar its room while it is on screen
     useEffect(() => {
         if (!tv || !shown) return;
@@ -275,7 +281,8 @@ const FloatingNav = () => {
                 </Box>
 
                 {/* Scans and tasks (administrators): always there, lit while something runs */}
-                <LibraryScanIndicator compact={narrow} />
+                {/* TV: a fixed "Server activity" entry (its label does not change with what runs) */}
+                <LibraryScanIndicator compact={narrow} tvEntry={tv} />
 
                 {/* Profile */}
                 {isLoggedIn && (
