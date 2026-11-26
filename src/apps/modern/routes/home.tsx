@@ -180,7 +180,8 @@ const Home = () => {
             >
                 <div className='tabContent pageTabContent' id='homeTab' data-index='0'>
                     {/* One request, prepared on the server by a scheduled task; the library buttons go under the banner */}
-                    <QuickHome nav={<HomeLibraryNav />} />
+                    {/* TV: the libraries are the rail on the left of every page (AppLayout) */}
+                    <QuickHome nav={layoutManager.tv ? undefined : <HomeLibraryNav />} />
                     {/* The classic sections are not used: the controller of this tab skips them */}
                     <div className='sections hide' data-disabled='true'></div>
                 </div>

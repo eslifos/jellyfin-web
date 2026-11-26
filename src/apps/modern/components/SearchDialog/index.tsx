@@ -79,6 +79,9 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
     const [ similar, setSimilar ] = useState<SearchResult[]>([]);
     const [ loading, setLoading ] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
+    const paperRef = useRef<HTMLDivElement>(null);
+    /** What had the focus when it opened (the search button): it gets it back on closing. */
+    const openerRef = useRef<HTMLElement | null>(null);
     const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
     const searchByTerm = useCallback(async (term: string, types: BaseItemKind[], limit: number) => {
@@ -133,8 +136,17 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
     }, [ query, activeCategory, search ]);
 
     useEffect(() => {
-        if (open) setTimeout(() => inputRef.current?.focus(), 150);
-        else { setQuery(''); setResults({}); setSimilar([]); setActiveCategory('all'); }
+        if (open) {
+            openerRef.current = document.activeElement as HTMLElement | null;
+            setTimeout(() => inputRef.current?.focus(), 150);
+            return;
+        }
+        setQuery(''); setResults({}); setSimilar([]); setActiveCategory('all');
+        // Closed: the focus goes back where it was (with the remote it would be lost on the page)
+        const opener = openerRef.current;
+        openerRef.current = null;
+        const active = document.activeElement;
+        if (opener?.isConnected && (!active || active === document.body || paperRef.current?.contains(active))) opener.focus();
     }, [ open ]);
 
     const getImg = (item: SearchResult) => {
@@ -152,10 +164,29 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
         if (e.key === 'Enter') addRecentSearch(user?.Id, query);
     }, [ query, user?.Id ]);
 
+    /** Enter on a result card does what a click does. */
+    const openOnEnter = useCallback((e: React.KeyboardEvent<HTMLElement>) => {
+        if (e.key !== 'Enter') return;
+        // Used up here: once the search closes the focus is back on its button, which must not take this Enter too
+        e.preventDefault();
+        e.currentTarget.click();
+    }, []);
+
+    const onDialogKeyDown = useCallback((e: React.KeyboardEvent) => {
+        if (e.key !== 'Escape') return;
+        e.stopPropagation();
+        onClose();
+    }, [ onClose ]);
+
     const hasResults = Object.values(results).some(a => a.length > 0);
     const ResultCard = ({ item, color }: { item: SearchResult; color: string }) => (
         <Box
+            role='button'
+            tabIndex={0}
+            aria-label={item.Name ?? ''}
             onClick={() => goTo(item)}
+            // The remote and the keyboard open it too
+            onKeyDown={openOnEnter}
             sx={{
                 flexShrink: 0,
                 width: 90,
@@ -165,7 +196,7 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
                 background: 'rgba(255,255,255,0.04)',
                 border: '1px solid rgba(255,255,255,0.06)',
                 transition: 'all 0.18s',
-                '&:hover': { transform: 'scale(1.06) translateY(-3px)', border: `1px solid ${color}60`, boxShadow: `0 6px 20px rgba(0,0,0,0.4), 0 0 8px ${color}30` }
+                '&:hover, &:focus-visible': { outline: 'none', transform: 'scale(1.06) translateY(-3px)', border: `1px solid ${color}`, boxShadow: `0 6px 20px rgba(0,0,0,0.4), 0 0 0 3px ${color}` }
             }}
         >
             <Box sx={{ width: '100%', paddingBottom: '150%', position: 'relative', background: `${color}15` }}>
@@ -219,7 +250,14 @@ const SearchDialog = ({ open, onClose }: SearchDialogProps) => {
             {/* Card flotante */}
             <Fade in={open} style={{ transformOrigin: 'top center' }}>
                 <Paper
+                    ref={paperRef}
                     elevation={0}
+                    role='dialog'
+                    aria-modal='true'
+                    aria-label={globalize.translate('Search')}
+                    // A dialog for the remote of the TV layout: the arrows stay in it and Back closes it (tvModals)
+                    data-tv-modal=''
+                    onKeyDown={onDialogKeyDown}
                     sx={{
                         position: 'fixed',
                         top: '8vh',

@@ -1,7 +1,8 @@
 /**
- * The floating bar with the remote (TV layout). The bar is at the bottom of the screen, over the page:
- *  - down when there is nothing further down on the page reaches it (on the button of the page on screen);
- *  - left / right go through its buttons; up goes back to where the focus was on the page;
+ * The bar of options with the remote (TV layout). On a TV the bar is a rail fixed on the right of the screen, only
+ * icons until the focus goes into it (then it widens with the names, see FloatingNav):
+ *  - right when there is nothing further right on the page reaches it (on the button of the page on screen);
+ *  - up / down go through its buttons; left goes back to the page, where the focus was;
  *  - Back on the home screen goes to it as well (see appRouter.handleBack), so it is one key away from anywhere.
  */
 import layoutManager from 'components/layoutManager';
@@ -9,6 +10,7 @@ import { scrollBehavior } from 'utils/reducedMotion';
 
 const BAR_SELECTOR = 'nav[data-bottom-bar]';
 const BUTTONS = 'button:not([disabled]), a[href]';
+const ARROWS = [ 'ArrowLeft', 'ArrowUp', 'ArrowDown', 'ArrowRight' ];
 
 /** Where the focus was on the page before going to the bar. */
 let returnTo: HTMLElement | null = null;
@@ -37,21 +39,21 @@ export const focusBottomBar = () => {
 };
 
 /**
- * What is on screen just above the bar, closest to the focused button: where up goes when the element the focus
- * came from is no longer there (the page drew that row again).
+ * What is on screen just left of the bar, at the height of the focused button: where left goes when the element the
+ * focus came from is no longer there (the page drew it again).
  */
-const justAboveBar = (from: HTMLElement) => {
-    const barTop = bar()?.getBoundingClientRect().top ?? window.innerHeight;
+const besideBar = (from: HTMLElement) => {
+    const barLeft = bar()?.getBoundingClientRect().left ?? window.innerWidth;
     const fromRect = from.getBoundingClientRect();
-    const fromX = fromRect.left + fromRect.width / 2;
+    const fromY = fromRect.top + fromRect.height / 2;
     let best: HTMLElement | null = null;
     let bestScore = Infinity;
     for (const el of document.querySelectorAll<HTMLElement>('a[href], button:not([disabled]), [tabindex="0"]')) {
-        if (isInBottomBar(el) || !el.getClientRects().length) continue;
+        if (isInBottomBar(el) || el.closest('[data-tv-rail]') || !el.getClientRects().length) continue;
         const r = el.getBoundingClientRect();
-        if (r.bottom > barTop || r.top < 0 || r.width === 0) continue;
-        // Closest to the bar first, then closest sideways
-        const score = (barTop - r.bottom) * 4 + Math.abs(r.left + r.width / 2 - fromX);
+        if (r.right > barLeft || r.top < 0 || r.bottom > window.innerHeight || r.width === 0) continue;
+        // Closest to the bar first, then closest in height
+        const score = (barLeft - r.right) * 4 + Math.abs(r.top + r.height / 2 - fromY);
         if (score < bestScore) {
             bestScore = score;
             best = el;
@@ -62,11 +64,11 @@ const justAboveBar = (from: HTMLElement) => {
 
 /** Back to the page, where the focus was before going to the bar. */
 const leaveBottomBar = (from: HTMLElement) => {
-    const target = returnTo?.isConnected && returnTo.getClientRects().length ? returnTo : justAboveBar(from);
+    const target = returnTo?.isConnected && returnTo.getClientRects().length ? returnTo : besideBar(from);
     returnTo = null;
     if (!target) return;
     target.focus({ preventScroll: true });
-    target.scrollIntoView({ block: 'center', inline: 'nearest', behavior: scrollBehavior() });
+    target.scrollIntoView({ block: 'nearest', inline: 'nearest', behavior: scrollBehavior() });
 };
 
 const moveInBar = (active: HTMLElement, step: number) => {
@@ -81,22 +83,28 @@ const onKeyDown = (e: KeyboardEvent) => {
     if (active && isTextField(active)) return;
 
     if (active && isInBottomBar(active)) {
-        // In the bar the keys are its own: through its buttons, up back to the page, nothing further down
-        const steps: Record<string, number> = { ArrowLeft: -1, ArrowRight: 1 };
+        // In the bar the keys are its own: through its buttons, left back to the page, nothing further right
+        const steps: Record<string, number> = { ArrowUp: -1, ArrowDown: 1 };
         if (e.key in steps) moveInBar(active, steps[e.key]);
-        else if (e.key === 'ArrowUp') leaveBottomBar(active);
-        else if (e.key !== 'ArrowDown') return;
+        else if (e.key === 'ArrowLeft') leaveBottomBar(active);
+        else if (e.key !== 'ArrowRight') return;
         e.preventDefault();
         // The rows of the page listen on the window too: they must not move the focus as well
         e.stopImmediatePropagation();
         return;
     }
 
-    if (e.key !== 'ArrowDown') return;
-    // Down: when the page's own navigation finds nothing below (the focus stays put), the bar is next
+    if (!ARROWS.includes(e.key)) return;
     const before = active;
     window.setTimeout(() => {
-        if (document.activeElement === before && !dialogOpen()) focusBottomBar();
+        if (dialogOpen()) return;
+        if (e.key === 'ArrowRight') {
+            // Right: when the page's own navigation finds nothing further right (the focus stays put), the bar is next
+            if (document.activeElement === before) focusBottomBar();
+        } else if (before && before !== document.body && isInBottomBar(document.activeElement)) {
+            // Only right goes into the bar: up or down near the right edge (where the bar is "below") stays put
+            before.focus({ preventScroll: true });
+        }
     }, 0);
 };
 

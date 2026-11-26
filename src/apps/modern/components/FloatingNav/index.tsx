@@ -8,7 +8,7 @@
  * tablets it steps aside while scrolling down.
  * Uses `createPortal` to escape any CSS `transform` stacking context from the parent.
  */
-import React, { useCallback, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import globalize from 'lib/globalize';
 import Box from '@mui/material/Box';
@@ -23,6 +23,7 @@ import DownloadForOfflineRoundedIcon from '@mui/icons-material/DownloadForOfflin
 import ArrowBackRoundedIcon from '@mui/icons-material/ArrowBackRounded';
 import { useLocation, useNavigate, useSearchParams } from 'react-router-dom';
 
+import layoutManager from 'components/layoutManager';
 import { useApi } from 'hooks/useApi';
 import { PUBLIC_PATHS } from 'components/router/appRouter';
 import RemotePlayButton from '../AppToolbar/RemotePlayButton';
@@ -92,7 +93,7 @@ export const barSx = {
     }
 } as const;
 
-export const BarDivider = () => <Box sx={{ width: '1px', height: '28px', background: 'rgba(255,255,255,0.1)', mx: 0.5, flexShrink: 0 }} />;
+export const BarDivider = () => <Box className='jfBarDivider' sx={{ width: '1px', height: '28px', background: 'rgba(255,255,255,0.1)', mx: 0.5, flexShrink: 0 }} />;
 
 /** Styles for the buttons made elsewhere (watch together, cast) so they match the pill. */
 const toolsSx = (narrow: boolean) => ({
@@ -114,6 +115,37 @@ const toolsSx = (narrow: boolean) => ({
 // The remote reaches the bar on the TV layout (it acts only there)
 installTvBottomBar();
 
+/** Width of the TV bar of options, folded (icons): the pages leave it room (--tv-bar-width, AppOverrides.scss). */
+const TV_BAR_FOLDED = 96;
+/** Width of the TV bar with the focus in it (the names too), over the page. */
+const TV_BAR_OPEN = 340;
+
+/**
+ * TV: the bar is a rail fixed on the right of the screen, the buttons one under the other. Folded it shows the icons;
+ * with the focus of the remote in it, it widens over the page with the name of each button.
+ */
+const tvBarSx = {
+    top: 0, bottom: 0, right: 0, left: 'auto', transform: 'none', width: TV_BAR_FOLDED, maxWidth: 'none',
+    flexDirection: 'column', justifyContent: 'center', alignItems: 'stretch', gap: 0.75, px: 1.5, py: 3,
+    borderRadius: 0, borderTop: 0, borderRight: 0, borderBottom: 0, overflowX: 'hidden', overflowY: 'auto',
+    transition: 'width 0.2s ease',
+    '& .jfBarGroup': { flexDirection: 'column', alignItems: 'stretch', gap: 0.75, p: 0 },
+    '& .jfBarDivider': { width: 'auto', height: '1px', mx: 1, my: 0.5 },
+    '& button': {
+        // Every button the same way (some draw their own layout, like the scans one): icon, then its name
+        width: '100%', display: 'flex !important', flexDirection: 'row !important', alignItems: 'center !important',
+        justifyContent: 'flex-start !important', gap: 1.5, padding: '14px 22px !important', overflow: 'hidden',
+        // The name of the button, only while the bar is open
+        '&::after': {
+            content: 'attr(aria-label)', display: 'block', flex: '1 1 auto', minWidth: 0, opacity: 0, fontSize: '22px', fontWeight: 600,
+            textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', transition: 'opacity 0.15s'
+        }
+    },
+    '& svg': { fontSize: '30px !important', flexShrink: 0 },
+    '& .MuiAvatar-root': { width: '32px !important', height: '32px !important', flexShrink: 0 },
+    '&:focus-within': { width: TV_BAR_OPEN, '& button::after': { opacity: 1 } }
+} as const;
+
 const FloatingNav = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -129,7 +161,18 @@ const FloatingNav = () => {
     const narrow = useMediaQuery(NARROW_BAR);
     const touchSized = useMediaQuery((t: Theme) => t.breakpoints.down('md'));
     const { hidden, show } = useHideOnScroll(shown && touchSized && !searchOpen);
-    useBottomSpace('nav', barRef, shown);
+    // TV: the bar is on the right (it takes no room at the bottom of the pages)
+    const tv = layoutManager.tv;
+    useBottomSpace('nav', barRef, shown && !tv);
+
+    // The pages leave the TV bar its room while it is on screen
+    useEffect(() => {
+        if (!tv || !shown) return;
+        document.documentElement.style.setProperty('--tv-bar-width', `${TV_BAR_FOLDED}px`);
+        return () => {
+            document.documentElement.style.removeProperty('--tv-bar-width');
+        };
+    }, [ tv, shown ]);
 
     const goToSettings = useCallback(() => {
         const userId = searchParams.get('userId');
@@ -150,7 +193,9 @@ const FloatingNav = () => {
     }
 
     // Phones: the bar takes the width of the screen and its buttons scroll sideways when they do not fit
-    const barPlacement = narrow ? narrowBarPlacement(hidden) : { left: '50%' };
+    let barPlacement: object = { left: '50%' };
+    if (tv) barPlacement = tvBarSx;
+    else if (narrow) barPlacement = narrowBarPlacement(hidden);
 
     return (
         <Box
@@ -224,7 +269,7 @@ const FloatingNav = () => {
 
                 <BarDivider />
                 {/* Watch together + cast */}
-                <Box sx={toolsSx(narrow)}>
+                <Box className='jfBarGroup' sx={toolsSx(narrow)}>
                     <SyncPlayButton />
                     <RemotePlayButton />
                 </Box>
@@ -234,7 +279,7 @@ const FloatingNav = () => {
 
                 {/* Profile */}
                 {isLoggedIn && (
-                    <Box sx={{
+                    <Box className='jfBarGroup' sx={{
                         flexShrink: 0,
                         color: 'rgba(255,255,255,0.55)',
                         borderRadius: '14px',

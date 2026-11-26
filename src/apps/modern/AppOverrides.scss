@@ -44,3 +44,15 @@ $mui-bp-xl: 1536px;
         }
     }
 }
+
+// TV: the pages leave room for the libraries rail fixed on their left and the bar of options on their right
+// (each sets its width while it is on screen)
+.layout-tv .mainAnimatedPage {
+    left: var(--tv-rail-width, 0);
+    right: var(--tv-bar-width, 0);
+}
+
+// TV: no tooltips (they come up with the focus of the remote; the rails show the names when open)
+.layout-tv .MuiTooltip-popper {
+    display: none;
+}

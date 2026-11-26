@@ -8,6 +8,7 @@ import alert from '../alert';
 
 import { focusBottomBar, isInBottomBar } from 'apps/modern/components/FloatingNav/tvBar';
 import { openPlayer } from 'apps/modern/components/Player/events';
+import { closeOpenModal } from 'scripts/tvModals';
 import layoutManager from 'components/layoutManager';
 import { getItemQuery } from 'hooks/useItem';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
@@ -133,6 +134,8 @@ class AppRouter {
      * @returns Whether it was handled; when not (the home screen, already in the bar) the app may close.
      */
     handleBack() {
+        // A menu or dialog on screen closes first
+        if (closeOpenModal()) return true;
         if (this.canGoBack()) {
             this.back();
             return true;

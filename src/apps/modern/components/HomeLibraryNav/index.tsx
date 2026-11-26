@@ -5,15 +5,17 @@
  * On phones each icon keeps its name below in small text (it scrolls sideways when they do not fit),
  * unless the user chose icons only.
  * Each user can reorder / hide items and change colors and labels (gear button).
+ * TV layout: a rail fixed on the left of every page instead (the pages move right to leave it room), always in
+ * reach of the remote (see tvRail).
  */
-import React, { type FC, type ReactNode, useEffect, useMemo, useState } from 'react';
+import React, { type FC, type ReactNode, useCallback, useEffect, useMemo, useState } from 'react';
 import Box from '@mui/material/Box';
 import type { Theme } from '@mui/material/styles';
 import Tooltip from '@mui/material/Tooltip';
 import useMediaQuery from '@mui/material/useMediaQuery';
 import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
-import { Link } from 'react-router-dom';
+import { Link, useLocation } from 'react-router-dom';
 
 import layoutManager from 'components/layoutManager';
 import { appRouter } from 'components/router/appRouter';
@@ -25,8 +27,16 @@ import LibraryIcon from '../LibraryIcon';
 import NavCustomizeDialog, { type NavEntry } from './NavCustomizeDialog';
 import { UNIVERSES_KEY, type NavSettings, backgroundCss, loadNavSettings, orderKeys, rgba, saveNavSettings } from './navSettings';
 import { ambientAnimation } from 'utils/reducedMotion';
+import { installTvRail, RAIL_ATTRIBUTE } from './tvRail';
 
 const COMPACT_AFTER = 140;
+/** Width of the TV rail, folded (icons): the pages leave it room (--tv-rail-width, AppOverrides.scss). */
+export const RAIL_FOLDED = 96;
+/** Width of the TV rail with the focus in it (the names too), over the page. */
+export const RAIL_OPEN = 320;
+
+// The remote reaches the rail on the TV layout (it acts only there)
+installTvRail();
 /** TV, read at 3 m: names at least 24 px. */
 const TV_LABEL_SIZE = '26px';
 const TV_ICON_SIZE = '34px';
@@ -35,7 +45,8 @@ interface Entry extends NavEntry {
     to: string;
 }
 
-const HomeLibraryNav: FC = () => {
+const HomeLibraryNav: FC<{ rail?: boolean }> = ({ rail = false }) => {
+    const location = useLocation();
     const { user } = useApi();
     const { data } = useUserViews({ userId: user?.Id });
     const [ compact, setCompact ] = useState(false);
@@ -84,6 +95,24 @@ const HomeLibraryNav: FC = () => {
     const showLabels = tv || stacked || (!phone && (settings.labels === 'always' || (settings.labels === 'auto' && !compact)));
     const iconsOnly = !tv && !stacked && (settings.labels === 'icons' || (settings.labels === 'auto' && compact));
 
+    const openCustomize = useCallback(() => setDraft({ ...saved }), [ saved ]);
+    const cancelCustomize = useCallback(() => setDraft(null), []);
+    const saveCustomize = useCallback(() => {
+        if (!draft) return;
+        saveNavSettings(draft);
+        setSaved(draft);
+        setDraft(null);
+    }, [ draft ]);
+
+    // The pages leave the rail its room while it is on screen
+    useEffect(() => {
+        if (!rail) return;
+        document.documentElement.style.setProperty('--tv-rail-width', `${RAIL_FOLDED}px`);
+        return () => {
+            document.documentElement.style.removeProperty('--tv-rail-width');
+        };
+    }, [ rail ]);
+
     if (!views?.length) return null;
 
     const visible = entries.filter(e => !settings.hidden.includes(e.key));
@@ -120,6 +149,80 @@ const HomeLibraryNav: FC = () => {
             {text}
         </Box>
     );
+
+    if (rail) {
+        // The library on screen (its id is in the address) or the universes
+        const parentId = new URLSearchParams(location.search).get('topParentId') ?? new URLSearchParams(location.search).get('parentId');
+        const isCurrent = (e: Entry) => (e.key === UNIVERSES_KEY ? location.pathname.startsWith('/universes') : !!parentId && e.key === parentId);
+        return (
+            <>
+                <Box
+                    component='nav'
+                    aria-label={globalize.translate('HeaderMyMedia')}
+                    {...{ [RAIL_ATTRIBUTE]: '' }}
+                    sx={{
+                        position: 'fixed', top: 0, bottom: 0, left: 0, zIndex: 1050, width: RAIL_FOLDED, boxSizing: 'border-box',
+                        overflowX: 'hidden', transition: 'width 0.2s ease',
+                        // Folded: icons only; with the focus of the remote in it, it widens over the page with the names
+                        '& a > span, & button > span': { opacity: 0, transition: 'opacity 0.15s' },
+                        '&:focus-within': { width: RAIL_OPEN, '& a > span, & button > span': { opacity: 1 } },
+                        display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: 0.75, px: 1.5, py: 3, overflowY: 'auto', scrollbarWidth: 'none',
+                        background: backgroundCss(settings),
+                        backdropFilter: 'blur(24px) saturate(1.5)',
+                        WebkitBackdropFilter: 'blur(24px) saturate(1.5)',
+                        borderRight: `1px solid ${rgba(accent, 0.2)}`,
+                        boxShadow: `8px 0 32px rgba(0,0,0,0.45), 0 0 24px ${rgba(accent, 0.08)}`
+                    }}
+                >
+                    {visible.map(e => {
+                        const special = e.key === UNIVERSES_KEY;
+                        const current = isCurrent(e);
+                        return (
+                            <Box
+                                key={e.key}
+                                component={Link}
+                                to={e.to}
+                                aria-label={e.name}
+                                aria-current={current ? 'page' : undefined}
+                                sx={{
+                                    ...itemSx(special),
+                                    width: '100%', boxSizing: 'border-box', borderRadius: '16px',
+                                    ...(current && !special && { color: '#fff', background: rgba(accent, 0.22) }),
+                                    '& > span': { overflow: 'hidden', textOverflow: 'ellipsis' }
+                                }}
+                            >
+                                {e.icon}
+                                {label(e.name, special || current)}
+                            </Box>
+                        );
+                    })}
+                    <Box
+                        component='button'
+                        type='button'
+                        aria-label={globalize.translate('NavCustomize')}
+                        onClick={openCustomize}
+                        sx={{
+                            ...itemSx(false), mt: 'auto', width: '100%', boxSizing: 'border-box', borderRadius: '16px', border: 0, cursor: 'pointer', font: 'inherit',
+                            '& > span': { overflow: 'hidden', textOverflow: 'ellipsis' }
+                        }}
+                    >
+                        <TuneRoundedIcon />
+                        {label(globalize.translate('NavCustomize'))}
+                    </Box>
+                </Box>
+                {draft && (
+                    <NavCustomizeDialog
+                        open
+                        settings={draft}
+                        entries={entries}
+                        onChange={setDraft}
+                        onCancel={cancelCustomize}
+                        onSave={saveCustomize}
+                    />
+                )}
+            </>
+        );
+    }
 
     return (
         <>
@@ -167,7 +270,7 @@ const HomeLibraryNav: FC = () => {
                             type='button'
                             className='jfNavGear'
                             aria-label={globalize.translate('NavCustomize')}
-                            onClick={() => setDraft({ ...saved })}
+                            onClick={openCustomize}
                             sx={{
                                 display: 'grid', placeItems: 'center', flexShrink: 0, width: 34, height: 34, ml: 0.25, p: 0,
                                 border: 0, borderRadius: '50%', cursor: 'pointer', color: 'rgba(255,255,255,0.6)', background: 'none',
@@ -186,12 +289,8 @@ const HomeLibraryNav: FC = () => {
                     settings={draft}
                     entries={entries}
                     onChange={setDraft}
-                    onCancel={() => setDraft(null)}
-                    onSave={() => {
-                        saveNavSettings(draft);
-                        setSaved(draft);
-                        setDraft(null);
-                    }}
+                    onCancel={cancelCustomize}
+                    onSave={saveCustomize}
                 />
             )}
         </>

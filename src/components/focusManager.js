@@ -45,17 +45,20 @@ function focus(element) {
 }
 
 const focusableTagNames = ['INPUT', 'TEXTAREA', 'SELECT', 'BUTTON', 'A'];
+/** Elements that act as buttons without being one (Material UI chips, the cards of the search): the remote reaches them too. */
+const ROLE_BUTTON = '[role="button"][tabindex="0"]';
 const focusableContainerTagNames = ['BODY', 'DIALOG'];
 const focusableQuery = focusableTagNames.map(function (t) {
     if (t === 'INPUT') {
         t += ':not([type="range"]):not([type="file"])';
     }
     return t + ':not([tabindex="-1"]):not(:disabled)';
-}).join(',') + ',.focusable';
+}).join(',') + ',.focusable,' + ROLE_BUTTON;
 
 function isFocusable(elem) {
     return focusableTagNames.indexOf(elem.tagName) !== -1
-            || (elem.classList?.contains('focusable'));
+            || (elem.classList?.contains('focusable'))
+            || !!elem.matches?.(ROLE_BUTTON);
 }
 
 function normalizeFocusable(elem, originalElement) {

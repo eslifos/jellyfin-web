@@ -21,6 +21,8 @@ const NOT_ITEMS = '.qh-arrow, [tabindex="-1"], [aria-hidden="true"]';
 const HEADERS = '.qh-row-head, .qh-block-head';
 /** How long to wait for a row drawn after scrolling to it. */
 const LOAD_WAIT_MS = 1500;
+/** How long a page may take to draw its first row and still get the focus on it. */
+const INITIAL_FOCUS_MS = 15000;
 
 type Direction = 'up' | 'down' | 'left' | 'right';
 
@@ -166,7 +168,27 @@ export const useTvRows = (rootRef: RefObject<HTMLElement>) => {
         // Before the app's own navigation (it listens on the window too, later)
         window.addEventListener('keydown', onKeyDown, true);
         document.addEventListener('focusin', onFocusIn);
+
+        // The page opens with the focus on its first row (the main button of the banner) once the rows are drawn, so
+        // the first key of the remote already moves from there; unless the focus is already somewhere on screen
+        const started = Date.now();
+        const initialFocus = window.setInterval(() => {
+            const root = activeRoot();
+            const rows = root ? pageRows(root) : [];
+            const active = document.activeElement;
+            const rect = active?.getBoundingClientRect();
+            const onScreen = !!active && active !== document.body && isShown(active) && !!rect && rect.width > 0
+                && rect.bottom > 0 && rect.top < window.innerHeight && rect.right > 0 && rect.left < window.innerWidth;
+            if (onScreen || Date.now() - started > INITIAL_FOCUS_MS) {
+                window.clearInterval(initialFocus);
+            } else if (rows.length) {
+                window.clearInterval(initialFocus);
+                enterRow(rows[0], rows);
+            }
+        }, 250);
+
         return () => {
+            window.clearInterval(initialFocus);
             window.removeEventListener('keydown', onKeyDown, true);
             document.removeEventListener('focusin', onFocusIn);
         };

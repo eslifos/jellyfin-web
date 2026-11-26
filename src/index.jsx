@@ -20,6 +20,7 @@ import getServerAddress from 'lib/jellyfin-apiclient/utils/getServerAddress';
 import { initialize as initializeAutoCast } from 'scripts/autocast';
 import browser from './scripts/browser';
 import keyboardNavigation from './scripts/keyboardNavigation';
+import { installTvModals } from './scripts/tvModals';
 import { getPlugins } from './scripts/settings/webSettings';
 import taskButton from './scripts/taskbutton';
 import { pageClassOn, serverAddress } from './utils/dashboard';
@@ -178,6 +179,7 @@ build: ${__JF_BUILD_VERSION__}`);
 
     // Enable navigation controls
     keyboardNavigation.enable();
+    installTvModals();
     autoFocuser.enable();
 }
 

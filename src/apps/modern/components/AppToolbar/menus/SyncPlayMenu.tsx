@@ -148,7 +148,8 @@ const SyncPlayMenu: FC<SyncPlayMenuProps> = ({ anchorEl, open, onMenuClose }) =>
     }, [ createGroup, defaultName, groupName ]);
 
     const onNameKeyDown = useCallback((e: React.KeyboardEvent) => {
-        e.stopPropagation();
+        // Typing stays in the field (not the menu's own keys); Escape still closes the menu
+        if (e.key !== 'Escape') e.stopPropagation();
         if (e.key === 'Enter') onCreate();
     }, [ onCreate ]);
 
