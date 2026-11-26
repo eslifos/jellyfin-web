@@ -6,8 +6,8 @@ Lo actualiza `/aplicar-mejoras` después de cada mejora. Estados: **Pendiente**,
 
 | Mejora | Repositorio | Estado | Commit |
 |---|---|---|---|
-| P1 · Foco y barra | jellyfin-web | Hecho | 499691942d |
-| P2 · Menú único a la izquierda | jellyfin-web | Pendiente | |
+| P1 · Foco y barra | jellyfin-web | Hecho | 499691942d, f6fac0d34e |
+| P2 · Menú único a la izquierda | jellyfin-web | Hecho | 7ba01884f8 |
 | P3 · Tamaños para 10 pies y sin desenfoques | jellyfin-web | Pendiente | |
 | P4 · Reproductor nativo con el control remoto | jellyfin-cosmic-tv | Pendiente en jellyfin-cosmic-tv | |
 | P5 · Detalle para TV | jellyfin-web | Pendiente | |
