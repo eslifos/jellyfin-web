@@ -52,6 +52,12 @@ $mui-bp-xl: 1536px;
     right: var(--tv-bar-width, 0);
 }
 
+// TV: the letters of a library stay left of the bar of options (fixed on the screen, they would be under it)
+.layout-tv .alphaPicker-fixed-right.alphaPicker-fixed-right {
+    right: calc(var(--tv-bar-width, 0px) + 1em);
+    left: auto;
+}
+
 // TV: no tooltips (they come up with the focus of the remote; the rails show the names when open)
 .layout-tv .MuiTooltip-popper {
     display: none;

@@ -31,11 +31,11 @@ const isTextField = (el: Element) => el instanceof HTMLInputElement && ![ 'butto
 const dialogOpen = () => [ ...document.querySelectorAll('.dialogContainer .dialog.opened, [role="dialog"], [role="menu"], .MuiPopover-root') ]
     .some(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
 
-/** Puts the focus on the bar, on the button of the page on screen. */
-export const focusBottomBar = () => {
+/** Puts the focus on the bar, on the button of the page on screen; `from` is where it goes back to (else the focus now). */
+export const focusBottomBar = (from?: HTMLElement | null) => {
     const buttons = barButtons();
     if (!buttons.length) return false;
-    const active = document.activeElement as HTMLElement | null;
+    const active = from ?? document.activeElement as HTMLElement | null;
     if (active && active !== document.body && !isInBottomBar(active)) returnTo = active;
     (buttons.find(b => b.getAttribute('aria-current') === 'page') ?? buttons[0]).focus();
     return true;
@@ -102,8 +102,12 @@ const onKeyDown = (e: KeyboardEvent) => {
     window.setTimeout(() => {
         if (dialogOpen()) return;
         if (e.key === 'ArrowRight') {
-            // Right: when the page's own navigation finds nothing further right (the focus stays put), the bar is next
-            if (document.activeElement === before) focusBottomBar();
+            // Right: when the page's own navigation finds nothing further right (the focus stays put), the bar is next;
+            // when it went into the bar by itself (the bar is the nearest thing that way), on the button of the screen,
+            // and in both cases left / Back come back to where the focus was
+            if (document.activeElement === before || (before && !isInBottomBar(before) && isInBottomBar(document.activeElement))) {
+                focusBottomBar(before);
+            }
         } else if (before && before !== document.body && isInBottomBar(document.activeElement)) {
             // Only right goes into the bar: up or down near the right edge (where the bar is "below") stays put
             before.focus({ preventScroll: true });
@@ -125,34 +129,45 @@ const currentScreen = () => [ ...document.querySelectorAll<HTMLElement>('.mainAn
     .pop() ?? null;
 
 /** How long a new screen may take to draw something to focus. */
-const NEW_SCREEN_WAIT_MS = 4000;
+const NEW_SCREEN_WAIT_MS = 8000;
 /** After this, with still nothing to focus in the screen, its open tab gets the focus. */
 const TABS_AFTER_MS = 1500;
 
 /**
  * Another screen opened from the bar or the libraries rail: they close (the focus leaves them) and the focus goes to
- * the new screen, on its first useful element (autoFocuser), once it has drawn something to focus.
+ * the new screen, on its first useful element (autoFocuser), once it has drawn something to focus. A screen opened
+ * from the page itself (a card, Back) gets it the same way once the focus is lost with the screen it was on, and so
+ * does one that opens with the focus on nothing (loaded as it is).
  */
 export const focusNewScreen = () => {
     if (!layoutManager.tv) return;
     const active = document.activeElement as HTMLElement | null;
-    if (!active || !(isInBottomBar(active) || active.closest('[data-tv-rail]'))) return;
-    returnTo = null;
-    active.blur();
+    const fromSide = !!active && (isInBottomBar(active) || !!active.closest('[data-tv-rail]'));
+    if (fromSide) {
+        returnTo = null;
+        active.blur();
+    }
+    /** The focus on nothing, or on something no longer on screen (in the screen that was left). */
+    const lost = (el: Element | null) => !el || el === document.body || !el.isConnected || !el.getClientRects().length;
     const started = Date.now();
     const tryFocus = () => {
         const focused = document.activeElement;
-        // Something else already took it (a dialog, the rows of the page)
-        if (focused && focused !== document.body) return;
+        const waitMore = Date.now() - started < NEW_SCREEN_WAIT_MS;
+        if (!lost(focused)) {
+            // Something took it in the new screen (a dialog, the page itself); else it is still on the element of the
+            // screen left behind, about to go: wait for it
+            if (focused === active && !fromSide && waitMore) window.setTimeout(tryFocus, 150);
+            return;
+        }
         const screen = currentScreen();
+        // Pages by rows put the focus on their first row themselves, once it is drawn (useTvRows)
+        if (!fromSide && screen?.querySelector('[data-focus-row]')) return;
         if (screen) autoFocus(screen);
         // A screen with nothing to focus yet (or ever, like an empty live TV) but its tabs above: the open tab
-        if ((!document.activeElement || document.activeElement === document.body) && Date.now() - started > TABS_AFTER_MS) {
+        if (lost(document.activeElement) && Date.now() - started > TABS_AFTER_MS) {
             document.querySelector<HTMLElement>('[role="tablist"] [role="tab"][aria-selected="true"]')?.focus();
         }
-        if ((!document.activeElement || document.activeElement === document.body) && Date.now() - started < NEW_SCREEN_WAIT_MS) {
-            window.setTimeout(tryFocus, 150);
-        }
+        if (lost(document.activeElement) && waitMore) window.setTimeout(tryFocus, 150);
     };
     window.setTimeout(tryFocus, 150);
 };

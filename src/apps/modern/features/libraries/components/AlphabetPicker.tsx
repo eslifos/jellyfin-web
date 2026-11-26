@@ -68,6 +68,8 @@ const AlphabetPicker: React.FC<AlphabetPickerProps> = ({
                         <ToggleButton
                             key={l}
                             value={l}
+                            // A page opens with the focus on its content, not on these letters
+                            className='noautofocus'
                             sx={{
                                 borderWidth: 0,
                                 paddingTop: {
