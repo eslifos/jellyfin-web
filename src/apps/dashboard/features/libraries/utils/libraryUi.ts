@@ -1,8 +1,7 @@
-import formatDistanceToNow from 'date-fns/formatDistanceToNow';
 import { CollectionType } from '@jellyfin/sdk/lib/generated-client/models/collection-type';
 
 import globalize from 'lib/globalize';
-import { getLocaleWithSuffix } from 'utils/dateFnsLocale';
+import { shortRelativeTime } from 'utils/relativeTime';
 import type { LibraryStats } from '../api/useLibraryStats';
 
 /** Accent color for each library type (Cosmic Dark palette). */
@@ -105,7 +104,7 @@ export const formatRelative = (date?: string | null) => {
     if (!date) return globalize.translate('Never');
     const d = new Date(date);
     if (isNaN(d.getTime()) || d.getFullYear() < 1990) return globalize.translate('Never');
-    return formatDistanceToNow(d, getLocaleWithSuffix());
+    return shortRelativeTime(d);
 };
 
 export const formatFullDate = (date?: string | null) => {

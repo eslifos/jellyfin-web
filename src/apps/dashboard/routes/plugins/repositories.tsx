@@ -27,13 +27,13 @@ import { usePackages } from 'apps/dashboard/features/plugins/api/usePackages';
 import { useRepositories } from 'apps/dashboard/features/plugins/api/useRepositories';
 import { useSetRepositories } from 'apps/dashboard/features/plugins/api/useSetRepositories';
 import NewRepositoryForm from 'apps/dashboard/features/plugins/components/NewRepositoryForm';
-import { Badge, StatTile, TRUSTED_REPO_URL } from 'apps/dashboard/features/plugins/components/PluginCosmic';
+import { Badge, TRUSTED_REPO_URL } from 'apps/dashboard/features/plugins/components/PluginCosmic';
 import ConfirmDialog from 'components/ConfirmDialog';
 import Loading from 'components/loading/LoadingComponent';
 import Page from 'components/Page';
 import globalize from 'lib/globalize';
 
-import { PageHeader } from '../../components/cosmic';
+import { PageHeader, StatTile } from '../../components/cosmic';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const OFFICIAL_REPO: RepositoryInfo = { Name: 'Jellyfin Stable', Url: 'https://repo.jellyfin.org/files/plugin/manifest.json', Enabled: true };

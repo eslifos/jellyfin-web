@@ -78,28 +78,6 @@ export const pluginUrl = (plugin: Pick<PluginDetails, 'id' | 'name'>) => `/dashb
 
 /* ---------- small UI ---------- */
 
-export const StatTile: FC<{ icon: React.ReactNode; label: string; value: React.ReactNode; color: string; active?: boolean; onClick?: () => void }> = ({ icon, label, value, color, active, onClick }) => (
-    <Paper elevation={0} onClick={onClick} sx={{
-        position: 'relative', overflow: 'hidden', p: 1.75, display: 'flex', alignItems: 'center', gap: 1.5,
-        cursor: onClick ? 'pointer' : 'default', transition: 'transform 0.2s, border-color 0.2s, box-shadow 0.2s',
-        borderColor: active ? `${color}99 !important` : undefined,
-        boxShadow: active ? `0 0 22px ${color}33` : 'none',
-        '&:hover': onClick ? { transform: 'translateY(-2px)', borderColor: `${color}66 !important` } : {}
-    }}>
-        <Box sx={{ position: 'absolute', top: 0, left: '1rem', right: '1rem', height: '2px', background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
-        <Box sx={{
-            width: 42, height: 42, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            background: `${color}1f`, border: `1px solid ${color}44`, '& svg': { color, fontSize: '1.35rem' }
-        }}>
-            {icon}
-        </Box>
-        <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: '1.45rem', fontWeight: 700, color: '#fff', lineHeight: 1.1 }}>{value}</Typography>
-            <Typography noWrap sx={{ fontSize: '0.7rem', letterSpacing: '0.8px', textTransform: 'uppercase', color: TEXT_TERTIARY }}>{label}</Typography>
-        </Box>
-    </Paper>
-);
-
 export const toggleSx = {
     '& .MuiToggleButton-root': {
         border: '1px solid rgba(0,164,220,0.2)', color: 'rgba(255,255,255,0.55)', px: 1.5, gap: 0.75, textTransform: 'none', fontSize: '0.82rem',

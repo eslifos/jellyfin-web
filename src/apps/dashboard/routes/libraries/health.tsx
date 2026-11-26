@@ -1,11 +1,9 @@
 import React, { type FC, useCallback, useMemo, useRef, useState } from 'react';
 import type { BaseItemDto } from '@jellyfin/sdk/lib/generated-client/models/base-item-dto';
 import { BaseItemKind } from '@jellyfin/sdk/lib/generated-client/models/base-item-kind';
-import { ItemFields } from '@jellyfin/sdk/lib/generated-client/models/item-fields';
-import { LocationType } from '@jellyfin/sdk/lib/generated-client/models/location-type';
 import { MetadataRefreshMode } from '@jellyfin/sdk/lib/generated-client/models/metadata-refresh-mode';
 import { getLibraryApi } from '@jellyfin/sdk/lib/utils/api/library-api';
-import { useMutation, useQuery } from '@tanstack/react-query';
+import { useMutation } from '@tanstack/react-query';
 import Alert from '@mui/material/Alert';
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
@@ -35,22 +33,21 @@ import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import { Link } from 'react-router-dom';
 
+import { type DamagedScan, useDamagedScan } from 'apps/dashboard/features/libraries/api/useDamagedScan';
 import { type ProbeIssue, type ProbeReason, useLogIssues } from 'apps/dashboard/features/libraries/api/useLogIssues';
 import { BACKUPS_KEY, type VobSubResult, repairVobSub, useVobSubTools } from 'apps/dashboard/features/libraries/api/vobSubRepair';
 import RepairBackupsCard from 'apps/dashboard/features/libraries/components/RepairBackupsCard';
 import { queryClient } from 'utils/query/queryClient';
-import { Badge, StatTile } from 'apps/dashboard/features/plugins/components/PluginCosmic';
+import { Badge } from 'apps/dashboard/features/plugins/components/PluginCosmic';
 import { relativeTime } from 'apps/dashboard/features/tasks/components/TaskCosmic';
-import Loading from 'components/loading/LoadingComponent';
 import Page from 'components/Page';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 
-import { PageHeader, SectionCard } from '../../components/cosmic';
+import { PageHeader, SectionCard, StatTile } from '../../components/cosmic';
 import { readPref, writePref } from 'utils/syncedPrefs';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
-const VIDEO_TYPES = [ BaseItemKind.Movie, BaseItemKind.Episode, BaseItemKind.Video, BaseItemKind.MusicVideo ];
 const IGNORE_KEY = 'dashboardDamagedIgnored';
 /** Items added less than this ago may simply not be analyzed yet. */
 const RECENT_MS = 30 * 60 * 1000;
@@ -84,36 +81,6 @@ const episodeLabel = (i: BaseItemDto) => {
     const s = String(i.ParentIndexNumber ?? 0).padStart(2, '0');
     const e = String(i.IndexNumber ?? 0).padStart(2, '0');
     return `${i.SeriesName} · S${s}E${e}${i.Name ? ` · ${i.Name}` : ''}`;
-};
-
-/** Video items whose file could not be analyzed (no video width saved). */
-const useDamagedItems = () => {
-    const { api } = useApi();
-    return useQuery({
-        queryKey: [ 'DamagedItems' ],
-        queryFn: async ({ signal }) => {
-            const lib = getLibraryApi(api!);
-            const base = {
-                recursive: true,
-                includeItemTypes: VIDEO_TYPES,
-                locationTypes: [ LocationType.FileSystem ],
-                enableImages: false,
-                enableUserData: false,
-                enableTotalRecordCount: true
-            };
-            const [ all, healthy ] = await Promise.all([
-                lib.getItems({ ...base, fields: [ ItemFields.Path, ItemFields.DateCreated ] }, { signal }),
-                lib.getItems({ ...base, minWidth: 1 }, { signal })
-            ]);
-            const ok = new Set((healthy.data.Items || []).map(i => i.Id));
-            return {
-                total: all.data.TotalRecordCount ?? all.data.Items?.length ?? 0,
-                damaged: (all.data.Items || []).filter(i => !ok.has(i.Id))
-            };
-        },
-        enabled: !!api,
-        staleTime: 60 * 1000
-    });
 };
 
 interface RepairState { state: 'queued' | 'running' | 'done' | 'failed' | 'notneeded'; result?: VobSubResult; error?: string }
@@ -216,8 +183,54 @@ const DamagedCard: FC<{ item: BaseItemDto; issue?: ProbeIssue; ignored: boolean;
     );
 };
 
+/** How far the check got: how many of the damaged videos were found, and how many videos were read for that. */
+const ScanProgress: FC<{ scan: DamagedScan }> = ({ scan }) => {
+    const locale = globalize.getCurrentDateTimeLocale();
+    const known = Boolean(scan.expected);
+    const text = known ? globalize.translate(
+        'HlthScanning',
+        scan.damaged.length.toLocaleString(locale),
+        (scan.expected ?? 0).toLocaleString(locale),
+        scan.checked.toLocaleString(locale),
+        scan.total.toLocaleString(locale)
+    ) : globalize.translate('HlthScanStarting');
+    return (
+        <Paper elevation={0} sx={{ p: 2, mb: 2.5, borderRadius: '16px', border: '1px solid rgba(38,198,218,0.3)' }} role='status' aria-live='polite'>
+            <Typography sx={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.8)', mb: 1 }}>{text}</Typography>
+            <LinearProgress
+                variant={known ? 'determinate' : 'indeterminate'}
+                value={known ? (scan.damaged.length / (scan.expected ?? 1)) * 100 : undefined}
+                sx={{ height: 6, borderRadius: 3, background: 'rgba(38,198,218,0.15)', '& .MuiLinearProgress-bar': { background: '#26c6da', borderRadius: 3 } }}
+            />
+        </Paper>
+    );
+};
+
+/** The check stopped: what it got up to there (or that it got nothing), with a way to start it again. */
+const ScanFailed: FC<{ scan: DamagedScan; onRetry: () => void }> = ({ scan, onRetry }) => {
+    const locale = globalize.getCurrentDateTimeLocale();
+    return (
+        <Alert severity='error' sx={{ mb: 2.5 }} action={<Button color='inherit' size='small' onClick={onRetry}>{globalize.translate('Retry')}</Button>}>
+            {scan.checked ?
+                globalize.translate('HlthScanStopped', scan.checked.toLocaleString(locale), scan.total.toLocaleString(locale)) :
+                globalize.translate('HlthLoadError')}
+        </Alert>
+    );
+};
+
+/**
+ * The figures at the top, from the counts right from the start (the list below fills in as the damaged videos are
+ * found); ignored videos do not count as damaged.
+ */
+const summarize = (scan: DamagedScan, counts: { damaged: number; ignored: number }) => {
+    const damagedCount = scan.expected == null ? counts.damaged : Math.max(counts.damaged, scan.expected - counts.ignored);
+    const healthyPct = scan.total ? Math.round(((scan.total - damagedCount) / scan.total) * 1000) / 10 : 100;
+    return { damagedCount, healthyPct };
+};
+
 export const Component = () => {
-    const { data, isPending, isError, refetch, isFetching } = useDamagedItems();
+    const { scan, restart: refetch } = useDamagedScan();
+    const scanning = !scan.done;
     const { data: logIssues, isFetching: logsFetching, refetch: refetchLogs } = useLogIssues();
     const [ ignored, setIgnored ] = useState<string[]>(readIgnored);
     const [ showIgnored, setShowIgnored ] = useState(false);
@@ -232,11 +245,11 @@ export const Component = () => {
         });
     }, []);
 
-    const rows = useMemo(() => (data?.damaged || []).map(item => {
+    const rows = useMemo(() => scan.damaged.map(item => {
         const issue = item.Path ? logIssues?.probe.get(item.Path) : undefined;
         const recent = item.DateCreated && Date.now() - Date.parse(item.DateCreated) < RECENT_MS;
         return { item, issue, reason: issue?.reason || (recent ? 'pending' : 'unknown') };
-    }).sort((a, b) => episodeLabel(a.item).localeCompare(episodeLabel(b.item))), [ data, logIssues ]);
+    }).sort((a, b) => episodeLabel(a.item).localeCompare(episodeLabel(b.item))), [ scan.damaged, logIssues ]);
 
     const counts = useMemo(() => {
         const active = rows.filter(r => !ignored.includes(r.item.Id || ''));
@@ -293,7 +306,7 @@ export const Component = () => {
             setBulk(b => (b ? { ...b, done: b.done + 1 } : b));
         }
         workingRef.current = false;
-        void refetch();
+        refetch();
         void queryClient.invalidateQueries({ queryKey: [ BACKUPS_KEY ] });
     }, [ api, keepBackup, refetch, setRepair ]);
 
@@ -325,7 +338,7 @@ export const Component = () => {
     }, [ setRepair ]);
 
     const onRefresh = useCallback(() => {
-        void refetch();
+        refetch();
         void refetchLogs();
         void refetchTools();
     }, [ refetch, refetchLogs, refetchTools ]);
@@ -335,10 +348,9 @@ export const Component = () => {
         return { done: values.filter(v => v.state === 'done').length, failed: values.filter(v => v.state === 'failed').length };
     }, [ repairs ]);
 
-    if (isPending) return <Loading />;
-
-    const healthyPct = data?.total ? Math.round(((data.total - counts.damaged) / data.total) * 1000) / 10 : 100;
-    const busy = isFetching || logsFetching;
+    const { damagedCount, healthyPct } = summarize(scan, counts);
+    const busy = scanning || logsFetching;
+    const totalText = scan.total.toLocaleString(globalize.getCurrentDateTimeLocale());
 
     return (
         <Page id='libraryHealthPage' title={globalize.translate('HlthTitle')} className='mainAnimatedPage type-interior fullWidthContent'>
@@ -353,13 +365,14 @@ export const Component = () => {
                     )}
                 />
 
-                {isError ? (
-                    <Alert severity='error'>{globalize.translate('HlthLoadError')}</Alert>
-                ) : (
+                {/* While it checks: how far it got; the problems found so far are already listed below */}
+                {scanning && <ScanProgress scan={scan} />}
+                {scan.failed && <ScanFailed scan={scan} onRetry={onRefresh} />}
+                {scan.failed && !scan.checked ? null : (
                     <>
                         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(170px, 1fr))', gap: 1.5, mb: 2.5 }}>
                             <StatTile icon={<CheckCircleIcon />} label={globalize.translate('HlthHealthy')} value={`${healthyPct}%`} color='#4caf50' active={!reasonFilter} onClick={() => setReasonFilter('')} />
-                            <StatTile icon={<BrokenImageIcon />} label={globalize.translate('HlthDamaged')} value={counts.damaged} color='#ef5350' />
+                            <StatTile icon={<BrokenImageIcon />} label={globalize.translate('HlthDamaged')} value={damagedCount} color='#ef5350' />
                             <StatTile icon={<SubtitlesOffIcon />} label={globalize.translate('HlthReasonJson')} value={counts.json} color='#ff9800' active={reasonFilter === 'json'} onClick={() => toggleReason('json')} />
                             <StatTile icon={<BrokenImageIcon />} label={globalize.translate('HlthReasonUnreadable')} value={counts.unreadable} color='#ef5350' active={reasonFilter === 'unreadable'} onClick={() => toggleReason('unreadable')} />
                             <StatTile icon={<HelpOutlineIcon />} label={globalize.translate('HlthReasonUnknown')} value={counts.unknown} color='#90a4ae' active={reasonFilter === 'unknown'} onClick={() => toggleReason('unknown')} />
@@ -406,13 +419,13 @@ export const Component = () => {
 
                         <RepairBackupsCard enabled={canRepairOnServer} />
 
-                        {counts.damaged === 0 && !showIgnored ? (
+                        {counts.damaged === 0 && !showIgnored ? (!scanning && (
                             <Paper elevation={0} sx={{ p: 4, mb: 2.5, textAlign: 'center', borderRadius: '16px', border: '1px solid rgba(76,175,80,0.3)' }}>
                                 <CheckCircleIcon sx={{ fontSize: 48, color: '#4caf50' }} />
                                 <Typography sx={{ fontWeight: 700, mt: 1 }}>{globalize.translate('HlthAllGood')}</Typography>
-                                <Typography sx={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.55)', mt: 0.5 }}>{globalize.translate('HlthAllGoodHelp', data?.total ?? 0)}</Typography>
+                                <Typography sx={{ fontSize: '0.85rem', color: 'rgba(255,255,255,0.55)', mt: 0.5 }}>{globalize.translate('HlthAllGoodHelp', totalText)}</Typography>
                             </Paper>
-                        ) : (
+                        )) : (
                             <>
                                 <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap', alignItems: 'center', mb: 2 }}>
                                     <TextField size='small' placeholder={globalize.translate('HlthSearch')} value={query} onChange={e => setQuery(e.target.value)} sx={{ flex: '1 1 240px' }}

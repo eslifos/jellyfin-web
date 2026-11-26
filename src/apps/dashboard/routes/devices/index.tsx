@@ -1,4 +1,4 @@
-import React, { type FC, useCallback, useMemo, useState } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import type { DeviceInfoDto } from '@jellyfin/sdk/lib/generated-client/models/device-info-dto';
 import type { SessionInfoDto } from '@jellyfin/sdk/lib/generated-client/models/session-info-dto';
 import Alert from '@mui/material/Alert';
@@ -6,18 +6,23 @@ import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import IconButton from '@mui/material/IconButton';
 import InputAdornment from '@mui/material/InputAdornment';
+import ListItemIcon from '@mui/material/ListItemIcon';
+import Menu from '@mui/material/Menu';
 import MenuItem from '@mui/material/MenuItem';
 import Paper from '@mui/material/Paper';
+import { type Theme } from '@mui/material/styles';
 import TextField from '@mui/material/TextField';
 import ToggleButton from '@mui/material/ToggleButton';
 import ToggleButtonGroup from '@mui/material/ToggleButtonGroup';
 import Typography from '@mui/material/Typography';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import AppsIcon from '@mui/icons-material/Apps';
 import CleaningServicesIcon from '@mui/icons-material/CleaningServices';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteSweepIcon from '@mui/icons-material/DeleteSweep';
 import DevicesIcon from '@mui/icons-material/Devices';
 import HistoryToggleOffIcon from '@mui/icons-material/HistoryToggleOff';
+import MoreVertIcon from '@mui/icons-material/MoreVert';
 import PlayCircleIcon from '@mui/icons-material/PlayCircle';
 import SearchIcon from '@mui/icons-material/Search';
 import TableRowsIcon from '@mui/icons-material/TableRows';
@@ -46,7 +51,7 @@ import { useApi } from 'hooks/useApi';
 import { useUsersDetails } from 'hooks/useUsers';
 import globalize from 'lib/globalize';
 
-import { PageHeader } from '../../components/cosmic';
+import { PageHeader, StatTile } from '../../components/cosmic';
 import { readPref, writePref } from 'utils/syncedPrefs';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
@@ -65,28 +70,6 @@ const readView = (): ViewMode => {
 };
 
 const time = (date?: string | null) => (date ? Date.parse(date) : 0);
-
-const StatTile: FC<{ icon: React.ReactNode; label: string; value: number; color: string; active?: boolean; onClick?: () => void }> = ({ icon, label, value, color, active, onClick }) => (
-    <Paper elevation={0} onClick={onClick} sx={{
-        position: 'relative', overflow: 'hidden', p: 1.75, display: 'flex', alignItems: 'center', gap: 1.5,
-        cursor: onClick ? 'pointer' : 'default', transition: 'transform 0.2s, border-color 0.2s, box-shadow 0.2s',
-        borderColor: active ? `${color}99 !important` : undefined,
-        boxShadow: active ? `0 0 22px ${color}33` : 'none',
-        '&:hover': onClick ? { transform: 'translateY(-2px)', borderColor: `${color}66 !important` } : {}
-    }}>
-        <Box sx={{ position: 'absolute', top: 0, left: '1rem', right: '1rem', height: '2px', background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
-        <Box sx={{
-            width: 42, height: 42, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            background: `${color}1f`, border: `1px solid ${color}44`, '& svg': { color, fontSize: '1.35rem' }
-        }}>
-            {icon}
-        </Box>
-        <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: '1.45rem', fontWeight: 700, color: '#fff', lineHeight: 1.1 }}>{value}</Typography>
-            <Typography noWrap sx={{ fontSize: '0.7rem', letterSpacing: '0.8px', textTransform: 'uppercase', color: TEXT_TERTIARY }}>{label}</Typography>
-        </Box>
-    </Paper>
-);
 
 const toggleSx = {
     '& .MuiToggleButton-root': {
@@ -117,6 +100,9 @@ export const Component = () => {
     const [ deviceToRename, setDeviceToRename ] = useState<DeviceInfoDto | null>(null);
     const [ messageSession, setMessageSession ] = useState<SessionInfoDto | null>(null);
     const [ bulkDelete, setBulkDelete ] = useState<'inactive' | 'all' | null>(null);
+    // Phones: "Delete all" goes into the "⋮" menu instead of a red button always in sight
+    const isPhone = useMediaQuery((t: Theme) => t.breakpoints.down('sm'));
+    const [ moreAnchor, setMoreAnchor ] = useState<HTMLElement | null>(null);
 
     const devices = useMemo(() => data?.Items || [], [ data ]);
     const currentDeviceId = api?.deviceInfo.id;
@@ -225,7 +211,12 @@ export const Component = () => {
     const closeRename = useCallback(() => setDeviceToRename(null), []);
     const closeMessage = useCallback(() => setMessageSession(null), []);
     const askInactive = useCallback(() => setBulkDelete('inactive'), []);
-    const askAll = useCallback(() => setBulkDelete('all'), []);
+    const askAll = useCallback(() => {
+        setMoreAnchor(null);
+        setBulkDelete('all');
+    }, []);
+    const openMore = useCallback((e: React.MouseEvent<HTMLElement>) => setMoreAnchor(e.currentTarget), []);
+    const closeMore = useCallback(() => setMoreAnchor(null), []);
     const clearSearch = useCallback(() => setSearch(''), []);
 
     if (isDevicesLoading || isUsersLoading) return <Loading />;
@@ -247,13 +238,33 @@ export const Component = () => {
                     title={globalize.translate('HeaderDevices')}
                     subtitle={globalize.translate('DevSubtitle')}
                     actions={(
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1.5 }}>
-                            <Button variant='outlined' color='warning' startIcon={<CleaningServicesIcon />} onClick={askInactive} disabled={inactiveDevices.length === 0} sx={{ borderRadius: '12px' }}>
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5, width: { xs: '100%', sm: 'auto' } }}>
+                            <Button variant='outlined' color='warning' startIcon={<CleaningServicesIcon />} onClick={askInactive} disabled={inactiveDevices.length === 0} sx={{ borderRadius: '12px', flex: { xs: 1, sm: 'none' } }}>
                                 {globalize.translate('DevDeleteInactive', inactiveDevices.length)}
                             </Button>
-                            <Button variant='outlined' color='error' startIcon={<DeleteSweepIcon />} onClick={askAll} disabled={devices.length <= 1} sx={{ borderRadius: '12px' }}>
-                                {globalize.translate('DeleteAll')}
-                            </Button>
+                            {isPhone ? (
+                                <>
+                                    <IconButton
+                                        aria-label={globalize.translate('ButtonMore')}
+                                        aria-haspopup='menu'
+                                        aria-expanded={moreAnchor ? 'true' : undefined}
+                                        onClick={openMore}
+                                        sx={{ border: '1px solid rgba(255,255,255,0.14)', borderRadius: '12px' }}
+                                    >
+                                        <MoreVertIcon />
+                                    </IconButton>
+                                    <Menu anchorEl={moreAnchor} open={!!moreAnchor} onClose={closeMore} anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }} transformOrigin={{ vertical: 'top', horizontal: 'right' }}>
+                                        <MenuItem onClick={askAll} disabled={devices.length <= 1} sx={{ color: 'error.main' }}>
+                                            <ListItemIcon><DeleteSweepIcon fontSize='small' color='error' /></ListItemIcon>
+                                            {globalize.translate('DeleteAll')}
+                                        </MenuItem>
+                                    </Menu>
+                                </>
+                            ) : (
+                                <Button variant='outlined' color='error' startIcon={<DeleteSweepIcon />} onClick={askAll} disabled={devices.length <= 1} sx={{ borderRadius: '12px' }}>
+                                    {globalize.translate('DeleteAll')}
+                                </Button>
+                            )}
                         </Box>
                     )}
                 />

@@ -27,7 +27,7 @@ import formatDistanceToNow from 'date-fns/formatDistanceToNow';
 import { useApiKeys } from 'apps/dashboard/features/keys/api/useApiKeys';
 import { useCreateKey } from 'apps/dashboard/features/keys/api/useCreateKey';
 import { useRevokeKey } from 'apps/dashboard/features/keys/api/useRevokeKey';
-import { Badge, StatTile } from 'apps/dashboard/features/plugins/components/PluginCosmic';
+import { Badge } from 'apps/dashboard/features/plugins/components/PluginCosmic';
 import ConfirmDialog from 'components/ConfirmDialog';
 import InputDialog from 'components/InputDialog';
 import Loading from 'components/loading/LoadingComponent';
@@ -35,7 +35,7 @@ import Page from 'components/Page';
 import globalize from 'lib/globalize';
 import { getLocaleWithSuffix } from 'utils/dateFnsLocale';
 
-import { PageHeader, SectionCard } from '../../components/cosmic';
+import { PageHeader, SectionCard, StatTile } from '../../components/cosmic';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 const DAY = 24 * 3600 * 1000;

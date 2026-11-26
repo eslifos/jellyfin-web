@@ -34,14 +34,14 @@ import TravelExploreIcon from '@mui/icons-material/TravelExplore';
 import TvIcon from '@mui/icons-material/Tv';
 import { Link as RouterLink } from 'react-router-dom';
 
-import { Badge, StatTile } from 'apps/dashboard/features/plugins/components/PluginCosmic';
+import { Badge } from 'apps/dashboard/features/plugins/components/PluginCosmic';
 import Loading from 'components/loading/LoadingComponent';
 import Page from 'components/Page';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
 
-import { PageHeader, SectionCard } from '../../components/cosmic';
+import { PageHeader, SectionCard, StatTile } from '../../components/cosmic';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 /** Friendly names for display order values (both TVDB season types and TMDb episode groups). */

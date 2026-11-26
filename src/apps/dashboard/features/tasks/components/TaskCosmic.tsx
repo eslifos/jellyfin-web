@@ -21,11 +21,11 @@ import StopIcon from '@mui/icons-material/Stop';
 import SubtitlesIcon from '@mui/icons-material/Subtitles';
 import ViewCarouselIcon from '@mui/icons-material/ViewCarousel';
 import formatDistance from 'date-fns/formatDistance';
-import formatDistanceToNow from 'date-fns/formatDistanceToNow';
 import { useNavigate } from 'react-router-dom';
 
 import { Badge } from 'apps/dashboard/features/plugins/components/PluginCosmic';
 import globalize from 'lib/globalize';
+import { shortRelativeTime } from 'utils/relativeTime';
 import { getLocaleWithSuffix } from 'utils/dateFnsLocale';
 
 import { useStartTask } from '../api/useStartTask';
@@ -40,7 +40,8 @@ const DAYS = [ 'Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday',
 
 export const isRunning = (t?: TaskInfo) => !!t && t.State !== TaskState.Idle;
 
-export const relativeTime = (d?: string | number | Date | null) => (d ? formatDistanceToNow(new Date(d), getLocaleWithSuffix()) : '');
+/** Short form ("hace 1 min", "en 3 h"): it fits tiles and rows on a phone. */
+export const relativeTime = (d?: string | number | Date | null) => shortRelativeTime(d);
 
 export const duration = (start?: string | null, end?: string | null) => {
     if (!start || !end) return '';

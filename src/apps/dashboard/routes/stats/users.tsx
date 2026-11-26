@@ -21,7 +21,7 @@ import TimerIcon from '@mui/icons-material/Timer';
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import { useNavigate } from 'react-router-dom';
 
-import { Badge, StatTile, toggleSx } from 'apps/dashboard/features/plugins/components/PluginCosmic';
+import { Badge, toggleSx } from 'apps/dashboard/features/plugins/components/PluginCosmic';
 import useLiveSessions from 'apps/dashboard/features/sessions/hooks/useLiveSessions';
 import { KIND_COLORS, type UserStats, entryMedia, formatDuration, hideBrokenImage, isLocalAddress, useUserStats } from 'apps/dashboard/features/stats/api/playbackStats';
 import { relativeTime } from 'apps/dashboard/features/tasks/components/TaskCosmic';
@@ -32,7 +32,7 @@ import { useApi } from 'hooks/useApi';
 import { useUsers } from 'hooks/useUsers';
 import globalize from 'lib/globalize';
 
-import { PageHeader } from '../../components/cosmic';
+import { PageHeader, StatTile } from '../../components/cosmic';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
 type Sort = 'seen' | 'time' | 'plays' | 'recent' | 'name';
@@ -135,7 +135,7 @@ const UserCard: FC<{ row: Row; share: number }> = ({ row, share }) => {
                 )}
             </Box>
 
-            <Box sx={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 1 }}>
+            <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(3, minmax(0, 1fr))', gap: 1 }}>
                 <Stat value={String(stats?.Plays ?? 0)} label={globalize.translate('StsPlays')} />
                 <Stat value={formatDuration(stats?.WatchedSeconds ?? 0)} label={globalize.translate('PvuWatched')} />
                 <Stat value={stats?.WatchedSeconds30 ? formatDuration(stats.WatchedSeconds30) : '—'} label={globalize.translate('PvuLast30')} />
@@ -158,6 +158,9 @@ const UserCard: FC<{ row: Row; share: number }> = ({ row, share }) => {
         </Paper>
     );
 };
+
+/** Five sort buttons do not fit a phone: the row scrolls sideways instead of widening the page. */
+const sortGroupSx = { ...toggleSx, maxWidth: '100%', overflowX: 'auto', scrollbarWidth: 'none', '& .MuiToggleButton-root': { ...toggleSx['& .MuiToggleButton-root'], whiteSpace: 'nowrap', flexShrink: 0 } };
 
 export const Component = () => {
     const { data: users, isPending: usersPending } = useUsers();
@@ -216,7 +219,7 @@ export const Component = () => {
                     <TextField size='small' placeholder={globalize.translate('PvuSearch')} value={query} onChange={e => setQuery(e.target.value)} sx={{ flex: '1 1 220px' }}
                         slotProps={{ input: { startAdornment: <InputAdornment position='start'><SearchIcon fontSize='small' /></InputAdornment> } }} />
                     <Typography sx={{ fontSize: '0.78rem', color: 'rgba(255,255,255,0.5)' }}>{globalize.translate('PvuSort')}</Typography>
-                    <ToggleButtonGroup size='small' exclusive value={sort} onChange={(_, v: Sort | null) => v && setSort(v)} sx={toggleSx}>
+                    <ToggleButtonGroup size='small' exclusive value={sort} onChange={(_, v: Sort | null) => v && setSort(v)} sx={sortGroupSx}>
                         <ToggleButton value='seen'>{globalize.translate('PvuSortSeen')}</ToggleButton>
                         <ToggleButton value='time'>{globalize.translate('PvuSortTime')}</ToggleButton>
                         <ToggleButton value='plays'>{globalize.translate('StsPlays')}</ToggleButton>

@@ -54,7 +54,7 @@ import globalize from 'lib/globalize';
 import { formatNumber } from 'utils/localeNumber';
 import { queryClient } from 'utils/query/queryClient';
 
-import { PageHeader } from '../../components/cosmic';
+import { PageHeader, StatTile } from '../../components/cosmic';
 import { readPref, writePref } from 'utils/syncedPrefs';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
@@ -111,29 +111,8 @@ const useActivityQuery = (params: SystemApiGetLogEntriesRequest, refetchInterval
     });
 };
 
-const StatTile: FC<{ icon: React.ReactNode; label: string; value?: number; color: string; active?: boolean; onClick?: () => void }> = ({ icon, label, value, color, active, onClick }) => (
-    <Paper elevation={0} onClick={onClick} sx={{
-        position: 'relative', overflow: 'hidden', p: 1.75, display: 'flex', alignItems: 'center', gap: 1.5,
-        cursor: onClick ? 'pointer' : 'default', transition: 'transform 0.2s, border-color 0.2s, box-shadow 0.2s',
-        borderColor: active ? `${color}99 !important` : undefined,
-        boxShadow: active ? `0 0 22px ${color}33` : 'none',
-        '&:hover': onClick ? { transform: 'translateY(-2px)', borderColor: `${color}66 !important` } : {}
-    }}>
-        <Box sx={{ position: 'absolute', top: 0, left: '1rem', right: '1rem', height: '2px', background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
-        <Box sx={{
-            width: 42, height: 42, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            background: `${color}1f`, border: `1px solid ${color}44`, '& svg': { color, fontSize: '1.35rem' }
-        }}>
-            {icon}
-        </Box>
-        <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: '1.45rem', fontWeight: 700, color: '#fff', lineHeight: 1.1 }}>
-                {value == null ? '—' : value.toLocaleString(globalize.getCurrentDateTimeLocale())}
-            </Typography>
-            <Typography noWrap sx={{ fontSize: '0.7rem', letterSpacing: '0.8px', textTransform: 'uppercase', color: TEXT_TERTIARY }}>{label}</Typography>
-        </Box>
-    </Paper>
-);
+/** A counter in the user's number format (a dash while it loads). */
+const count = (value?: number) => (value == null ? '—' : value.toLocaleString(globalize.getCurrentDateTimeLocale()));
 
 const toggleSx = {
     '& .MuiToggleButton-root': {
@@ -431,12 +410,12 @@ export const Component = () => {
                 ) : (
                     <>
                         <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(190px, 1fr))', gap: 2, mb: 2.5 }}>
-                            <StatTile icon={<HistoryIcon />} label={globalize.translate('ActTotal')} value={total.data?.TotalRecordCount} color='#00a4dc' active={!hasFilters} onClick={clearFilters} />
-                            <StatTile icon={<TodayIcon />} label={globalize.translate('ActLast24h')} value={last24h.data?.TotalRecordCount} color='#26c6da' active={period === '24h'} onClick={() => setPeriod(p => (p === '24h' ? 'all' : '24h'))} />
-                            <StatTile icon={<LoginIcon />} label={globalize.translate('ActLogins24h')} value={logins.data?.TotalRecordCount} color='#4caf50' active={type === 'AuthenticationSucceeded'} onClick={() => setType(t => (t === 'AuthenticationSucceeded' ? '' : 'AuthenticationSucceeded'))} />
-                            <StatTile icon={<GppBadIcon />} label={globalize.translate('ActFailedLogins7d')} value={failedLogins.data?.TotalRecordCount} color='#ff7043' active={type === 'AuthenticationFailed'} onClick={() => setType(t => (t === 'AuthenticationFailed' ? '' : 'AuthenticationFailed'))} />
-                            <StatTile icon={<WarningIcon />} label={globalize.translate('ActWarnings')} value={warnings.data?.TotalRecordCount} color='#ff9800' active={severity === LogLevel.Warning} onClick={() => setSeverity(s => (s === LogLevel.Warning ? '' : LogLevel.Warning))} />
-                            <StatTile icon={<ErrorIcon />} label={globalize.translate('ActErrors')} value={errors.data?.TotalRecordCount} color='#ef5350' active={severity === LogLevel.Error} onClick={() => setSeverity(s => (s === LogLevel.Error ? '' : LogLevel.Error))} />
+                            <StatTile icon={<HistoryIcon />} label={globalize.translate('ActTotal')} value={count(total.data?.TotalRecordCount)} color='#00a4dc' active={!hasFilters} onClick={clearFilters} />
+                            <StatTile icon={<TodayIcon />} label={globalize.translate('ActLast24h')} value={count(last24h.data?.TotalRecordCount)} color='#26c6da' active={period === '24h'} onClick={() => setPeriod(p => (p === '24h' ? 'all' : '24h'))} />
+                            <StatTile icon={<LoginIcon />} label={globalize.translate('ActLogins24h')} value={count(logins.data?.TotalRecordCount)} color='#4caf50' active={type === 'AuthenticationSucceeded'} onClick={() => setType(t => (t === 'AuthenticationSucceeded' ? '' : 'AuthenticationSucceeded'))} />
+                            <StatTile icon={<GppBadIcon />} label={globalize.translate('ActFailedLogins7d')} value={count(failedLogins.data?.TotalRecordCount)} color='#ff7043' active={type === 'AuthenticationFailed'} onClick={() => setType(t => (t === 'AuthenticationFailed' ? '' : 'AuthenticationFailed'))} />
+                            <StatTile icon={<WarningIcon />} label={globalize.translate('ActWarnings')} value={count(warnings.data?.TotalRecordCount)} color='#ff9800' active={severity === LogLevel.Warning} onClick={() => setSeverity(s => (s === LogLevel.Warning ? '' : LogLevel.Warning))} />
+                            <StatTile icon={<ErrorIcon />} label={globalize.translate('ActErrors')} value={count(errors.data?.TotalRecordCount)} color='#ef5350' active={severity === LogLevel.Error} onClick={() => setSeverity(s => (s === LogLevel.Error ? '' : LogLevel.Error))} />
                         </Box>
 
                         <Paper elevation={0} sx={{ p: 1.5, mb: 2.5, borderRadius: '16px', display: 'flex', flexWrap: 'wrap', alignItems: 'center', gap: 1.5 }}>

@@ -21,11 +21,12 @@ $drawer-width: 240px;
         position: unset !important;
     }
 
-    // There is no top bar anymore: small gap on top, and room at the bottom
-    // so the floating pill never covers the end of the page.
+    // There is no top bar anymore: small gap on top, and room at the bottom so the floating bars never cover the end
+    // of the page: what they measure (the pill, plus the small player when both show; --jf-bottom-bar-space already
+    // has the safe area and a margin) and never less than before.
     .mainAnimatedPage .content-primary {
         padding-top: 1rem;
-        padding-bottom: 9rem !important;
+        padding-bottom: max(9rem, calc(var(--jf-bottom-bar-space, 0px) + 1rem)) !important;
     }
 
     // Fix the padding of the metadata editor

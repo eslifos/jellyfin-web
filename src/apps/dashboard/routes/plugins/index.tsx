@@ -26,7 +26,7 @@ import { Link } from 'react-router-dom';
 import { QueryKey } from 'apps/dashboard/features/plugins/api/queryKey';
 import { usePluginDetails } from 'apps/dashboard/features/plugins/api/usePluginDetails';
 import NoPluginResults from 'apps/dashboard/features/plugins/components/NoPluginResults';
-import { StatTile, PluginTile, categoryLabel, getUpdate, toggleSx } from 'apps/dashboard/features/plugins/components/PluginCosmic';
+import { PluginTile, categoryLabel, getUpdate, toggleSx } from 'apps/dashboard/features/plugins/components/PluginCosmic';
 import { PluginCategory } from 'apps/dashboard/features/plugins/constants/pluginCategory';
 import useRestartServer from 'apps/dashboard/features/system/api/useRestartServer';
 import ConfirmDialog from 'components/ConfirmDialog';
@@ -38,7 +38,7 @@ import { useSystemInfo } from 'hooks/useSystemInfo';
 import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
 
-import { PageHeader } from '../../components/cosmic';
+import { PageHeader, StatTile } from '../../components/cosmic';
 
 const MAIN_CATEGORIES = Object.values(PluginCategory).filter(c => c !== PluginCategory.Other).map(c => c.toLowerCase());
 

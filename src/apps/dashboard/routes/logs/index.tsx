@@ -29,7 +29,7 @@ import { useNavigate } from 'react-router-dom';
 
 import { useServerLogs } from 'apps/dashboard/features/logs/api/useServerLogs';
 import { LOG_KINDS, type LogKind, formatSize, logKind } from 'apps/dashboard/features/logs/utils/logTypes';
-import { Badge, StatTile } from 'apps/dashboard/features/plugins/components/PluginCosmic';
+import { Badge } from 'apps/dashboard/features/plugins/components/PluginCosmic';
 import { relativeTime } from 'apps/dashboard/features/tasks/components/TaskCosmic';
 import { SavedSnackbar } from 'apps/legacy/routes/user/components/PreferencesUi';
 import Loading from 'components/loading/LoadingComponent';
@@ -39,7 +39,7 @@ import { QUERY_KEY as CONFIG_KEY, useConfiguration } from 'hooks/useConfiguratio
 import globalize from 'lib/globalize';
 import { queryClient } from 'utils/query/queryClient';
 
-import { PageHeader, SectionCard, ToggleRow } from '../../components/cosmic';
+import { PageHeader, SectionCard, StatTile, ToggleRow } from '../../components/cosmic';
 
 type Sort = 'date' | 'size' | 'name';
 

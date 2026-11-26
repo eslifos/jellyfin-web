@@ -36,7 +36,7 @@ import { useRestoreBackup } from 'apps/dashboard/features/backups/api/useRestore
 import BackupProgressDialog from 'apps/dashboard/features/backups/components/BackupProgressDialog';
 import RestoreConfirmationDialog from 'apps/dashboard/features/backups/components/RestoreConfirmationDialog';
 import RestoreProgressDialog from 'apps/dashboard/features/backups/components/RestoreProgressDialog';
-import { Badge, StatTile } from 'apps/dashboard/features/plugins/components/PluginCosmic';
+import { Badge } from 'apps/dashboard/features/plugins/components/PluginCosmic';
 import useLiveTasks from 'apps/dashboard/features/tasks/hooks/useLiveTasks';
 import ConfirmDialog from 'components/ConfirmDialog';
 import Loading from 'components/loading/LoadingComponent';
@@ -46,7 +46,7 @@ import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
 import { getLocaleWithSuffix } from 'utils/dateFnsLocale';
 
-import { PageHeader, SectionCard, ToggleRow } from '../../components/cosmic';
+import { PageHeader, SectionCard, StatTile, ToggleRow } from '../../components/cosmic';
 
 const DAY = 24 * 3600 * 1000;
 const STALE_DAYS = 30;

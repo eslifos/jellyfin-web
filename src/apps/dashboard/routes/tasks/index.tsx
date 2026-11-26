@@ -15,7 +15,6 @@ import SearchIcon from '@mui/icons-material/Search';
 import UpcomingIcon from '@mui/icons-material/Upcoming';
 import { useNavigate } from 'react-router-dom';
 
-import { StatTile } from 'apps/dashboard/features/plugins/components/PluginCosmic';
 import {
     IconBox, RunButton, TaskProgressBar, TaskTile, categoryStyle, isRunning, nextRun, relativeTime
 } from 'apps/dashboard/features/tasks/components/TaskCosmic';
@@ -25,7 +24,7 @@ import Loading from 'components/loading/LoadingComponent';
 import Page from 'components/Page';
 import globalize from 'lib/globalize';
 
-import { PageHeader, SectionCard } from '../../components/cosmic';
+import { PageHeader, SectionCard, StatTile } from '../../components/cosmic';
 
 type Filter = 'all' | 'running' | 'failed' | 'manual';
 const SOON_MS = 24 * 3600 * 1000;

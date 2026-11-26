@@ -32,13 +32,12 @@ import PublicIcon from '@mui/icons-material/Public';
 import PublicOffIcon from '@mui/icons-material/PublicOff';
 import SupervisorAccountIcon from '@mui/icons-material/SupervisorAccount';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import { formatDistanceToNow } from 'date-fns';
 import React, { type FC, useCallback, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
-import { getLocaleWithSuffix } from 'utils/dateFnsLocale';
+import { shortRelativeTime } from 'utils/relativeTime';
 
 import { UserTab } from '../constants/userTab';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
@@ -66,7 +65,7 @@ export const getAccentFor = (user: UserDto) => {
 };
 
 export const formatRelative = (date?: string | null) => (
-    date ? formatDistanceToNow(Date.parse(date), getLocaleWithSuffix()) : globalize.translate('UsersNever')
+    shortRelativeTime(date) || globalize.translate('UsersNever')
 );
 
 /** Active in the last 10 minutes. */

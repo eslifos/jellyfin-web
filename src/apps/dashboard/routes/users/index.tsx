@@ -20,7 +20,7 @@ import TableRowsIcon from '@mui/icons-material/TableRows';
 import ViewModuleIcon from '@mui/icons-material/ViewModule';
 import AccountCircleIcon from '@mui/icons-material/AccountCircle';
 import WifiTetheringIcon from '@mui/icons-material/WifiTethering';
-import React, { type FC, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 
 import Toast from 'apps/dashboard/components/Toast';
@@ -40,7 +40,7 @@ import { useUsers } from 'hooks/useUsers';
 import { deleteProfile, fetchProfileLinks } from 'utils/profiles';
 import globalize from 'lib/globalize';
 
-import { PageHeader } from '../../components/cosmic';
+import { PageHeader, StatTile } from '../../components/cosmic';
 import { readPref, writePref } from 'utils/syncedPrefs';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 import { formatNumber } from 'utils/localeNumber';
@@ -61,28 +61,6 @@ const readView = (): ViewMode => {
 };
 
 const time = (date?: string | null) => (date ? Date.parse(date) : 0);
-
-const StatTile: FC<{ icon: React.ReactNode; label: string; value: number; color: string; active?: boolean; onClick?: () => void }> = ({ icon, label, value, color, active, onClick }) => (
-    <Paper elevation={0} onClick={onClick} sx={{
-        position: 'relative', overflow: 'hidden', p: 1.75, display: 'flex', alignItems: 'center', gap: 1.5,
-        cursor: onClick ? 'pointer' : 'default', transition: 'transform 0.2s, border-color 0.2s, box-shadow 0.2s',
-        borderColor: active ? `${color}99 !important` : undefined,
-        boxShadow: active ? `0 0 22px ${color}33` : 'none',
-        '&:hover': onClick ? { transform: 'translateY(-2px)', borderColor: `${color}66 !important` } : {}
-    }}>
-        <Box sx={{ position: 'absolute', top: 0, left: '1rem', right: '1rem', height: '2px', background: `linear-gradient(90deg, transparent, ${color}, transparent)` }} />
-        <Box sx={{
-            width: 42, height: 42, borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0,
-            background: `${color}1f`, border: `1px solid ${color}44`, '& svg': { color, fontSize: '1.35rem' }
-        }}>
-            {icon}
-        </Box>
-        <Box sx={{ minWidth: 0 }}>
-            <Typography sx={{ fontSize: '1.45rem', fontWeight: 700, color: '#fff', lineHeight: 1.1 }}>{value}</Typography>
-            <Typography noWrap sx={{ fontSize: '0.7rem', letterSpacing: '0.8px', textTransform: 'uppercase', color: TEXT_TERTIARY }}>{label}</Typography>
-        </Box>
-    </Paper>
-);
 
 const toggleSx = {
     '& .MuiToggleButton-root': {
