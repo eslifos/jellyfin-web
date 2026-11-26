@@ -14,7 +14,7 @@ import { useApi } from 'hooks/useApi';
 
 import Player from './components/Player';
 import FloatingNav from './components/FloatingNav';
-import HomeLibraryNav from './components/HomeLibraryNav';
+import TvMenu from './components/TvMenu';
 import SyncPlayInviteHandler from './features/syncPlay/components/SyncPlayInviteHandler';
 import LibraryTopBar from './features/libraries/components/LibraryTopBar';
 import { LibraryProvider } from './features/libraries/hooks/useLibrary';
@@ -69,8 +69,8 @@ export const Component = () => {
             {/* The player (small bar and full player) for everything that plays */}
             {user && <Player />}
             <FloatingNav />
-            {/* TV: the libraries, fixed on the left of every page (not over the full player or the sign in) */}
-            {user && layoutManager.tv && location.pathname !== '/video' && !PUBLIC_PATHS.includes(location.pathname) && <HomeLibraryNav rail />}
+            {/* TV: the one menu, fixed on the left of every screen (not over the full player, the sign in or the profiles) */}
+            {user && layoutManager.tv && ![ '/video', '/profiles' ].includes(location.pathname) && !PUBLIC_PATHS.includes(location.pathname) && <TvMenu />}
             {/* Safari on iPhone / iPad, once: how to add the app to the Home Screen */}
             {user && <IosInstallHint />}
 

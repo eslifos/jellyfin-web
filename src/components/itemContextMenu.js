@@ -3,6 +3,7 @@ import { getLibraryApi } from '@jellyfin/sdk/lib/utils/api/library-api';
 
 import { DOWNLOADABLE_TYPES, canDownloadItem } from 'apps/modern/features/downloads/support';
 import { AppFeature } from 'constants/appFeature';
+import { PluginType } from 'constants/pluginType';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 
 import browser from '../scripts/browser';
@@ -14,6 +15,7 @@ import { appHost } from './apphost';
 import { appRouter } from './router/appRouter';
 import itemHelper, { canEditPlaylist } from './itemHelper';
 import { playbackManager } from './playback/playbackmanager';
+import { pluginManager } from './pluginManager';
 import toast from './toast/toast';
 import * as userSettings from '../scripts/settings/userSettings';
 
@@ -164,6 +166,22 @@ export async function getCommands(options) {
                 icon: 'playlist_add'
             });
         }
+    }
+
+    // The TV layout has no bar for these: watching with others and playing on another device are here instead
+    if (options.playElsewhere && canPlay && item.MediaType !== 'Photo') {
+        if (pluginManager.ofType(PluginType.SyncPlay).length > 0 && user.Policy?.SyncPlayAccess !== 'None') {
+            commands.push({
+                name: globalize.translate('TvWatchTogether'),
+                id: 'syncplay',
+                icon: 'groups'
+            });
+        }
+        commands.push({
+            name: globalize.translate('HeaderPlayOn'),
+            id: 'playon',
+            icon: 'cast'
+        });
     }
 
     if ((item.Type === 'Timer') && user.Policy.EnableLiveTvManagement && options.cancelTimer !== false) {
@@ -619,6 +637,18 @@ function executeCommand(item, id, options) {
                 break;
             case 'delete':
                 deleteItem(apiClient, item).then(getResolveFunction(resolve, id, true, true, itemId), getResolveFunction(resolve, id));
+                break;
+            case 'syncplay':
+                import('../plugins/syncPlay/ui/groupSelectionMenu').then(({ default: groupSelectionMenu }) => {
+                    groupSelectionMenu.show(options.positionTo);
+                });
+                getResolveFunction(resolve, id)();
+                break;
+            case 'playon':
+                import('./playback/playerSelectionMenu').then(playerSelectionMenu => {
+                    playerSelectionMenu.show(options.positionTo);
+                });
+                getResolveFunction(resolve, id)();
                 break;
             case 'share':
                 navigator.share({

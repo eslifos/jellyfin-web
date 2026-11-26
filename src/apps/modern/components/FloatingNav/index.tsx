@@ -2,13 +2,14 @@
  * FloatingNav — persistent bottom navigation pill for the experimental layout.
  *
  * Renders as a glassmorphism pill fixed at the bottom center of the viewport, above the iPhone home indicator.
- * Hidden on public paths (login, wizard) and on the video player route.
+ * Hidden on public paths (login, wizard) and on the video player route. Not on the TV layout: there the TV menu takes
+ * its place (Search, Home, Coming up and the settings are in it; see TvMenu).
  * Every page leaves room at its end for it (see bottomSpace.ts). On phones it takes the width of the screen and its
  * buttons scroll sideways when they do not fit (like the bar of the libraries), the hidden side faded. On phones and
  * tablets it steps aside while scrolling down.
  * Uses `createPortal` to escape any CSS `transform` stacking context from the parent.
  */
-import React, { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import globalize from 'lib/globalize';
 import Box from '@mui/material/Box';
@@ -35,7 +36,6 @@ import { downloadsAvailable } from '../../features/downloads/support';
 import { hiddenBarSx, useBottomSpace, useHideOnScroll } from './bottomSpace';
 import ScrollRail, { narrowBarPlacement } from './ScrollRail';
 import { isSettingsSubPath } from './settingsPaths';
-import { focusNewScreen, installTvBottomBar } from './tvBar';
 import { ambientAnimation } from 'utils/reducedMotion';
 
 /**
@@ -112,40 +112,6 @@ const toolsSx = (narrow: boolean) => ({
     '& svg': { fontSize: '1.5rem !important' }
 });
 
-// The remote reaches the bar on the TV layout (it acts only there)
-installTvBottomBar();
-
-/** Width of the TV bar of options, folded (icons): the pages leave it room (--tv-bar-width, AppOverrides.scss). */
-const TV_BAR_FOLDED = 96;
-/** Width of the TV bar with the focus in it (the names too), over the page. */
-const TV_BAR_OPEN = 340;
-
-/**
- * TV: the bar is a rail fixed on the right of the screen, the buttons one under the other. Folded it shows the icons;
- * with the focus of the remote in it, it widens over the page with the name of each button.
- */
-const tvBarSx = {
-    top: 0, bottom: 0, right: 0, left: 'auto', transform: 'none', width: TV_BAR_FOLDED, maxWidth: 'none',
-    flexDirection: 'column', justifyContent: 'center', alignItems: 'stretch', gap: 0.75, px: 1.5, py: 3,
-    borderRadius: 0, borderTop: 0, borderRight: 0, borderBottom: 0, overflowX: 'hidden', overflowY: 'auto',
-    transition: 'width 0.2s ease',
-    '& .jfBarGroup': { flexDirection: 'column', alignItems: 'stretch', gap: 0.75, p: 0 },
-    '& .jfBarDivider': { width: 'auto', height: '1px', mx: 1, my: 0.5 },
-    '& button': {
-        // Every button the same way (some draw their own layout, like the scans one): icon, then its name
-        width: '100%', display: 'flex !important', flexDirection: 'row !important', alignItems: 'center !important',
-        justifyContent: 'flex-start !important', gap: 1.5, padding: '14px 22px !important', overflow: 'hidden',
-        // The name of the button, only while the bar is open
-        '&::after': {
-            content: 'attr(aria-label)', display: 'block', flex: '1 1 auto', minWidth: 0, opacity: 0, fontSize: '22px', fontWeight: 600,
-            textAlign: 'left', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', transition: 'opacity 0.15s'
-        }
-    },
-    '& svg': { fontSize: '30px !important', flexShrink: 0 },
-    '& .MuiAvatar-root': { width: '32px !important', height: '32px !important', flexShrink: 0 },
-    '&:focus-within': { width: TV_BAR_OPEN, '& button::after': { opacity: 1 } }
-} as const;
-
 const FloatingNav = () => {
     const location = useLocation();
     const navigate = useNavigate();
@@ -155,30 +121,13 @@ const FloatingNav = () => {
     const [ searchOpen, setSearchOpen ] = useState(false);
     const [ searchParams ] = useSearchParams();
     const showSettingsBack = isSettingsSubPath(location.pathname);
-    const shown = !(isPublicPath || location.pathname === '/video' || location.pathname === '/profiles');
+    const shown = !(layoutManager.tv || isPublicPath || location.pathname === '/video' || location.pathname === '/profiles');
 
     const barRef = useRef<HTMLDivElement>(null);
     const narrow = useMediaQuery(NARROW_BAR);
     const touchSized = useMediaQuery((t: Theme) => t.breakpoints.down('md'));
     const { hidden, show } = useHideOnScroll(shown && touchSized && !searchOpen);
-    // TV: the bar is on the right (it takes no room at the bottom of the pages)
-    const tv = layoutManager.tv;
-    useBottomSpace('nav', barRef, shown && !tv);
-
-    // TV: another screen opened from the bar or the rail closes them; the focus goes to the new screen
-    const screenKey = location.pathname + location.search;
-    useEffect(() => {
-        focusNewScreen();
-    }, [ screenKey ]);
-
-    // The pages leave the TV bar its room while it is on screen
-    useEffect(() => {
-        if (!tv || !shown) return;
-        document.documentElement.style.setProperty('--tv-bar-width', `${TV_BAR_FOLDED}px`);
-        return () => {
-            document.documentElement.style.removeProperty('--tv-bar-width');
-        };
-    }, [ tv, shown ]);
+    useBottomSpace('nav', barRef, shown);
 
     const goToSettings = useCallback(() => {
         const userId = searchParams.get('userId');
@@ -199,9 +148,7 @@ const FloatingNav = () => {
     }
 
     // Phones: the bar takes the width of the screen and its buttons scroll sideways when they do not fit
-    let barPlacement: object = { left: '50%' };
-    if (tv) barPlacement = tvBarSx;
-    else if (narrow) barPlacement = narrowBarPlacement(hidden);
+    const barPlacement = narrow ? narrowBarPlacement(hidden) : { left: '50%' };
 
     return (
         <Box
@@ -281,8 +228,7 @@ const FloatingNav = () => {
                 </Box>
 
                 {/* Scans and tasks (administrators): always there, lit while something runs */}
-                {/* TV: a fixed "Server activity" entry (its label does not change with what runs) */}
-                <LibraryScanIndicator compact={narrow} tvEntry={tv} />
+                <LibraryScanIndicator compact={narrow} />
 
                 {/* Profile */}
                 {isLoggedIn && (

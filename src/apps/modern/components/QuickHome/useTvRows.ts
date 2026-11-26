@@ -54,11 +54,11 @@ const isTextField = (el: Element) => el instanceof HTMLInputElement && ![ 'butto
     || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement || (el as HTMLElement).isContentEditable;
 
 /** A dialog or menu on screen (the modern app keeps some mounted and hidden: those do not count). */
-/** Something on screen above the first row, not in the side rails of the TV layout (the tabs of a library). */
+/** Something on screen above the first row, not in the TV menu (the tabs of a library). */
 const isAboveRows = (el: Element, firstRow: Element) => {
     // Against its first item: a banner row may start under the tabs, at the top of the screen
     const first = rowItems(firstRow)[0] ?? firstRow;
-    return !el.closest('[data-tv-rail], nav[data-bottom-bar]')
+    return !el.closest('[data-tv-menu]')
         && el.getBoundingClientRect().bottom <= first.getBoundingClientRect().top + 4;
 };
 

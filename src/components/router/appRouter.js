@@ -6,8 +6,7 @@ import itemHelper from '../itemHelper';
 import loading from '../loading/loading';
 import alert from '../alert';
 
-import { focusBottomBar, leaveBottomBarIfIn } from 'apps/modern/components/FloatingNav/tvBar';
-import { leaveRailIfIn } from 'apps/modern/components/HomeLibraryNav/tvRail';
+import { handleTvBack } from 'apps/modern/components/TvMenu/tvMenu';
 import { openPlayer } from 'apps/modern/components/Player/events';
 import { closeOpenModal } from 'scripts/tvModals';
 import layoutManager from 'components/layoutManager';
@@ -134,18 +133,25 @@ class AppRouter {
      * The Back key of a remote or of an app installed on the TV.
      * @returns Whether it was handled; when not (the home screen, already in the bar) the app may close.
      */
+    /**
+     * Back. Returns false when there is nothing left to go back to: the app may close then (the TV app does).
+     * TV layout: the TV menu decides first (it closes; on the home screen, to the start of the row, then the menu,
+     * then "Press Back again to exit"); a screen with nothing before it goes to the home screen.
+     */
     handleBack() {
-        // A menu or dialog on screen closes first; then the bar or the rail of the TV layout, if the focus is there
+        // A menu or dialog on screen closes first
         if (closeOpenModal()) return true;
-        if (layoutManager.tv && (leaveBottomBarIfIn() || leaveRailIfIn())) return true;
+        if (layoutManager.tv) {
+            const used = handleTvBack(this.isStartPage());
+            if (used !== null) return used;
+        }
         if (this.canGoBack()) {
             this.back();
             return true;
         }
-        // Home screen with the remote: Back opens the bar (its options are there); in the bar, Back closes it (above).
-        // The app is left with the Home key of the remote
-        if (layoutManager.tv && this.isStartPage()) {
-            return focusBottomBar();
+        if (layoutManager.tv) {
+            this.goHome();
+            return true;
         }
         return false;
     }

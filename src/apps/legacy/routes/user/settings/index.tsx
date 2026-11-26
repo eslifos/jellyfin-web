@@ -42,6 +42,7 @@ import Dashboard from 'utils/dashboard';
 import shell from 'scripts/shell';
 import keyboardNavigation from 'scripts/keyboardNavigation';
 import { downloadsAvailable } from 'apps/modern/features/downloads/support';
+import LibraryScanIndicator from 'apps/dashboard/features/libraries/components/LibraryScanIndicator';
 import OfflinePinIcon from '@mui/icons-material/OfflinePin';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
 
@@ -253,6 +254,13 @@ const UserSettingsPage: FC = () => {
                     <SectionCard title={globalize.translate('HeaderAdmin')} accentColor='#aa5cc3'>
                         <SettingsItem icon={<DashboardIcon />} label={globalize.translate('TabDashboard')} href='#/dashboard' color='#aa5cc3' />
                         <SettingsItem icon={<EditIcon />} label={globalize.translate('MetadataManager')} href='#/metadata' color='#aa5cc3' />
+                    </SectionCard>
+                )}
+
+                {/* TV: what the server is doing (scans and tasks), instead of a button in the menu */}
+                {isLoggedInUser && user.Policy?.IsAdministrator && layoutManager.tv && (
+                    <SectionCard title={globalize.translate('TabServer')} accentColor='#aa5cc3'>
+                        <LibraryScanIndicator listItem />
                     </SectionCard>
                 )}
 

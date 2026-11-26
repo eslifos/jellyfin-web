@@ -121,7 +121,9 @@ function getContextMenuOptions(item, user, button) {
         shuffle: false,
         instantMix: false,
         user: user,
-        share: true
+        share: true,
+        // TV: "Watch together" and "Play on" (there is no bar for them)
+        playElsewhere: layoutManager.tv
     };
 }
 

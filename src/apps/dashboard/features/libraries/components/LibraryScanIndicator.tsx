@@ -3,11 +3,14 @@
  * navigation of the app. Quiet while nothing runs; lit, with a ring (and the percent when known), while a library
  * is scanned or a task runs. It opens the detail: scans in progress, the file being worked on and running tasks;
  * when nothing runs, a way to scan every library. (The dashboard shows the same thing on its own pages.)
+ * On the TV layout it is an entry of the settings instead ("Server activity", see the settings menu).
  */
 import RadarRoundedIcon from '@mui/icons-material/RadarRounded';
 import React, { type FC, useCallback, useState } from 'react';
 import Box from '@mui/material/Box';
 import CircularProgress from '@mui/material/CircularProgress';
+import ListItemButton from '@mui/material/ListItemButton';
+import ListItemText from '@mui/material/ListItemText';
 import Paper from '@mui/material/Paper';
 import Popover from '@mui/material/Popover';
 import Tooltip from '@mui/material/Tooltip';
@@ -29,13 +32,17 @@ interface LibraryScanIndicatorProps {
     /** Narrow phones: less padding. */
     compact?: boolean;
     /**
-     * TV: the remote reaches it as a fixed "Server activity" entry. Elsewhere the indicator is kept out of the focus
-     * order (its label changes with what runs; the mouse and touch open it).
+     * An entry of a list (the settings on the TV layout): "Server activity" with what runs under it, reached with the
+     * remote. Otherwise a button of the bar, kept out of the focus order (its label changes with what runs; the mouse
+     * and touch open it).
      */
-    tvEntry?: boolean;
+    listItem?: boolean;
 }
 
 const RING = 34;
+/** Where the detail opens: under its entry in a list, above its button in the bar. */
+const LIST_POPOVER = { anchorOrigin: { vertical: 'bottom', horizontal: 'left' }, transformOrigin: { vertical: 'top', horizontal: 'left' } } as const;
+const BAR_POPOVER = { anchorOrigin: { vertical: 'top', horizontal: 'center' }, transformOrigin: { vertical: 'bottom', horizontal: 'center' } } as const;
 const ACCENT = '#00a4dc';
 
 interface ScanStatus {
@@ -134,7 +141,24 @@ const IdlePanel: FC = () => {
     );
 };
 
-const LibraryScanIndicator: FC<LibraryScanIndicatorProps> = ({ compact = false, tvEntry = false }) => {
+/** "Server activity" as an entry of a list, with what runs under it. */
+const ScanListEntry: FC<{ status: ScanStatus; label: string; onOpen: (e: React.MouseEvent<HTMLElement>) => void }> = ({ status, label, onOpen }) => (
+    <ListItemButton
+        onClick={onOpen}
+        aria-haspopup='dialog'
+        data-busy={status.busy ? 'true' : undefined}
+        sx={{ borderRadius: '12px', mb: 0.5, px: 1.5, py: 1.2, gap: 1.5, color: status.busy ? ACCENT : 'rgba(255,255,255,0.85)' }}
+    >
+        <ScannerIcon status={status} />
+        <ListItemText
+            primary={globalize.translate('ServerActivity')}
+            secondary={label}
+            slotProps={{ primary: { fontWeight: 500 }, secondary: { color: TEXT_SECONDARY, noWrap: true } }}
+        />
+    </ListItemButton>
+);
+
+const LibraryScanIndicator: FC<LibraryScanIndicatorProps> = ({ compact = false, listItem = false }) => {
     const { user } = useApi();
     const scans = useLibraryScans();
     const [ anchor, setAnchor ] = useState<HTMLElement | null>(null);
@@ -149,42 +173,45 @@ const LibraryScanIndicator: FC<LibraryScanIndicatorProps> = ({ compact = false, 
     const { busy, detail, percent, summary } = status;
     const statusLabel = percent ? `${summary}. ${detail}` : detail;
 
+    const trigger = listItem ? <ScanListEntry status={status} label={statusLabel} onOpen={onOpen} /> : (
+        <Tooltip
+            placement='top'
+            title={percent ? (
+                <>
+                    <Box component='span' sx={{ display: 'block', fontWeight: 700 }}>{summary}</Box>
+                    <Box component='span' sx={{ display: 'block', opacity: 0.75 }}>{detail}</Box>
+                </>
+            ) : detail}
+        >
+            <Box
+                component='button'
+                type='button'
+                onClick={onOpen}
+                tabIndex={-1}
+                aria-label={statusLabel}
+                aria-haspopup='dialog'
+                data-busy={busy ? 'true' : undefined}
+                sx={{
+                    // The same height as the other buttons of the bar
+                    display: 'grid', placeItems: 'center', p: compact ? '4px 5px' : '4px 9px', border: 0, borderRadius: '14px',
+                    flexShrink: 0, background: busy ? 'rgba(0,164,220,0.12)' : 'transparent',
+                    color: busy ? ACCENT : 'rgba(255,255,255,0.55)', cursor: 'pointer',
+                    '&:hover': { background: 'rgba(0,164,220,0.12)', color: ACCENT }
+                }}
+            >
+                <ScannerIcon status={status} />
+            </Box>
+        </Tooltip>
+    );
+
     return (
         <>
-            <Tooltip
-                placement='top'
-                title={percent ? (
-                    <>
-                        <Box component='span' sx={{ display: 'block', fontWeight: 700 }}>{summary}</Box>
-                        <Box component='span' sx={{ display: 'block', opacity: 0.75 }}>{detail}</Box>
-                    </>
-                ) : detail}
-            >
-                <Box
-                    component='button'
-                    type='button'
-                    onClick={onOpen}
-                    tabIndex={tvEntry ? 0 : -1}
-                    aria-label={tvEntry ? globalize.translate('ServerActivity') : statusLabel}
-                    aria-haspopup='dialog'
-                    data-busy={busy ? 'true' : undefined}
-                    sx={{
-                        // The same height as the other buttons of the bar
-                        display: 'grid', placeItems: 'center', p: compact ? '4px 5px' : '4px 9px', border: 0, borderRadius: '14px',
-                        flexShrink: 0, background: busy ? 'rgba(0,164,220,0.12)' : 'transparent',
-                        color: busy ? ACCENT : 'rgba(255,255,255,0.55)', cursor: 'pointer',
-                        '&:hover': { background: 'rgba(0,164,220,0.12)', color: ACCENT }
-                    }}
-                >
-                    <ScannerIcon status={status} />
-                </Box>
-            </Tooltip>
+            {trigger}
             <Popover
                 open={!!anchor}
                 anchorEl={anchor}
                 onClose={onClose}
-                anchorOrigin={{ vertical: 'top', horizontal: 'center' }}
-                transformOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+                {...(listItem ? LIST_POPOVER : BAR_POPOVER)}
                 slotProps={{ paper: { sx: { background: 'none', boxShadow: 'none', mt: -1 } } }}
             >
                 <Paper elevation={0} sx={{ p: 2, width: 'min(420px, 92vw)', borderRadius: '16px', background: 'rgba(14,17,34,0.97)', border: '1px solid rgba(0,164,220,0.3)' }}>
