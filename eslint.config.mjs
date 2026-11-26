@@ -40,6 +40,7 @@ export default tseslint.config(
             'node_modules',
             'coverage',
             'dist',
+            'ux-review',
             '.idea',
             '.vscode'
         ]
