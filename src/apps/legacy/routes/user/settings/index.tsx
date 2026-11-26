@@ -45,6 +45,7 @@ import { downloadsAvailable } from 'apps/modern/features/downloads/support';
 import LibraryScanIndicator from 'apps/dashboard/features/libraries/components/LibraryScanIndicator';
 import OfflinePinIcon from '@mui/icons-material/OfflinePin';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
+import { minText } from 'utils/tvText';
 
 interface SettingsItemProps {
     icon: React.ReactNode;
@@ -148,7 +149,7 @@ const SectionCard: FC<SectionCardProps> = ({ title, accentColor = '#00a4dc', chi
             <Typography
                 variant='overline'
                 sx={{
-                    fontSize: '0.7rem',
+                    fontSize: minText('0.7rem'),
                     letterSpacing: '1.5px',
                     color: accentColor,
                     fontWeight: 700

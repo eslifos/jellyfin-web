@@ -1,0 +1,73 @@
+// Loading indicators keep turning when the rest of the motion stops (reduced motion, the TV layout): they tell the
+// app is working (WCAG counts them as essential motion).
+// $still: a selector suffix that gives the rules the weight of the one that stopped the motion (an id).
+// $durations: also put back their own durations (after a rule that shortened every animation).
+@mixin keep-loading-indicators($still, $durations: true) {
+    .MuiCircularProgress-indeterminate#{$still},
+    .MuiCircularProgress-circleIndeterminate#{$still} {
+        @if $durations {
+            animation-duration: 1.4s !important;
+        }
+
+        animation-iteration-count: infinite !important;
+    }
+
+    .MuiLinearProgress-bar1Indeterminate#{$still} {
+        @if $durations {
+            animation-duration: 2.1s !important;
+        }
+
+        animation-iteration-count: infinite !important;
+    }
+
+    .MuiLinearProgress-bar2Indeterminate#{$still} {
+        @if $durations {
+            animation-duration: 2.1s !important;
+            animation-delay: 1.15s !important;
+        }
+
+        animation-iteration-count: infinite !important;
+    }
+
+    .mdlSpinnerActive#{$still} {
+        @if $durations {
+            animation-duration: 1568.23529412ms !important;
+        }
+
+        animation-iteration-count: infinite !important;
+    }
+
+    .mdlSpinnerActive .mdl-spinner__layer#{$still} {
+        @if $durations {
+            animation-duration: 5332ms !important;
+        }
+
+        animation-iteration-count: infinite !important;
+    }
+
+    .mdlSpinnerActive .mdl-spinner__circleLeft#{$still},
+    .mdlSpinnerActive .mdl-spinner__circleRight#{$still} {
+        @if $durations {
+            animation-duration: 1333ms !important;
+        }
+
+        animation-iteration-count: infinite !important;
+    }
+
+    .jf-busy-spin#{$still} {
+        @if $durations {
+            animation-duration: 1.4s !important;
+        }
+
+        animation-iteration-count: infinite !important;
+    }
+
+    .rotatingCircle#{$still},
+    .primary-icon.spin#{$still} {
+        @if $durations {
+            animation-duration: 2s !important;
+        }
+
+        animation-iteration-count: infinite !important;
+    }
+}

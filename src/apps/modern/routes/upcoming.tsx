@@ -37,6 +37,7 @@ import { type WithTmdbImage, tmdbImageUrl } from '../components/HomeFeed/tmdbIma
 import { touchGroupSx } from '../components/touchTarget';
 import { useLiveLibraryRefresh } from '../components/HomeFeed/useLiveLibraryRefresh';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
+import { minText } from 'utils/tvText';
 
 type View = 'calendar' | 'list';
 type Filter = 'all' | 'shows' | 'movies';
@@ -180,7 +181,7 @@ const EntryThumb: FC<{ item: CalItem; compact?: boolean; color: string }> = ({ i
     if (!source) {
         const Icon = item.Type === BaseItemKind.Episode ? LiveTvRoundedIcon : MovieRoundedIcon;
         return (
-            <Box aria-hidden='true' className='upcThumbFallback' sx={{ ...box, display: 'grid', placeItems: 'center', color: '#fff', background: `linear-gradient(160deg, ${color}cc, ${color}55)`, fontSize: '0.72rem', fontWeight: 800 }}>
+            <Box aria-hidden='true' className='upcThumbFallback' sx={{ ...box, display: 'grid', placeItems: 'center', color: '#fff', background: `linear-gradient(160deg, ${color}cc, ${color}55)`, fontSize: minText('0.72rem'), fontWeight: 800 }}>
                 {compact ? <Icon sx={{ fontSize: 14 }} /> : initials(item.SeriesName || item.Name)}
             </Box>
         );
@@ -205,12 +206,12 @@ const EntryChip: FC<{ e: Entry; compact?: boolean }> = ({ e, compact }) => {
         }}>
             <EntryThumb item={i} compact={compact} color={color} />
             <Box sx={{ minWidth: 0, flex: 1 }}>
-                <Typography noWrap sx={{ fontSize: compact ? '0.68rem' : '0.86rem', fontWeight: 700, color: '#fff', lineHeight: 1.25 }}>{i.SeriesName || i.Name}</Typography>
-                <Typography noWrap sx={{ fontSize: compact ? '0.6rem' : '0.74rem', color: 'rgba(255,255,255,0.55)' }}>{entryLine(e)}</Typography>
-                {!compact && i.Type === BaseItemKind.Episode && i.Name && <Typography noWrap sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY }}>{i.Name}</Typography>}
+                <Typography noWrap sx={{ fontSize: compact ? minText('0.68rem') : '0.86rem', fontWeight: 700, color: '#fff', lineHeight: 1.25 }}>{i.SeriesName || i.Name}</Typography>
+                <Typography noWrap sx={{ fontSize: compact ? minText('0.6rem') : minText('0.74rem'), color: 'rgba(255,255,255,0.55)' }}>{entryLine(e)}</Typography>
+                {!compact && i.Type === BaseItemKind.Episode && i.Name && <Typography noWrap sx={{ fontSize: minText('0.72rem'), color: TEXT_TERTIARY }}>{i.Name}</Typography>}
             </Box>
-            {isNew && <Box sx={{ px: 0.6, borderRadius: '6px', fontSize: '0.56rem', fontWeight: 800, color: '#fff', background: '#aa5cc3', flexShrink: 0 }}>{globalize.translate('UpcNew')}</Box>}
-            {e.available && <Typography sx={{ color: '#4caf50', fontSize: compact ? '0.7rem' : '0.9rem', flexShrink: 0 }} title={globalize.translate('UpcAvailable')}>✓</Typography>}
+            {isNew && <Box sx={{ px: 0.6, borderRadius: '6px', fontSize: minText('0.56rem'), fontWeight: 800, color: '#fff', background: '#aa5cc3', flexShrink: 0 }}>{globalize.translate('UpcNew')}</Box>}
+            {e.available && <Typography sx={{ color: '#4caf50', fontSize: compact ? minText('0.7rem') : '0.9rem', flexShrink: 0 }} title={globalize.translate('UpcAvailable')}>✓</Typography>}
         </Box>
     );
 };
@@ -348,7 +349,7 @@ const UpcomingPage: FC = () => {
     const listDays = Array.from(byDay.keys()).sort();
 
     const chip = (label: string, color: string) => (
-        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1.25, py: 0.4, borderRadius: '20px', fontSize: '0.74rem', fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <Box sx={{ display: 'inline-flex', alignItems: 'center', gap: 0.75, px: 1.25, py: 0.4, borderRadius: '20px', fontSize: minText('0.74rem'), fontWeight: 700, color: '#fff', background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.1)' }}>
             <Box sx={{ width: 8, height: 8, borderRadius: '50%', background: color }} />{label}
         </Box>
     );
@@ -389,7 +390,7 @@ const UpcomingPage: FC = () => {
                         <Paper elevation={0} sx={{ borderRadius: '16px', overflow: 'hidden', overflowX: 'auto' }}>
                             <Box sx={{ display: 'grid', gridTemplateColumns: 'repeat(7, minmax(120px, 1fr))', minWidth: 840 }}>
                                 {cells.slice(0, 7).map(d => (
-                                    <Typography key={`h${d.getDay()}`} sx={{ px: 1, py: 0.75, fontSize: '0.7rem', fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
+                                    <Typography key={`h${d.getDay()}`} sx={{ px: 1, py: 0.75, fontSize: minText('0.7rem'), fontWeight: 700, letterSpacing: '1px', textTransform: 'uppercase', color: 'rgba(255,255,255,0.5)', borderBottom: '1px solid rgba(255,255,255,0.08)' }}>
                                         {d.toLocaleDateString(locale(), { weekday: 'short' })}
                                     </Typography>
                                 ))}
@@ -408,13 +409,13 @@ const UpcomingPage: FC = () => {
                                         }}>
                                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.75, mb: 0.5 }}>
                                                 <Typography sx={{ fontSize: '0.8rem', fontWeight: 700, color: inMonth ? '#fff' : TEXT_TERTIARY }}>{d.getDate()}</Typography>
-                                                {isToday && <Box sx={{ px: 0.75, borderRadius: '6px', fontSize: '0.6rem', fontWeight: 800, color: '#fff', background: '#00a4dc' }}>{globalize.translate('StsToday')}</Box>}
-                                                {entries.length > 0 && <Typography sx={{ ml: 'auto', fontSize: '0.62rem', color: TEXT_TERTIARY }}>{entries.length}</Typography>}
+                                                {isToday && <Box sx={{ px: 0.75, borderRadius: '6px', fontSize: minText('0.6rem'), fontWeight: 800, color: '#fff', background: '#00a4dc' }}>{globalize.translate('StsToday')}</Box>}
+                                                {entries.length > 0 && <Typography sx={{ ml: 'auto', fontSize: minText('0.62rem'), color: TEXT_TERTIARY }}>{entries.length}</Typography>}
                                             </Box>
                                             <Stack spacing={0.5}>
                                                 {shown.map(e => <EntryChip key={e.key} e={e} compact />)}
                                                 {entries.length > 4 && (
-                                                    <Typography component='button' onClick={() => setExpanded(open ? null : k)} sx={{ all: 'unset', cursor: 'pointer', fontSize: '0.66rem', color: '#00a4dc', px: 0.5 }}>
+                                                    <Typography component='button' onClick={() => setExpanded(open ? null : k)} sx={{ all: 'unset', cursor: 'pointer', fontSize: minText('0.66rem'), color: '#00a4dc', px: 0.5 }}>
                                                         {open ? globalize.translate('UpcLess') : globalize.translate('UpcMore', entries.length - 4)}
                                                     </Typography>
                                                 )}
@@ -450,7 +451,7 @@ const UpcomingPage: FC = () => {
                         <Typography sx={{ fontSize: '0.84rem', color: 'rgba(255,255,255,0.8)' }}>{globalize.translate('UpcEnableHint')}</Typography>
                     </Paper>
                 )}
-                <Typography sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY, mt: 2 }}>{globalize.translate('UpcNote')}</Typography>
+                <Typography sx={{ fontSize: minText('0.72rem'), color: TEXT_TERTIARY, mt: 2 }}>{globalize.translate('UpcNote')}</Typography>
             </Box>
         </Page>
     );

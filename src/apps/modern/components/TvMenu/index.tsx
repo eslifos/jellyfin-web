@@ -48,7 +48,7 @@ const itemSx = (current: boolean) => ({
     background: current ? 'rgba(0,164,220,0.22)' : 'transparent',
     transition: 'background 0.15s, color 0.15s',
     '& > svg': { fontSize: ICON_SIZE, flexShrink: 0, mx: '8px' },
-    '& > .MuiAvatar-root': { width: ICON_SIZE, height: ICON_SIZE, fontSize: '16px', flexShrink: 0, mx: '8px' },
+    '& > .MuiAvatar-root': { width: ICON_SIZE, height: ICON_SIZE, fontSize: '20px', flexShrink: 0, mx: '8px' },
     '& > span': { fontSize: LABEL_SIZE, fontWeight: current ? 700 : 600, overflow: 'hidden', textOverflow: 'ellipsis', opacity: 0, transition: 'opacity 0.15s' },
     // Where the focus is must be seen from across the room
     '&:focus, &:hover': { outline: 'none', color: '#fff', background: 'rgba(0,164,220,0.32)', boxShadow: `inset 0 0 0 3px ${ACCENT}` }

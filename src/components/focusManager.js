@@ -325,6 +325,12 @@ function nav(activeElement, direction, container, focusableElements) {
                 break;
         }
 
+        // Hidden but in its place (a closed dialog kept mounted): it cannot take the focus. Checked last, only for
+        // what is that way
+        if (getComputedStyle(curr).visibility === 'hidden') {
+            continue;
+        }
+
         const x = elementRect.left;
         const y = elementRect.top;
         const x2 = x + elementRect.width - 1;

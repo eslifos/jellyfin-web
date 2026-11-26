@@ -1,3 +1,5 @@
+@use '../../styles/loadingMotion' as *;
+
 /*
  * Text that is not the main one, readable on the dark background from a sofa (TV) and in the sun (phone):
  * secondary for labels and descriptions, tertiary for hints, dates and counts (at least 4.5:1 on #080810).
@@ -395,48 +397,6 @@ $jf-still: ':not(#jf-motion)';
         transition-delay: 0s !important;
     }
 
-    /* Loading indicators keep turning: they tell the app is working (WCAG counts them as essential motion) */
-    .MuiCircularProgress-indeterminate#{$jf-still},
-    .MuiCircularProgress-circleIndeterminate#{$jf-still} {
-        animation-duration: 1.4s !important;
-        animation-iteration-count: infinite !important;
-    }
-
-    .MuiLinearProgress-bar1Indeterminate#{$jf-still} {
-        animation-duration: 2.1s !important;
-        animation-iteration-count: infinite !important;
-    }
-
-    .MuiLinearProgress-bar2Indeterminate#{$jf-still} {
-        animation-duration: 2.1s !important;
-        animation-delay: 1.15s !important;
-        animation-iteration-count: infinite !important;
-    }
-
-    .mdlSpinnerActive#{$jf-still} {
-        animation-duration: 1568.23529412ms !important;
-        animation-iteration-count: infinite !important;
-    }
-
-    .mdlSpinnerActive .mdl-spinner__layer#{$jf-still} {
-        animation-duration: 5332ms !important;
-        animation-iteration-count: infinite !important;
-    }
-
-    .mdlSpinnerActive .mdl-spinner__circleLeft#{$jf-still},
-    .mdlSpinnerActive .mdl-spinner__circleRight#{$jf-still} {
-        animation-duration: 1333ms !important;
-        animation-iteration-count: infinite !important;
-    }
-
-    .jf-busy-spin#{$jf-still} {
-        animation-duration: 1.4s !important;
-        animation-iteration-count: infinite !important;
-    }
-
-    .rotatingCircle#{$jf-still},
-    .primary-icon.spin#{$jf-still} {
-        animation-duration: 2s !important;
-        animation-iteration-count: infinite !important;
-    }
+    /* Loading indicators keep turning */
+    @include keep-loading-indicators($jf-still);
 }

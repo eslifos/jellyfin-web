@@ -53,6 +53,9 @@ import './styles/livetv.scss';
 import './styles/dashboard.scss';
 import './styles/detailtable.scss';
 import './styles/librarybrowser.scss';
+import './styles/tv.scss';
+// The icons font from the start: a screen that draws an icon before it would show its name as a word
+import 'material-design-icons-iconfont';
 
 /** Enough room to list every file the first page loads (with its images) for the service worker. */
 const RESOURCE_TIMING_ENTRIES = 1500;

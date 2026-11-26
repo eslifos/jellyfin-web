@@ -1,0 +1,102 @@
+@use 'loadingMotion' as *;
+
+// TV layout, read from the couch (3 m) on a 1080p screen: the "10-foot" rules of Cosmic. Only with .layout-tv (on
+// <html>): phones, tablets and computers do not change.
+//  - text: the root size of a 1080p TV (as fonts.sized.scss), so everything sized in rem grows with it; what is sized
+//    in px gets its own minimum below (no visible text under 20 px);
+//  - no blur (backdrop-filter): each one over a moving picture costs frames on a TV stick;
+//  - nothing moves forever: the endless animations (glows, pulses) play once; loading indicators keep turning;
+//  - the focus of the remote, the same everywhere: a white border, a little bigger and a Cosmic glow;
+//  - buttons at least 56 px high with 24 px text;
+//  - the badges of the posters (quality, ratings) only in the banner and the detail, not on the cards;
+//  - text and controls inside the safe area of the screen (48 px on the sides, 27 px above and below); the pictures
+//    still reach the edges.
+
+// The weight of an id: over the MUI sx classes and the rules with !important of each component
+$tv: ':not(#jf-tv)';
+$focus-glow: 0 0 0 2px rgba(0, 164, 220, 0.9), 0 0 28px rgba(0, 164, 220, 0.65);
+// What the remote focuses: cards, buttons, tabs, list entries and the links drawn as boxes
+$focusable: '.card, .qh-card, .qh-wide, .qh-pick, .qh-btn, .MuiButtonBase-root, .MuiListItemButton-root, .detailButton, .raised, .button-flat, .emby-tab-button, .listItem, a.MuiBox-root, button.MuiBox-root';
+
+html.layout-tv {
+    // The floor of the text sized in code (utils/tvText.ts minText)
+    --tv-min-text: 20px;
+
+    @media all and (min-height: 720px) {
+        font-size: 20px;
+    }
+
+    @media all and (min-height: 1000px) {
+        font-size: 27px;
+    }
+
+    *#{$tv},
+    *#{$tv}::before,
+    *#{$tv}::after {
+        backdrop-filter: none !important;
+        animation-iteration-count: 1 !important;
+    }
+
+    @include keep-loading-indicators($tv, $durations: false);
+
+    small#{$tv} {
+        font-size: max(var(--tv-min-text), 0.83em);
+    }
+
+    // Badges: not on the cards
+    .jfBadges#{$tv},
+    .qh-card .qh-badge#{$tv} {
+        display: none !important;
+    }
+
+    // Buttons
+    .MuiButton-root#{$tv},
+    .MuiToggleButton-root#{$tv},
+    [role="tab"]#{$tv},
+    .qh-btn#{$tv},
+    .detailButton#{$tv},
+    .raised#{$tv},
+    .button-flat#{$tv} {
+        min-height: 56px;
+        font-size: max(24px, 1em);
+    }
+
+    // The focus of the remote
+    :is(#{$focusable})#{$tv}:focus {
+        outline: 4px solid #fff !important;
+        outline-offset: 2px;
+        box-shadow: $focus-glow !important;
+        transform: scale(1.06);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+        z-index: 1;
+    }
+
+    // The TV menu: its entries keep their place (the menu is narrow), with the same border and glow
+    [data-tv-menu] :is(a, button)#{$tv}:focus {
+        transform: none;
+        outline-offset: -4px;
+    }
+
+    // Safe area: the screens start 27 px from the top and end 27 px from the bottom (the TV menu is on the left, the
+    // rows and banners keep their text far from the right edge); the letters of a library, fixed on the right edge,
+    // 48 px from it
+    .mainAnimatedPage#{$tv} {
+        padding-top: 27px;
+        padding-bottom: 27px;
+        box-sizing: border-box;
+    }
+
+    .alphaPicker-fixed-right#{$tv} {
+        right: 48px;
+        left: auto;
+    }
+
+    // Its 27 letters in one column the height of the screen (not buttons of 56 px)
+    .alphaPicker-fixed-right .MuiToggleButton-root#{$tv} {
+        min-height: 0;
+        height: 34px;
+        padding: 0 10px;
+        font-size: var(--tv-min-text);
+        line-height: 1;
+    }
+}
