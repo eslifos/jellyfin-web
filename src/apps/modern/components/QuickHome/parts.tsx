@@ -148,6 +148,8 @@ export const POSTER_WIDTHS = [ 180, 360 ];
 export const WIDE_WIDTHS = [ 400, 720 ];
 export const HERO_WIDTHS = [ 720, 1280, 1920 ];
 export const HERO_DELAY = 9000;
+/** The banner goes on turning after this long without keys, touches or the wheel. */
+export const HERO_IDLE_RESUME = 10000;
 
 export const ROW_TITLES: Record<string, string> = {
     top10movies: 'QhTopMovies',
@@ -297,23 +299,42 @@ export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ a
         return () => observer.disconnect();
     }, []);
 
+    // While someone is moving around (keys of the remote, touches, the wheel) or the banner gets the focus it stays
+    // still; it goes on after 10 s without anything
+    const [ busy, setBusy ] = useState(false);
+    const idleTimer = useRef<number>();
+    const markBusy = useCallback(() => {
+        setBusy(true);
+        window.clearTimeout(idleTimer.current);
+        idleTimer.current = window.setTimeout(() => setBusy(false), HERO_IDLE_RESUME);
+    }, []);
     useEffect(() => {
-        if (paused || !inView || count < 2 || prefersReducedMotion()) return;
+        const options = { capture: true, passive: true };
+        window.addEventListener('keydown', markBusy, options);
+        window.addEventListener('pointerdown', markBusy, options);
+        window.addEventListener('wheel', markBusy, options);
+        return () => {
+            window.removeEventListener('keydown', markBusy, options);
+            window.removeEventListener('pointerdown', markBusy, options);
+            window.removeEventListener('wheel', markBusy, options);
+            window.clearTimeout(idleTimer.current);
+        };
+    }, [ markBusy ]);
+
+    useEffect(() => {
+        if (paused || busy || !inView || count < 2 || prefersReducedMotion()) return;
         const timer = window.setInterval(() => {
             if (document.visibilityState === 'visible') setIndex(i => (i + 1) % count);
         }, HERO_DELAY);
         return () => window.clearInterval(timer);
-    }, [ paused, inView, count ]);
+    }, [ paused, busy, inView, count ]);
 
     const onPick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
         setIndex(Number(e.currentTarget.dataset.index ?? 0));
     }, []);
+    // The mouse over it holds it
     const onEnter = useCallback(() => setPaused(true), []);
     const onLeave = useCallback(() => setPaused(false), []);
-    // With the focus on the banner (remote control, keyboard) it does not change under it
-    const onFocusOut = useCallback((e: React.FocusEvent<HTMLElement>) => {
-        if (!e.currentTarget.contains(e.relatedTarget as Node | null)) setPaused(false);
-    }, []);
     const onTouchStart = useCallback((e: TouchEvent) => {
         touchX.current = e.touches[0]?.clientX ?? null;
     }, []);
@@ -338,11 +359,11 @@ export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ a
             ref={ref}
             id='qh-spotlight'
             className='qh-hero'
+            data-focus-row=''
             aria-roledescription='carousel'
             onMouseEnter={onEnter}
             onMouseLeave={onLeave}
-            onFocus={onEnter}
-            onBlur={onFocusOut}
+            onFocus={markBusy}
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
         >
@@ -406,7 +427,7 @@ export const Row: FC<{ id?: string, title: string, hint?: string, accent?: strin
     }, []);
 
     return (
-        <section id={id} className='qh-row' style={accent ? { '--qh-accent': accent } as React.CSSProperties : undefined}>
+        <section id={id} className='qh-row' data-focus-row='' style={accent ? { '--qh-accent': accent } as React.CSSProperties : undefined}>
             <header className='qh-row-head'>
                 <h3 className='qh-row-title'>{title}</h3>
                 {hint && <span className='qh-row-hint'>{hint}</span>}
@@ -586,7 +607,7 @@ export const Spotlight: FC<{ api: Api, items: HomeCard[], title: string, accent?
     const link = href({ Id: item.Id, Type: item.Type as BaseItemDto['Type'] }, serverId);
 
     return (
-        <section id={id} className='qh-row qh-spot-row' style={accent ? { '--qh-accent': accent } as React.CSSProperties : undefined}>
+        <section id={id} className='qh-row qh-spot-row' data-focus-row='' style={accent ? { '--qh-accent': accent } as React.CSSProperties : undefined}>
             <header className='qh-row-head'>
                 <h3 className='qh-row-title'>{title}</h3>
                 <span className='qh-row-hint'>{globalize.translate('HfSpotlightHelp')}</span>

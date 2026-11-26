@@ -122,6 +122,11 @@ class AppRouter {
         return this.baseRoute;
     }
 
+    /** The first screen of the app (home, sign in): "back" has nowhere to go from it. */
+    isStartPage(path = history.location.pathname) {
+        return !document.querySelector('.dialogContainer') && START_PAGE_PATHS.includes(path);
+    }
+
     canGoBack(path = history.location.pathname) {
         if (
             !document.querySelector('.dialogContainer')

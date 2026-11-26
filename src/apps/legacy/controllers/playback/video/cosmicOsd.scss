@@ -550,6 +550,60 @@ $muted: rgba(255, 255, 255, 0.62);
     color: $muted;
 }
 
+// Subtitles being prepared by the server, or failed (with "Retry")
+.cosmicPanelNote {
+    display: flex;
+    align-items: center;
+    gap: 0.6em;
+    margin: 0.4em 0.3em;
+    padding: 0.75em 0.9em;
+    border-radius: 0.8em;
+    background: rgba($accent, 0.12);
+    border: 1px solid rgba($accent, 0.3);
+    font-weight: 600;
+    line-height: 1.35;
+
+    .material-icons {
+        color: $accent;
+    }
+
+    .material-icons {
+        flex-shrink: 0;
+    }
+
+    span:not(.material-icons) {
+        flex: 1;
+        min-width: 0;
+    }
+}
+
+.cosmicPanelNote-error {
+    background: rgba(255, 112, 67, 0.12);
+    border-color: rgba(255, 112, 67, 0.4);
+
+    .material-icons {
+        color: #ff8a65;
+    }
+}
+
+.cosmicPanelNoteAction {
+    flex-shrink: 0;
+    min-height: 2.75em;
+    padding: 0 1.1em;
+    border: 0;
+    border-radius: 999px;
+    background: $accent;
+    color: #04121b;
+    font: inherit;
+    font-weight: 800;
+    cursor: pointer;
+
+    &:focus-visible {
+        outline: 2px solid #fff;
+        outline-offset: 2px;
+    }
+}
+
 // Video info card
 .cosmicVideoInfo {
     margin: 0.4em 0.3em 0;

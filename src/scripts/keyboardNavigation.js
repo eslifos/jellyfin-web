@@ -200,9 +200,11 @@ export function enable() {
                 inputManager.handleCommand('back');
                 break;
 
-            // HACK: Hisense TV (VIDAA OS) uses Backspace for Back action
+            // Backspace is "back" on the TV layout (and Hisense TVs, VIDAA OS, send it for their Back key);
+            // in a text field it still deletes
             case 'Backspace':
-                if (browser.tv && browser.hisense && browser.vidaa) {
+                if ((layoutManager.tv || (browser.tv && browser.hisense && browser.vidaa))
+                    && !isInteractiveElement(document.activeElement)) {
                     inputManager.handleCommand('back');
                 } else {
                     capture = false;

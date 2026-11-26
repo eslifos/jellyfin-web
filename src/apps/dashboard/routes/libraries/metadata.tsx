@@ -17,6 +17,7 @@ import SaveIcon from '@mui/icons-material/Save';
 import TranslateIcon from '@mui/icons-material/Translate';
 import { type ActionFunctionArgs, Form, useActionData, useNavigation } from 'react-router-dom';
 
+import GenreMapCard from 'apps/dashboard/features/libraries/components/GenreMapCard';
 import LastFmKeyCard from 'apps/dashboard/features/libraries/components/LastFmKeyCard';
 import { useCountries } from 'apps/dashboard/features/libraries/api/useCountries';
 import { useCultures } from 'apps/dashboard/features/libraries/api/useCultures';
@@ -273,6 +274,10 @@ export const Component = () => {
                         </Box>
                     </Form>
                 )}
+
+                <Box sx={{ mt: 3 }}>
+                    <GenreMapCard />
+                </Box>
 
                 <Box sx={{ mt: 3 }}>
                     <LastFmKeyCard />

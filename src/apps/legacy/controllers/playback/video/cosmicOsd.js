@@ -14,6 +14,7 @@ import datetime from 'scripts/datetime';
 import globalize from 'lib/globalize';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import toast from 'components/toast/toast';
+import { getSubtitleStatus, onSubtitleStatus } from 'components/playback/subtitleStatus';
 import { getVideoElement, promptRemotePlayback, watchRemotePlayback } from 'components/playback/remotePlayback';
 import './cosmicOsd.scss';
 
@@ -155,6 +156,31 @@ export default function createCosmicOsd(view, hooks) {
             <span class="cosmicPanelOptionText">${escapeHtml(name || '')}${aside ? `<small>${escapeHtml(aside)}</small>` : ''}</span>
         </button>`;
 
+    /** The subtitle chosen is being read out of the video file by the server, or that failed. */
+    function subtitleNotice(index) {
+        const status = getSubtitleStatus();
+        if (status.streamIndex !== index) return null;
+        return status.state === 'idle' ? null : status;
+    }
+
+    function subtitleNoticeHtml(index) {
+        const notice = subtitleNotice(index);
+        if (!notice) return '';
+        if (notice.state === 'preparing') {
+            return `<p class="cosmicPanelNote" role="status">${icon('hourglass_top')}<span>${escapeHtml(t('SubtitlesPreparing'))}</span></p>`;
+        }
+        return `<div class="cosmicPanelNote cosmicPanelNote-error" role="alert">${icon('error_outline')}<span>${escapeHtml(t('SubtitlesFailed'))}</span>`
+            + `<button type="button" class="cosmicPanelNoteAction" data-action="subretry">${escapeHtml(t('Retry'))}</button></div>`;
+    }
+
+    /** What the subtitles row says: the subtitle chosen, or that it is being prepared / failed. */
+    function subtitleRowValue(subs) {
+        const notice = subtitleNotice(subs.index);
+        if (notice?.state === 'preparing') return t('SubtitlesPreparing');
+        if (notice?.state === 'failed') return t('SubtitlesFailedShort');
+        return subs.current ? subs.current.DisplayTitle : t('VpSubtitlesOff');
+    }
+
     function subtitleState(player) {
         const streams = playbackManager.subtitleTracks(player);
         const index = playbackManager.getSubtitleStreamIndex(player) ?? -1;
@@ -248,6 +274,7 @@ export default function createCosmicOsd(view, hooks) {
                 const subs = subtitleState(player);
                 html = panelHeader(t('Subtitles'), 'closed_caption', true)
                     + '<div class="cosmicPanelBody">'
+                    + subtitleNoticeHtml(subs.index)
                     + option('subtitles', -1, t('VpSubtitlesOff'), '', subs.index === -1)
                     + subs.streams.map(s => option('subtitles', s.Index, s.DisplayTitle, s.IsExternal ? t('VpExternal') : '', s.Index === subs.index)).join('')
                     + '</div>';
@@ -302,7 +329,8 @@ export default function createCosmicOsd(view, hooks) {
 
                 parts.push(`<div class="cosmicPanelGroupTitle">${escapeHtml(t('VpAudioAndSubtitles'))}</div>`);
                 parts.push(row('audio', 'audiotrack', t('Audio'), audio?.DisplayTitle || (audioTracks.length ? '' : t('VpNoOptions'))));
-                parts.push(row('subtitles', 'closed_caption', t('Subtitles'), subs.current ? subs.current.DisplayTitle : t('VpSubtitlesOff')));
+                parts.push(row('subtitles', 'closed_caption', t('Subtitles'), subtitleRowValue(subs)));
+                parts.push(subtitleNoticeHtml(subs.index));
                 if (subs.canSecondary) {
                     const secIndex = playbackManager.getSecondarySubtitleStreamIndex(player) ?? -1;
                     const sec = subs.secondary.find(s => s.Index === secIndex);
@@ -400,6 +428,8 @@ export default function createCosmicOsd(view, hooks) {
         } else if (target.dataset.action === 'suboffset') {
             hooks.showSubtitleOffset();
             setPanel(null);
+        } else if (target.dataset.action === 'subretry') {
+            getSubtitleStatus().retry?.();
         } else if (target.dataset.select) {
             onSelect(target.dataset.select, target.dataset.value);
         } else if (target.dataset.view != null) {
@@ -710,6 +740,10 @@ export default function createCosmicOsd(view, hooks) {
 
     settingsPanel.addEventListener('click', onSettingsClick);
     queuePanel.addEventListener('click', onQueueClick);
+    // The menu open says at once when the subtitles are ready or failed
+    const stopSubtitleStatus = onSubtitleStatus(() => {
+        if (openPanel === 'settings' && (settingsView === 'main' || settingsView === 'subtitles')) void renderSettings();
+    });
     details.querySelector('.cosmicOsdDetailsToggle').addEventListener('click', onDetailsToggle);
     btnQueue.addEventListener('click', toggleQueue);
     btnCast.addEventListener('click', onCastClick);
@@ -744,6 +778,7 @@ export default function createCosmicOsd(view, hooks) {
         },
         destroy() {
             clearTimeout(refreshTimer);
+            stopSubtitleStatus();
             settingsPanel.removeEventListener('click', onSettingsClick);
             queuePanel.removeEventListener('click', onQueueClick);
             btnQueue.removeEventListener('click', toggleQueue);

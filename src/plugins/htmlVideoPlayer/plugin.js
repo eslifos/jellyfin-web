@@ -44,12 +44,34 @@ import { setBackdropTransparency, TRANSPARENCY_LEVEL } from '../../components/ba
 import Events from '../../utils/events.ts';
 import { includesAny } from '../../utils/container.ts';
 import { isHls } from '../../utils/mediaSource.ts';
+import { clearSubtitleStatus, setSubtitleStatus } from '../../components/playback/subtitleStatus.ts';
+import toast from '../../components/toast/toast';
 
 /** Waits before trying a failed subtitle download again */
 const SUBTITLE_RETRY_DELAYS_MS = [ 3000, 8000, 15000 ];
-/** While the server extracts subtitles: first look at the part already extracted, then every so often */
-const SUBTITLE_PARTIAL_FIRST_MS = 500;
+/** While the server extracts subtitles: how often to look at the part already extracted */
 const SUBTITLE_PARTIAL_POLL_MS = 2000;
+/**
+ * Once lines are on screen, less often: the server reads the file at about twice the playback speed, so it stays
+ * ahead of what is watched without asking every moment (an extraction can take an hour for a long film)
+ */
+const SUBTITLE_PARTIAL_AHEAD_POLL_MS = 15000;
+/** Closer than this to the end of the lines loaded, the player asks quickly again (ticks) */
+const SUBTITLE_PARTIAL_EDGE_TICKS = 60 * 10000000;
+const TICKS_PER_SECOND = 10000000;
+/** Failed requests in a row (no network) before the subtitle is given up */
+const SUBTITLE_PARTIAL_NETWORK_ERRORS = 30;
+
+/** A subtitle inside the video file, which the server reads out of it before it can be shown. */
+const isEmbeddedTextTrack = track => !track.IsExternal && track.DeliveryMethod === 'External';
+
+/** The server could not read the subtitle out of the video file. */
+class SubtitlePreparationError extends Error {
+    constructor() {
+        super('The subtitle could not be extracted from the video file');
+        this.name = 'SubtitlePreparationError';
+    }
+}
 
 const NATIVE_UNSUPPORTED_SUBTITLE_CODECS = ['ssa', 'ass', 'pgssub', 'dvdsub', 'vobsub'];
 const ASS_SUBTITLE_CODECS = ['ssa', 'ass'];
@@ -288,6 +310,10 @@ export class HtmlVideoPlayer {
      * @type {number | undefined}
      */
     #customSecondaryTrackIndex;
+    /**
+     * @type {boolean} The next subtitle load tries again an extraction that failed
+     */
+    #retrySubtitles = false;
     /**
      * @type {boolean | undefined}
      */
@@ -896,6 +922,7 @@ export class HtmlVideoPlayer {
 
     destroy() {
         this.setSubtitleOffset.cancel();
+        clearSubtitleStatus();
 
         destroyHlsPlayer(this);
         destroyFlvPlayer(this);
@@ -1264,24 +1291,124 @@ export class HtmlVideoPlayer {
     /**
      * @private
      */
-    async fetchSubtitles(track, item, onPartial) {
+    async fetchSubtitles(track, item, onPartial, targetTextTrackIndex = PRIMARY_TEXT_TRACK_INDEX) {
         if (window.Windows && itemHelper.isLocalItem(item)) {
             return this.fetchSubtitlesUwp(track, item);
         }
 
-        // Subtitles inside the video file are extracted by the server (it starts as soon as play is pressed), which
-        // means reading the whole file. Like Plex, the player does not wait for the end: it shows the lines already
-        // extracted as they come, which runs ahead of the video.
-        const wait = { done: false };
-        if (onPartial && !track.IsExternal && track.DeliveryMethod === 'External') {
-            this.followPartialSubtitles(track, item, wait, onPartial);
+        // Subtitles inside the video file are read out of it by the server, which means reading the whole file
+        // (minutes on network storage, longer than a proxy waits for one answer). The player never waits on that one
+        // long request: it asks for the part already extracted (shown as it comes, like Plex) until it is complete,
+        // and then takes the whole subtitle, which is ready at once.
+        if (isEmbeddedTextTrack(track)) {
+            const retry = this.#retrySubtitles;
+            this.#retrySubtitles = false;
+            await this.waitForExtractedSubtitles(track, item, onPartial, retry, targetTextTrackIndex);
         }
+        return this.fetchFullSubtitles(track, item);
+    }
 
+    /**
+     * Follows the extraction of a subtitle inside the video file until it is complete, showing the lines already
+     * extracted and telling the menus it is being prepared. Throws when the server says the extraction failed.
+     * @private
+     */
+    async waitForExtractedSubtitles(track, item, onPartial, retry, targetTextTrackIndex) {
+        // No ".js" at the end: proxies caching static assets by extension would keep an unfinished answer
+        const url = getTextTrackUrl(track, item).replace(/\/Subtitles\/(\d+)\/\d+\/Stream\.vtt/i, '/Subtitles/$1/Partial');
+        if (!url.includes('/Partial?') && !url.endsWith('/Partial')) return;
+        let shown = 0;
+        // Where the lines shown so far end (ticks): the video past it has nothing to show yet
+        let loadedUpTo = 0;
+        let ask = retry;
+        let networkErrors = 0;
+        const playingAt = () => Math.round((this.#mediaElement?.currentTime ?? 0) * TICKS_PER_SECOND);
+        // The server is told where the video is: after a jump ahead it also reads the subtitle from there
+        const requestUrl = () => {
+            const params = new URLSearchParams({ positionTicks: String(playingAt()) });
+            if (ask) params.set('retry', 'true');
+            return url + (url.includes('?') ? '&' : '?') + params.toString();
+        };
         try {
-            return await this.fetchFullSubtitles(track, item);
+            // Until the video ends or another subtitle is chosen
+            while (this.isCurrentTextTrack(track, targetTextTrackIndex)) {
+                let response;
+                try {
+                    response = await fetch(requestUrl(), { cache: 'no-store' });
+                    networkErrors = 0;
+                } catch (error) {
+                    // The network went away for a moment: keep asking (the app says it has no connection)
+                    if (++networkErrors > SUBTITLE_PARTIAL_NETWORK_ERRORS) throw error;
+                    await this.waitForSubtitlePoll(SUBTITLE_PARTIAL_POLL_MS);
+                    continue;
+                }
+                ask = false;
+                const state = response.headers.get('X-Subtitles-State');
+                // A server before this one does not start the extraction when asked here: the regular request does
+                if (!state) return;
+                if (response.status === 200 && onPartial) {
+                    const data = await response.json();
+                    const events = data?.TrackEvents ?? [];
+                    if (events.length > shown) {
+                        shown = events.length;
+                        loadedUpTo = events[events.length - 1].EndPositionTicks;
+                        onPartial(data);
+                    }
+                }
+                if (!response.ok || state === 'complete' || state === 'none') return;
+                if (state === 'failed') throw new SubtitlePreparationError();
+
+                // "Preparing" only while what is watched has no lines yet (the start, or right after a jump ahead)
+                const waiting = !onPartial || playingAt() > loadedUpTo;
+                if (waiting) setSubtitleStatus({ state: 'preparing', streamIndex: track.Index });
+                else clearSubtitleStatus(track.Index);
+
+                // Quick while the video is at the edge of what is loaded; otherwise less often. A jump asks at once.
+                const nearTheEdge = playingAt() > loadedUpTo - SUBTITLE_PARTIAL_EDGE_TICKS;
+                await this.waitForSubtitlePoll(onPartial && nearTheEdge ? SUBTITLE_PARTIAL_POLL_MS : SUBTITLE_PARTIAL_AHEAD_POLL_MS);
+            }
         } finally {
-            wait.done = true;
+            clearSubtitleStatus(track.Index);
         }
+    }
+
+    /**
+     * Waits until the next look at the subtitle being extracted, or less when the video jumps somewhere.
+     * @private
+     */
+    waitForSubtitlePoll(ms) {
+        const media = this.#mediaElement;
+        return new Promise(resolve => {
+            const done = () => {
+                clearTimeout(timer);
+                media?.removeEventListener('seeked', done);
+                resolve();
+            };
+            const timer = setTimeout(done, ms);
+            media?.addEventListener('seeked', done);
+        });
+    }
+
+    /**
+     * A subtitle that could not be prepared: a short notice and, in the menus, a way to try again.
+     * @private
+     */
+    onSubtitlesFailed(track, targetTextTrackIndex, error) {
+        console.error('[htmlVideoPlayer] subtitles', error);
+        if (!this.isCurrentTextTrack(track, targetTextTrackIndex)) return;
+        const retry = () => {
+            clearSubtitleStatus();
+            const videoElement = this.#mediaElement;
+            if (!videoElement || !this.isCurrentTextTrack(track, targetTextTrackIndex)) return;
+            // Load it again from the start (the failed extraction is tried again)
+            this.destroyCustomTrack(videoElement, targetTextTrackIndex);
+            if (this.isSecondaryTrack(targetTextTrackIndex)) this.#customSecondaryTrackIndex = track.Index;
+            else this.#customTrackIndex = track.Index;
+            this.#retrySubtitles = true;
+            this.renderTracksEvents(videoElement, track, this._currentPlayOptions.item, targetTextTrackIndex);
+        };
+        setSubtitleStatus({ state: 'failed', streamIndex: track.Index, retry });
+        toast(globalize.translate('SubtitlesFailedToast'));
     }
 
     /**
@@ -1303,36 +1430,6 @@ export class HtmlVideoPlayer {
     }
 
     /**
-     * While the server extracts the subtitle, asks every few seconds for the part already extracted.
-     * @private
-     */
-    async followPartialSubtitles(track, item, wait, onPartial) {
-        const url = getTextTrackUrl(track, item).replace(/\/Subtitles\/(\d+)\/\d+\/Stream\.vtt/i, '/Subtitles/$1/Partial.js');
-        if (!url.includes('/Partial.js')) return;
-        let shown = 0;
-        await new Promise(resolve => setTimeout(resolve, SUBTITLE_PARTIAL_FIRST_MS));
-        while (!wait.done && this.#mediaElement) {
-            try {
-                const response = await fetch(url, { cache: 'no-store' });
-                if (wait.done) return;
-                const complete = response.headers.get('X-Subtitles-Complete') === 'true';
-                if (response.status === 200) {
-                    const data = await response.json();
-                    const events = data?.TrackEvents ?? [];
-                    if (!wait.done && events.length > shown) {
-                        shown = events.length;
-                        onPartial(data);
-                    }
-                }
-                if (complete || !response.ok) return;
-            } catch (error) {
-                console.debug('[htmlVideoPlayer] partial subtitles', error);
-            }
-            await new Promise(resolve => setTimeout(resolve, SUBTITLE_PARTIAL_POLL_MS));
-        }
-    }
-
-    /**
      * Whether a subtitle track is still the one chosen (a late answer for a track left behind is ignored).
      * @private
      */
@@ -1345,6 +1442,9 @@ export class HtmlVideoPlayer {
      * @private
      */
     setTrackForDisplay(videoElement, track, targetTextTrackIndex = PRIMARY_TEXT_TRACK_INDEX) {
+        // Another subtitle (or none): whatever was said about the previous one no longer applies
+        if (!this.isSecondaryTrack(targetTextTrackIndex) && track?.Index !== this.#customTrackIndex) clearSubtitleStatus();
+
         if (!track) {
             // Destroy all tracks by passing undefined if there is no valid primary track
             this.destroyCustomTrack(videoElement, this.isSecondaryTrack(targetTextTrackIndex) ? targetTextTrackIndex : undefined);
@@ -1372,6 +1472,24 @@ export class HtmlVideoPlayer {
             this.#customTrackIndex = track.Index;
         }
         this.renderTracksEvents(videoElement, track, item, targetTextTrackIndex);
+    }
+
+    /**
+     * @private
+     */
+    renderSsaAssWhenReady(videoElement, track, item, targetTextTrackIndex) {
+        // The styled renderer loads the whole subtitle at once: inside the video file, it waits until it is extracted
+        if (!isEmbeddedTextTrack(track)) {
+            this.renderSsaAss(videoElement, track, item);
+            return;
+        }
+        const retry = this.#retrySubtitles;
+        this.#retrySubtitles = false;
+        this.waitForExtractedSubtitles(track, item, null, retry, targetTextTrackIndex)
+            .then(() => {
+                if (this.isCurrentTextTrack(track, targetTextTrackIndex)) this.renderSsaAss(videoElement, track, item);
+            })
+            .catch(error => this.onSubtitlesFailed(track, targetTextTrackIndex, error));
     }
 
     /**
@@ -1569,7 +1687,7 @@ export class HtmlVideoPlayer {
                 this.#currentSecondaryTrackEvents = subtitleData.TrackEvents;
             }
         };
-        this.fetchSubtitles(track, item, show).then(show).catch(error => console.error('[htmlVideoPlayer] subtitles', error));
+        this.fetchSubtitles(track, item, show, targetTextTrackIndex).then(show).catch(error => this.onSubtitlesFailed(track, targetTextTrackIndex, error));
     }
 
     /**
@@ -1614,7 +1732,7 @@ export class HtmlVideoPlayer {
         if (!itemHelper.isLocalItem(item) || track.IsExternal) {
             const format = (track.Codec || '').toLowerCase();
             if (ASS_SUBTITLE_CODECS.includes(format)) {
-                this.renderSsaAss(videoElement, track, item);
+                this.renderSsaAssWhenReady(videoElement, track, item, targetTextTrackIndex);
                 return;
             }
             if (format === 'pgssub') {
@@ -1655,8 +1773,9 @@ export class HtmlVideoPlayer {
         }
 
         // download the track json
-        // Lines already given to the track: the part extracted so far arrives first, then the whole subtitle
-        let added = 0;
+        // Lines already given to the track: the part extracted so far arrives first (lines read from where the video
+        // jumped to may come before others are filled in), then the whole subtitle
+        let added = new Set();
         const show = (data, whole = false) => {
             // Exit if the video element was destroyed (or the track changed) while fetching subtitles
             if (!this.isCurrentTextTrack(track, targetTextTrackIndex)) return;
@@ -1664,9 +1783,9 @@ export class HtmlVideoPlayer {
             console.debug(`downloaded ${data.TrackEvents.length} track events${whole ? '' : ' (extracted so far)'}`);
 
             // The whole subtitle replaces the partial lines (same text, checked encoding)
-            if (whole && added) {
+            if (whole && added.size) {
                 while (trackElement.cues?.length) trackElement.removeCue(trackElement.cues[0]);
-                added = 0;
+                added = new Set();
             }
 
             const subtitleAppearance = userSettings.getSubtitleAppearanceSettings();
@@ -1674,7 +1793,10 @@ export class HtmlVideoPlayer {
 
             // add some cues to show the text
             // in safari, the cues need to be added before setting the track mode to showing
-            for (const trackEvent of data.TrackEvents.slice(added)) {
+            for (const trackEvent of data.TrackEvents) {
+                const key = `${trackEvent.StartPositionTicks}|${trackEvent.Text}`;
+                if (added.has(key)) continue;
+                added.add(key);
                 const TrackCue = window.VTTCue || window.TextTrackCue;
                 const text = normalizeTrackEventText(trackEvent.Text, false);
                 const cue = new TrackCue(trackEvent.StartPositionTicks / 10000000, trackEvent.EndPositionTicks / 10000000, text);
@@ -1690,13 +1812,12 @@ export class HtmlVideoPlayer {
 
                 trackElement.addCue(cue);
             }
-            added = data.TrackEvents.length;
 
             trackElement.mode = 'showing';
         };
-        this.fetchSubtitles(track, item, show)
+        this.fetchSubtitles(track, item, show, targetTextTrackIndex)
             .then(data => show(data, true))
-            .catch(error => console.error('[htmlVideoPlayer] subtitles', error));
+            .catch(error => this.onSubtitlesFailed(track, targetTextTrackIndex, error));
     }
 
     /**

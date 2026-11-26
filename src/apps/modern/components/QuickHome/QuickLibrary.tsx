@@ -22,6 +22,7 @@ import {
     type Block, Card, Hero, ICONS, Lazy, type Personal, type ProgressCard, Recommendations, Row, type Shape, ShelfRow, Spotlight,
     UpcomingCard, Wide, accentOf, get
 } from './parts';
+import { useTvRows } from './useTvRows';
 
 interface LibraryPage {
     Ready: boolean;
@@ -111,6 +112,8 @@ const QuickLibrary: FC<{ libraryId: string, name?: string, accent?: string, them
         void refetchPersonal();
     }, [ refetchPage, refetchPersonal ]);
     const root = useRef<HTMLDivElement>(null);
+    // TV: the remote moves by rows
+    useTvRows(root);
     const serverId = legacy?.serverId();
     const [ external, setExternal ] = useState<ExternalMovie | null>(null);
     const onCloseExternal = useCallback(() => setExternal(null), []);

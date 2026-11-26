@@ -15,6 +15,7 @@ import PublicRoundedIcon from '@mui/icons-material/PublicRounded';
 import TuneRoundedIcon from '@mui/icons-material/TuneRounded';
 import { Link } from 'react-router-dom';
 
+import layoutManager from 'components/layoutManager';
 import { appRouter } from 'components/router/appRouter';
 import { useUserViews } from 'hooks/api/useUserViews';
 import { useApi } from 'hooks/useApi';
@@ -26,6 +27,9 @@ import { UNIVERSES_KEY, type NavSettings, backgroundCss, loadNavSettings, orderK
 import { ambientAnimation } from 'utils/reducedMotion';
 
 const COMPACT_AFTER = 140;
+/** TV, read at 3 m: names at least 24 px. */
+const TV_LABEL_SIZE = '26px';
+const TV_ICON_SIZE = '34px';
 
 interface Entry extends NavEntry {
     to: string;
@@ -73,10 +77,12 @@ const HomeLibraryNav: FC = () => {
         return orderKeys((views || []).map(v => v.Id!), settings).map(k => byKey.get(k)!).filter(Boolean);
     }, [ views, settings ]);
 
+    // TV: always the name next to the icon, big enough to read from the couch
+    const tv = layoutManager.tv;
     // Phones: the name goes under the icon in small text, so it still fits once the page has scrolled
-    const stacked = phone && settings.labels !== 'icons';
-    const showLabels = stacked || (!phone && (settings.labels === 'always' || (settings.labels === 'auto' && !compact)));
-    const iconsOnly = !stacked && (settings.labels === 'icons' || (settings.labels === 'auto' && compact));
+    const stacked = !tv && phone && settings.labels !== 'icons';
+    const showLabels = tv || stacked || (!phone && (settings.labels === 'always' || (settings.labels === 'auto' && !compact)));
+    const iconsOnly = !tv && !stacked && (settings.labels === 'icons' || (settings.labels === 'auto' && compact));
 
     if (!views?.length) return null;
 
@@ -91,13 +97,16 @@ const HomeLibraryNav: FC = () => {
         color: special ? '#fff' : 'rgba(255,255,255,0.7)', textDecoration: 'none', whiteSpace: 'nowrap',
         transition: 'all 0.2s',
         background: special ? `linear-gradient(135deg, rgba(170,92,195,0.35), ${rgba(accent, 0.3)})` : 'none',
-        '& svg': { fontSize: '1.35rem', transition: 'filter 0.2s' },
+        '& svg': { fontSize: tv ? TV_ICON_SIZE : '1.35rem', transition: 'filter 0.2s' },
+        ...(tv && { px: 2.5, py: 1.25, gap: 1.25 }),
         '&:hover, &:focus-visible': {
             outline: 'none',
             color: special ? '#fff' : accent,
             background: special ? `linear-gradient(135deg, rgba(170,92,195,0.55), ${rgba(accent, 0.5)})` : rgba(accent, 0.14),
             '& svg': { filter: `drop-shadow(0 0 6px ${rgba(accent, 0.8)})` }
-        }
+        },
+        // The remote: where the focus is must be seen from across the room
+        ...(tv && { '&:focus': { outline: 'none', color: '#fff', background: rgba(accent, 0.3), boxShadow: `0 0 0 3px ${accent}` } })
     });
 
     const label = (text: ReactNode, bold = false) => (
@@ -105,7 +114,7 @@ const HomeLibraryNav: FC = () => {
             maxWidth: '100%', overflow: 'hidden', textOverflow: 'ellipsis',
             fontSize: '0.66rem', lineHeight: 1.15, fontWeight: bold ? 700 : 600
         } : {
-            fontSize: '0.9rem', fontWeight: bold ? 700 : 600,
+            fontSize: tv ? TV_LABEL_SIZE : '0.9rem', fontWeight: bold ? 700 : 600,
             display: showLabels ? 'inline' : 'none'
         }}>
             {text}
@@ -115,12 +124,14 @@ const HomeLibraryNav: FC = () => {
     return (
         <>
             <Box sx={{
-                position: settings.sticky ? 'sticky' : 'relative', top: { xs: 10, md: 14 }, zIndex: 1050,
+                // TV: in its place (the remote brings the page to it), so it never covers what has the focus
+                position: settings.sticky && !tv ? 'sticky' : 'relative', top: { xs: 10, md: 14 }, zIndex: 1050,
                 display: 'flex', justifyContent: 'center', px: 2, pt: 1.5, pb: 1, pointerEvents: 'none'
             }}>
                 <Box
                     component='nav'
                     aria-label={globalize.translate('HeaderMyMedia')}
+                    data-focus-row=''
                     sx={{
                         pointerEvents: 'auto', maxWidth: '100%', display: 'flex', alignItems: 'center', gap: 0.5,
                         px: 1, py: 0.75, overflowX: 'auto', scrollbarWidth: 'none', '&::-webkit-scrollbar': { display: 'none' },

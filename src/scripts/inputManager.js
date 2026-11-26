@@ -112,8 +112,12 @@ export function handleCommand(commandName, options) {
         'back': () => {
             if (appRouter.canGoBack()) {
                 appRouter.back();
-            } else if (appHost.supports(AppFeature.Exit)) {
-                appHost.exit();
+            } else if (appRouter.isStartPage()) {
+                // The home screen: nothing to go back to. Only an app installed on the TV closes (its system asks it)
+                if (appHost.supports(AppFeature.Exit)) appHost.exit();
+            } else {
+                // A page opened straight (nothing before it in this tab): the screen before it is the home screen
+                appRouter.goHome();
             }
         },
         'select': () => {

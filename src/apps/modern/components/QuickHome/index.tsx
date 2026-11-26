@@ -24,6 +24,7 @@ import {
     Card, Hero, Lazy, LibraryBlock, type ProgressCard, Recommendations, Row, Spotlight, UpcomingCard, Wide,
     hashColor, useHomePage, usePersonal
 } from './parts';
+import { useTvRows } from './useTvRows';
 
 /* ---------- Page ---------- */
 
@@ -37,6 +38,8 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
     const page = pageQuery.data;
     const personal = personalQuery.data;
     const root = useRef<HTMLDivElement>(null);
+    // TV: the remote moves by rows
+    useTvRows(root);
     const serverId = legacy?.serverId();
     const [ sections, setSections ] = useState(loadHomeSections);
 
@@ -122,7 +125,7 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
             </Lazy>
         ) : null),
         genres: () => (page.Genres.length ? (
-            <section key='genres' id='qh-genres' className='qh-row'>
+            <section key='genres' id='qh-genres' className='qh-row' data-focus-row=''>
                 <header className='qh-row-head'><h3 className='qh-row-title'>{globalize.translate('QhGenres')}</h3></header>
                 <div className='qh-genre-list'>
                     {page.Genres.map(g => (

@@ -14,6 +14,7 @@ import { queryClient } from 'utils/query/queryClient';
 
 import { GenresSection } from '../HomeFeed/feedParts';
 import { Card, type HomeCard, Lazy, Row, Spotlight, get, href, imageUrl } from './parts';
+import { useTvRows } from './useTvRows';
 
 import './quickAudiobooks.scss';
 import { prefersReducedMotion, scrollBehavior } from 'utils/reducedMotion';
@@ -215,6 +216,7 @@ const AbHero: FC<{ slides: Slide[], home: AbHome, serverId?: string }> = ({ slid
     return (
         <section
             className='qh-hero ab-hero'
+            data-focus-row=''
             aria-roledescription='carousel'
             onMouseEnter={onEnter}
             onMouseLeave={onLeave}
@@ -322,7 +324,7 @@ const ShelfPicker: FC<{ title: string, hint?: string, accent: string, shelves: A
     if (!api || !shelf) return null;
     const items = shelf.ItemIds.map(i => books.get(norm(i))).filter((b): b is AbBook => !!b);
     return (
-        <section className='qh-row ab-shelf' style={{ '--qh-accent': accent } as React.CSSProperties}>
+        <section className='qh-row ab-shelf' data-focus-row='' style={{ '--qh-accent': accent } as React.CSSProperties}>
             <header className='qh-row-head'>
                 <h3 className='qh-row-title'>{title}</h3>
                 {hint && <span className='qh-row-hint'>{hint}</span>}
@@ -360,6 +362,8 @@ const QuickAudiobooks: FC<{ libraryId: string, name?: string }> = ({ libraryId, 
     const { api, user, __legacyApiClient__: legacy } = useApi();
     const { data: home } = useAudiobooks(libraryId);
     const root = useRef<HTMLDivElement>(null);
+    // TV: the remote moves by rows
+    useTvRows(root);
     const serverId = legacy?.serverId();
 
     // Coming back (after listening) refreshes where the user is
