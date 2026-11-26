@@ -16,9 +16,11 @@ export const enum LayoutMode {
     Tv = 'tv'
 };
 
-/** The layout modes that use the legacy app. */
+/**
+ * The layout modes that use the legacy app. The TV layout uses the modern one (the same bars, menus and pages as on
+ * a phone or a computer), with what the remote needs on top (rows, focus, Back).
+ */
 export const LegacyLayoutModes = new Set([
     LayoutMode.DesktopLegacy,
-    LayoutMode.MobileLegacy,
-    LayoutMode.Tv
+    LayoutMode.MobileLegacy
 ]);

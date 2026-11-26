@@ -8,14 +8,10 @@ import ErrorBoundary from 'components/router/ErrorBoundary';
 import { retryImport } from 'utils/connection/loadError';
 import FallbackRoute from 'components/router/FallbackRoute';
 
-import { ASYNC_USER_ROUTES as MODERN_ASYNC_USER_ROUTES } from 'apps/modern/routes/asyncRoutes';
-import layoutManager from 'components/layoutManager';
-
 import AppLayout from '../AppLayout';
 
 import { ASYNC_PUBLIC_ROUTES, ASYNC_USER_ROUTES } from './asyncRoutes';
 import { LEGACY_PUBLIC_ROUTES, LEGACY_USER_ROUTES } from './legacyRoutes';
-import TvLibraryLayout, { TV_LIBRARY_PATHS } from './TvLibraryLayout';
 
 const LoginPage = lazy(() => retryImport(() => import('./session/login')));
 const AddServerPage = lazy(() => retryImport(() => import('./session/addServer')));
@@ -28,14 +24,6 @@ const withSuspense = (Component: React.ComponentType) => (
 
 const MIGRATED_PUBLIC = [ 'login', 'addserver', 'selectserver', 'forgotpasswordpin' ];
 
-/** TV: the libraries are the Cosmic pages of the desktop (continuous scrolling), not the legacy paged ones. */
-const tvLibraries = layoutManager.tv;
-const TV_LIBRARY_ROUTES: RouteObject[] = tvLibraries ? [ {
-    Component: TvLibraryLayout,
-    children: MODERN_ASYNC_USER_ROUTES.filter(r => TV_LIBRARY_PATHS.includes(r.path)).map(toAsyncPageRoute)
-} ] : [];
-const userLegacyRoutes = tvLibraries ? LEGACY_USER_ROUTES.filter(r => !TV_LIBRARY_PATHS.includes(r.path)) : LEGACY_USER_ROUTES;
-
 export const APP_ROUTES: RouteObject[] = [
     {
         path: '/*',
@@ -47,9 +35,8 @@ export const APP_ROUTES: RouteObject[] = [
                 /* User routes */
                 Component: ConnectionRequired,
                 children: [
-                    ...TV_LIBRARY_ROUTES,
                     ...ASYNC_USER_ROUTES.map(toAsyncPageRoute),
-                    ...userLegacyRoutes.map(toViewManagerPageRoute)
+                    ...LEGACY_USER_ROUTES.map(toViewManagerPageRoute)
                 ],
                 ErrorBoundary
             },

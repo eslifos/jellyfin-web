@@ -51,7 +51,9 @@ export const pageRows = (root: Element) => [ ...root.querySelectorAll(ROW_SELECT
 const isTextField = (el: Element) => el instanceof HTMLInputElement && ![ 'button', 'checkbox', 'radio', 'submit', 'reset' ].includes(el.type)
     || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement || (el as HTMLElement).isContentEditable;
 
-const dialogOpen = () => !!document.querySelector('.dialogContainer .dialog.opened, [role="dialog"], [role="menu"], .MuiPopover-root');
+/** A dialog or menu on screen (the modern app keeps some mounted and hidden: those do not count). */
+const dialogOpen = () => [ ...document.querySelectorAll('.dialogContainer .dialog.opened, [role="dialog"], [role="menu"], .MuiPopover-root') ]
+    .some(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
 
 export const useTvRows = (rootRef: RefObject<HTMLElement>) => {
     useEffect(() => {

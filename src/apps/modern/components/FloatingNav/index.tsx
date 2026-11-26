@@ -34,6 +34,7 @@ import { downloadsAvailable } from '../../features/downloads/support';
 import { hiddenBarSx, useBottomSpace, useHideOnScroll } from './bottomSpace';
 import ScrollRail, { narrowBarPlacement } from './ScrollRail';
 import { isSettingsSubPath } from './settingsPaths';
+import { installTvBottomBar } from './tvBar';
 import { ambientAnimation } from 'utils/reducedMotion';
 
 /**
@@ -81,7 +82,14 @@ export const barSx = {
     border: '1px solid rgba(0, 164, 220, 0.2)',
     borderRadius: '50px',
     boxShadow: '0 8px 32px rgba(0,0,0,0.5), 0 0 0 1px rgba(255,255,255,0.04) inset, 0 0 24px rgba(0,164,220,0.1)',
-    ...ambientAnimation('jf-glow-pulse 4s ease-in-out infinite')
+    ...ambientAnimation('jf-glow-pulse 4s ease-in-out infinite'),
+    // With the remote or the keyboard, the button that has the focus stands out
+    '& button:focus-visible, & a:focus-visible, & .Mui-focusVisible': {
+        outline: '3px solid #00a4dc',
+        outlineOffset: '2px',
+        color: '#fff !important',
+        background: 'rgba(0,164,220,0.22) !important'
+    }
 } as const;
 
 export const BarDivider = () => <Box sx={{ width: '1px', height: '28px', background: 'rgba(255,255,255,0.1)', mx: 0.5, flexShrink: 0 }} />;
@@ -102,6 +110,9 @@ const toolsSx = (narrow: boolean) => ({
     },
     '& svg': { fontSize: '1.5rem !important' }
 });
+
+// The remote reaches the bar on the TV layout (it acts only there)
+installTvBottomBar();
 
 const FloatingNav = () => {
     const location = useLocation();
@@ -169,7 +180,7 @@ const FloatingNav = () => {
 
                 {/* Home */}
                 <Tooltip title={globalize.translate('Home')} placement='top'>
-                    <IconButton onClick={goHome} aria-label={globalize.translate('Home')} sx={barBtnSx(isActive('/home'), narrow)}>
+                    <IconButton onClick={goHome} aria-label={globalize.translate('Home')} aria-current={isActive('/home') ? 'page' : undefined} sx={barBtnSx(isActive('/home'), narrow)}>
                         <HomeRoundedIcon />
                     </IconButton>
                 </Tooltip>
@@ -179,7 +190,7 @@ const FloatingNav = () => {
                     <IconButton
                         onClick={goUpcoming}
                         aria-label={globalize.translate('UpcTitle')}
-                        sx={barBtnSx(isActive('/upcoming'), narrow)}
+                        aria-current={isActive('/upcoming') ? 'page' : undefined} sx={barBtnSx(isActive('/upcoming'), narrow)}
                     >
                         <CalendarMonthRoundedIcon />
                     </IconButton>
@@ -191,7 +202,7 @@ const FloatingNav = () => {
                         <IconButton
                             onClick={goDownloads}
                             aria-label={globalize.translate('DlPageTitle')}
-                            sx={barBtnSx(isActive('/downloads'), narrow)}
+                            aria-current={isActive('/downloads') ? 'page' : undefined} sx={barBtnSx(isActive('/downloads'), narrow)}
                         >
                             <DownloadForOfflineRoundedIcon />
                         </IconButton>

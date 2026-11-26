@@ -6,6 +6,7 @@ import itemHelper from '../itemHelper';
 import loading from '../loading/loading';
 import alert from '../alert';
 
+import { focusBottomBar, isInBottomBar } from 'apps/modern/components/FloatingNav/tvBar';
 import { openPlayer } from 'apps/modern/components/Player/events';
 import layoutManager from 'components/layoutManager';
 import { getItemQuery } from 'hooks/useItem';
@@ -125,6 +126,22 @@ class AppRouter {
     /** The first screen of the app (home, sign in): "back" has nowhere to go from it. */
     isStartPage(path = history.location.pathname) {
         return !document.querySelector('.dialogContainer') && START_PAGE_PATHS.includes(path);
+    }
+
+    /**
+     * The Back key of a remote or of an app installed on the TV.
+     * @returns Whether it was handled; when not (the home screen, already in the bar) the app may close.
+     */
+    handleBack() {
+        if (this.canGoBack()) {
+            this.back();
+            return true;
+        }
+        // Home screen with the remote: Back goes to the bar first (its options are there); from the bar, it closes
+        if (layoutManager.tv && this.isStartPage() && !isInBottomBar(document.activeElement)) {
+            return focusBottomBar();
+        }
+        return false;
     }
 
     canGoBack(path = history.location.pathname) {

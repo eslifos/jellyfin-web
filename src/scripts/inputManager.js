@@ -110,8 +110,8 @@ export function handleCommand(commandName, options) {
             appRouter.showSettings();
         },
         'back': () => {
-            if (appRouter.canGoBack()) {
-                appRouter.back();
+            if (appRouter.handleBack()) {
+                // Went back, or (TV home screen) to the bar
             } else if (appRouter.isStartPage()) {
                 // The home screen: nothing to go back to. Only an app installed on the TV closes (its system asks it)
                 if (appHost.supports(AppFeature.Exit)) appHost.exit();
