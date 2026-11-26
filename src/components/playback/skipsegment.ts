@@ -96,7 +96,9 @@ class SkipSegment extends PlaybackSubscriber {
             void elem.offsetWidth;
 
             const hasFocus = document.activeElement && focusManager.isCurrentlyFocusable(document.activeElement);
-            if (options.focus && !hasFocus) {
+            // TV: the remote is on it at once (one OK skips), unless the focus is in a panel or a dialog of the player
+            const busy = !!document.activeElement?.closest('.cosmicOsdPanel-open, .dialogContainer, .MuiModal-root');
+            if (options.focus && (layoutManager.tv ? !busy : !hasFocus)) {
                 focusManager.focus(elem);
             }
 

@@ -1176,6 +1176,20 @@ export default function (view) {
         }
     }
 
+    /** Back: closes what is open on the player (a panel, the details), else hides its controls; true when used. */
+    function onBackCommand() {
+        if (getOpenedDialog()) return false;
+        if (cosmicOsd.closeTop()) {
+            showOsd();
+            return true;
+        }
+        if (currentVisibleMenu === 'osd') {
+            hideOsd();
+            return true;
+        }
+        return false;
+    }
+
     function onKeyDown(e) {
         clickedElement = e.target;
 
@@ -1223,6 +1237,16 @@ export default function (view) {
                         e.preventDefault();
                         playbackManager.playPause(currentPlayer);
                         showOsd(btnPlayPause);
+                    }
+                    return;
+                // Up: audio and subtitles; down: the episodes (the queue), else just the controls
+                case 'ArrowUp':
+                case 'ArrowDown':
+                    if (!e.shiftKey) {
+                        e.preventDefault();
+                        showOsd();
+                        if (key === 'ArrowUp') cosmicOsd.toggleSettings();
+                        else if (!view.querySelector('.btnCosmicQueue')?.classList.contains('hide')) cosmicOsd.toggleQueue();
                     }
                     return;
             }
@@ -1656,6 +1680,8 @@ export default function (view) {
                 passive: true
             });
             showOsd();
+            // Back of the TV app (it does not arrive as a key): first the panels, then the controls, then out
+            appRouter.setBackHandler(onBackCommand);
             inputManager.on(window, onInputCommand);
             document.addEventListener('keydown', onKeyDown);
             dom.addEventListener(document, 'keydown', onKeyDownCapture, {
@@ -1696,6 +1722,7 @@ export default function (view) {
         }
     });
     view.addEventListener('viewbeforehide', function () {
+        appRouter.setBackHandler(null);
         if (statsOverlay) {
             statsOverlay.enabled(false);
         }

@@ -34,6 +34,8 @@ export const PUBLIC_PATHS = [
 ];
 
 class AppRouter {
+    /** The screen on view that answers Back first, when it has one (the video player: its panels, its controls). */
+    backHandler = null;
     forcedLogoutMsg;
     msgTimeout;
     promiseShow;
@@ -130,17 +132,23 @@ class AppRouter {
     }
 
     /**
-     * The Back key of a remote or of an app installed on the TV.
-     * @returns Whether it was handled; when not (the home screen, already in the bar) the app may close.
+     * The screen on view that answers Back first (null when it goes): it returns whether it used the key.
+     * @param {(() => boolean) | null} handler The handler.
      */
+    setBackHandler(handler) {
+        this.backHandler = handler;
+    }
+
     /**
-     * Back. Returns false when there is nothing left to go back to: the app may close then (the TV app does).
-     * TV layout: the TV menu decides first (it closes; on the home screen, to the start of the row, then the menu,
-     * then "Press Back again to exit"); a screen with nothing before it goes to the home screen.
+     * Back (the key of a remote, or of the TV app). Returns false when there is nothing left to go back to: the app
+     * may close then (the TV app does). A menu or dialog closes first, then the screen on view may use it (the video
+     * player: its panels, then its controls). TV layout: then the TV menu (it closes; on the home screen, to the start
+     * of the row, then the menu, then "Press Back again to exit"); a screen with nothing before it goes to the home
+     * screen.
      */
     handleBack() {
-        // A menu or dialog on screen closes first
         if (closeOpenModal()) return true;
+        if (this.backHandler?.()) return true;
         if (layoutManager.tv) {
             const used = handleTvBack(this.isStartPage());
             if (used !== null) return used;

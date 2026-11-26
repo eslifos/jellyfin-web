@@ -19,6 +19,7 @@ import * as userSettings from '../../scripts/settings/userSettings';
 import loading from '../loading/loading';
 import { appHost } from '../apphost';
 import { showPlaybackError } from './playbackErrorDialog';
+import { needsVideoTranscoding } from './transcodeReasons';
 import { includesAny } from '../../utils/container.ts';
 import { getItems } from '../../utils/jellyfin-apiclient/getItems.ts';
 import { getItemBackdropImageUrl } from '../../utils/jellyfin-apiclient/backdropImage';
@@ -2780,7 +2781,8 @@ export class PlaybackManager {
                     return sendPlaybackListToPlayer(player, playOptions.items, deviceProfile, apiClient, mediaSourceId, options);
                 }
 
-                // this reference was only needed by sendPlaybackListToPlayer
+                // this reference was only needed by sendPlaybackListToPlayer (and by the native fallback below)
+                const listItems = playOptions.items;
                 playOptions.items = null;
 
                 const trackOptions = {};
@@ -2804,6 +2806,14 @@ export class PlaybackManager {
                 const getMediaSource = prepared ? prepared.mediaSource.then(known => known || askMediaSource()) : askMediaSource();
 
                 return getMediaSource.then(async (mediaSource) => {
+                    // The TV app with the web player first: a video this player could only play transcoded goes to
+                    // the native player of the app, which plays it as it is (it decodes more formats)
+                    const fallback = getNativeFallback(player, item, playOptions, mediaSource);
+                    if (fallback) {
+                        console.debug(`[playbackManager] ${item.Id} needs transcoding here: playing it with ${fallback.name}`);
+                        return playAfterBitrateDetect(maxBitrate, item, { ...playOptions, items: listItems, nativeFallback: true }, onPlaybackStartedFn, prevSource);
+                    }
+
                     if (trackOptions.DefaultSecondarySubtitleStreamIndex != null) {
                         mediaSource.DefaultSecondarySubtitleStreamIndex = trackOptions.DefaultSecondarySubtitleStreamIndex;
                     }
@@ -3187,6 +3197,20 @@ export class PlaybackManager {
                     return Promise.reject();
                 }
             });
+        }
+
+        /**
+         * The native player that takes a video whose picture the chosen (web) player could only play transcoded, when
+         * the app offers one as a fallback (its canPlayItem accepts playOptions.nativeFallback); null otherwise. Only
+         * the picture counts: an audio the browser does not decode (Dolby Digital) is converted alone, cheaply, and the
+         * web player keeps it.
+         */
+        function getNativeFallback(player, item, playOptions, mediaSource) {
+            if (playOptions.nativeFallback || !player.isLocalPlayer || item.MediaType !== 'Video') return null;
+            if (mediaSource.SupportsDirectPlay || mediaSource.SupportsDirectStream || !needsVideoTranscoding(mediaSource)) return null;
+            const fallbackOptions = { ...playOptions, nativeFallback: true };
+            return getAutomaticPlayers(self, true).find(p => p !== player
+                && p.canPlayMediaType(item.MediaType) && !!p.canPlayItem?.(item, fallbackOptions)) ?? null;
         }
 
         function getPlayer(item, playOptions, forceLocalPlayers) {
