@@ -6,6 +6,8 @@ Herramientas para revisar Jellyfin Cosmic como lo ve un usuario final y converti
 |---|---|
 | `.claude/agents/revisor-ux.md` | Agente que mira capturas y código, y escribe el informe con prompts |
 | `.claude/skills/revision-ux/SKILL.md` | Comando `/revision-ux` que prepara todo y llama al agente |
+| `.claude/skills/aplicar-mejoras/SKILL.md` | Comando `/aplicar-mejoras` que hace las mejoras de un informe una por una |
+| `ux-review/progreso.md` | Qué mejoras de cada informe están hechas y en qué commit |
 | `ux-review/scripts/recorrido.mjs` | Entra con un usuario y saca capturas de cada pantalla en móvil, tablet, escritorio y TV, con avisos automáticos |
 | `ux-review/informes/` | Informes de cada revisión (se guardan en git) |
 | `ux-review/salida/` | Capturas de cada recorrido (no se guardan en git) |
