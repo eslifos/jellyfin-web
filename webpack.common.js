@@ -88,7 +88,7 @@ const config = {
                 'robots.txt',
                 {
                     from: 'touchicon*.png',
-                    context: path.resolve(__dirname, 'node_modules/@jellyfin/ux-web/favicons'),
+                    context: path.resolve(__dirname, 'src/assets/img/cosmic/favicons'),
                     to: 'favicons'
                 },
                 ...Assets.map(asset => {

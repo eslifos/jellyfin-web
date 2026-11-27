@@ -113,7 +113,7 @@
             display: block;
             width: 240px;
             height: 62px;
-            background: url('@jellyfin/ux-web/banner-light.png') center / contain no-repeat;
+            background: url('../assets/img/cosmic/banner-light.png') center / contain no-repeat;
             margin: 0 auto 1.4rem;
             animation: jf-logo-glow 3s ease-in-out infinite, jf-float-logo 4s ease-in-out infinite;
         }
@@ -863,7 +863,7 @@
         display: block;
         width: 220px;
         height: 56px;
-        background: url('@jellyfin/ux-web/banner-light.png') center / contain no-repeat;
+        background: url('../assets/img/cosmic/banner-light.png') center / contain no-repeat;
         margin: 0 auto 1.5rem;
         animation: jf-logo-glow 3s ease-in-out infinite, jf-float-logo 4s ease-in-out infinite;
     }

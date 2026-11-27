@@ -7,8 +7,8 @@
  */
 import { useSyncExternalStore } from 'react';
 
-import defaultBanner from '@jellyfin/ux-web/banner-light.png';
-import defaultIcon from '@jellyfin/ux-web/icon-transparent.png';
+import defaultBanner from 'assets/img/cosmic/banner-light.png';
+import defaultIcon from 'assets/img/cosmic/icon-transparent.png';
 
 export type CustomLogoType = 'Icon' | 'Banner';
 
