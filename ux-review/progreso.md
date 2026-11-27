@@ -12,7 +12,7 @@ Lo actualiza `/aplicar-mejoras` después de cada mejora. Estados: **Pendiente**,
 | P4 · Reproductor con el control remoto (el de la web, con el nativo de respaldo) | jellyfin-web + jellyfin-cosmic-tv | Hecho | 2c7cb26f13 (web), ac9cfea6 (TV) |
 | P5 · Detalle para TV | jellyfin-web | Hecho | 179541a491 |
 | P6 · La portada sigue al foco y tráiler automático | jellyfin-web (+ jellyfin) | Parcial: la web hecha; los tráileres no se descargan en el servidor (yt-dlp "Requested format is not available"), pendiente en jellyfin | be5942c5d1 |
-| P7 · Tarjetas horizontales con logo en TV | jellyfin-web | Pendiente | |
+| P7 · Tarjetas horizontales con logo en TV | jellyfin-web | Hecho (mejora opcional en jellyfin: BackdropTag/LogoTag en las filas) | 053b6074a3 |
 | P8 · Búsqueda única para TV con voz | jellyfin-web + jellyfin-cosmic-tv | Pendiente | |
 | P9 · "¿Quién está viendo?" e iniciar sesión con el celular | jellyfin-web | Pendiente | |
 | P10 · Seguir viendo y canal en Google TV | jellyfin-cosmic-tv | Pendiente en jellyfin-cosmic-tv | |
