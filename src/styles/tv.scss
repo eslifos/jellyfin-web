@@ -77,6 +77,11 @@ html.layout-tv {
         outline-offset: -4px;
     }
 
+    // A video loading over the screen (before its own screen opens): the TV menu is not over its black
+    body:has(> .videoPlayerContainer-onTop) :is([data-tv-menu], [data-tv-menu-shade]) {
+        display: none;
+    }
+
     // Safe area: the screens start 27 px from the top and end 27 px from the bottom (the TV menu is on the left, the
     // rows and banners keep their text far from the right edge); the letters of a library, fixed on the right edge,
     // 48 px from it

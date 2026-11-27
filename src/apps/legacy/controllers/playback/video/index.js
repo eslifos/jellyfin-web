@@ -7,6 +7,7 @@ import { TICKS_PER_MINUTE, TICKS_PER_SECOND } from 'constants/time';
 import { EventType } from 'constants/eventType';
 
 import { playbackManager } from 'components/playback/playbackmanager';
+import { playbackScreenOpen } from 'components/playback/tvPlaybackStart';
 import browser from 'scripts/browser';
 import dom from 'utils/dom';
 import inputManager from 'scripts/inputManager';
@@ -1672,6 +1673,8 @@ export default function (view) {
         setBackdropTransparency(TRANSPARENCY_LEVEL.Full);
     });
     view.addEventListener('viewshow', function () {
+        // The remote, held while the video started (TV), is this screen's now
+        playbackScreenOpen();
         try {
             Events.on(playbackManager, 'playerchange', onPlayerChange);
             bindToPlayer(playbackManager.getCurrentPlayer());

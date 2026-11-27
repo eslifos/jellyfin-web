@@ -15,7 +15,7 @@ import { AppFeature } from 'constants/appFeature';
 import globalize from 'lib/globalize';
 import { scrollBehavior } from 'utils/reducedMotion';
 
-import { ROW_ATTRIBUTE, rowItems } from '../QuickHome/useTvRows';
+import { dialogOpen, ROW_ATTRIBUTE, rowItems } from '../QuickHome/useTvRows';
 
 export const MENU_ATTRIBUTE = 'data-tv-menu';
 const MENU_SELECTOR = `[${MENU_ATTRIBUTE}]`;
@@ -36,10 +36,6 @@ export const isInTvMenu = (el: Element | null) => !!el?.closest?.(MENU_SELECTOR)
 
 const isTextField = (el: Element) => el instanceof HTMLInputElement && ![ 'button', 'checkbox', 'radio', 'submit', 'reset' ].includes(el.type)
     || el instanceof HTMLTextAreaElement || el instanceof HTMLSelectElement || (el as HTMLElement).isContentEditable;
-
-/** A dialog or menu on screen (the modern app keeps some mounted and hidden: those do not count). */
-const dialogOpen = () => [ ...document.querySelectorAll('.dialogContainer .dialog.opened, [role="dialog"], [role="menu"], .MuiPopover-root') ]
-    .some(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
 
 /** The screen on view (the one left behind may still be in the document, hidden, while the new one comes in). */
 const currentScreen = () => [ ...document.querySelectorAll<HTMLElement>('.mainAnimatedPage') ]

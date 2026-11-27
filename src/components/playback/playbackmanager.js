@@ -20,6 +20,7 @@ import loading from '../loading/loading';
 import { appHost } from '../apphost';
 import { showPlaybackError } from './playbackErrorDialog';
 import { needsVideoTranscoding } from './transcodeReasons';
+import { startingPlayback } from './tvPlaybackStart';
 import { includesAny } from '../../utils/container.ts';
 import { getItems } from '../../utils/jellyfin-apiclient/getItems.ts';
 import { getItemBackdropImageUrl } from '../../utils/jellyfin-apiclient/backdropImage';
@@ -2183,6 +2184,7 @@ export class PlaybackManager {
 
             if (options.fullscreen) {
                 loading.show();
+                startingPlayback();
             }
 
             let { items } = options;

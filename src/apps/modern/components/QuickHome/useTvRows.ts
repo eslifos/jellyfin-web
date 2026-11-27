@@ -11,6 +11,7 @@
 import { type RefObject, useEffect } from 'react';
 
 import layoutManager from 'components/layoutManager';
+import { isStartingPlayback } from 'components/playback/tvPlaybackStart';
 import { scrollBehavior } from 'utils/reducedMotion';
 
 export const ROW_ATTRIBUTE = 'data-focus-row';
@@ -62,8 +63,13 @@ const isAboveRows = (el: Element, firstRow: Element) => {
         && el.getBoundingClientRect().bottom <= first.getBoundingClientRect().top + 4;
 };
 
-const dialogOpen = () => [ ...document.querySelectorAll('.dialogContainer .dialog.opened, [role="dialog"], [role="menu"], .MuiPopover-root') ]
-    .some(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
+/**
+ * Something over the screen that takes the remote: a dialog or menu (the modern app keeps some mounted and hidden:
+ * those do not count), or a video starting (tvPlaybackStart).
+ */
+export const dialogOpen = () => isStartingPlayback()
+    || [ ...document.querySelectorAll('.dialogContainer .dialog.opened, [role="dialog"], [role="menu"], .MuiPopover-root') ]
+        .some(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
 
 export const useTvRows = (rootRef: RefObject<HTMLElement>) => {
     useEffect(() => {
