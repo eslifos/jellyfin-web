@@ -24,6 +24,7 @@ import { UNIVERSES_KEY, type NavSettings, loadNavSettings } from '../HomeLibrary
 import { useNavEntries } from '../HomeLibraryNav/useNavEntries';
 import { isSettingsSubPath } from '../FloatingNav/settingsPaths';
 import { MENU_ATTRIBUTE, closeTvMenu, focusNewScreen, installTvMenu } from './tvMenu';
+import { TV_LINK_EVENT, openPendingTvLink } from './tvLinks';
 
 /** Folded: icons only. The screens leave it this room (--tv-menu-width, AppOverrides.scss). */
 const FOLDED = 72;
@@ -105,6 +106,17 @@ const TvMenu: FC = () => {
     useEffect(() => {
         focusNewScreen();
     }, [ screenKey ]);
+
+    // A program of the Android TV home screen: the one the app was opened with (before "Who is watching?", which is
+    // then not asked), and the ones that arrive later
+    useEffect(() => {
+        const open = () => {
+            openPendingTvLink().catch(err => console.warn('[TvMenu] could not open the link of the TV home screen', err));
+        };
+        open();
+        window.addEventListener(TV_LINK_EVENT, open);
+        return () => window.removeEventListener(TV_LINK_EVENT, open);
+    }, []);
 
     // Opening the app with several profiles in the account: "Who is watching?" first (once per opening; a profile
     // chosen there reloads the app, which does not ask again)
