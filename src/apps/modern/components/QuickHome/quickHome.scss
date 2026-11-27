@@ -1152,17 +1152,26 @@
     object-fit: cover;
     background: #000;
     opacity: 0;
+    visibility: hidden;
     pointer-events: none;
+}
+
+// It fades in once it really plays, and is gone at once when it stops (never a black box with the player's icon)
+.qh-hero-trailer .qh-hero-video {
+    opacity: 1;
+    visibility: visible;
     transition: opacity 0.6s ease;
 }
 
-.qh-hero-trailer .qh-hero-video {
-    opacity: 1;
-}
+// TV: one backdrop that changes picture (TvBackdrop): the new one fades in once loaded, no slow zoom
+.qh-hero-bg-tv {
+    animation: none;
+    opacity: 0;
+    transition: opacity 0.25s ease;
 
-// The backdrop of a card of the rows: a short fade, no slow zoom (it changes with every card)
-.qh-hero-bg-follow {
-    animation: qhFade 0.25s ease;
+    &.is-loaded {
+        opacity: 1;
+    }
 }
 
 // The title of the focused card over the banner's own, which stays (its buttons are where Up goes) but unseen

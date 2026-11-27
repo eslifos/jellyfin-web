@@ -174,6 +174,7 @@ export const useHeroTrailer = (api: Api, videoRef: RefObject<HTMLVideoElement>, 
         let timer: number | undefined;
         let cancelled = false;
 
+        const stopShowing = () => setPlaying(false);
         const stop = () => {
             window.clearTimeout(timer);
             setPlaying(false);
@@ -201,10 +202,15 @@ export const useHeroTrailer = (api: Api, videoRef: RefObject<HTMLVideoElement>, 
                 void start();
             }, TRAILER_DELAY_MS);
         };
-        const onPlaying = () => setPlaying(true);
+        // Shown only once its picture really moves (not on "playing", which comes before the first frame, nor while
+        // it waits for data): never a black box or the player's icon over the banner
+        const onTimeUpdate = () => {
+            if (video.currentTime > 0.3 && !video.paused) setPlaying(true);
+        };
         const onPlaybackStart = () => stop();
 
-        video.addEventListener('playing', onPlaying);
+        video.addEventListener('timeupdate', onTimeUpdate);
+        video.addEventListener('waiting', stopShowing);
         video.addEventListener('ended', stop);
         video.addEventListener('error', stop);
         window.addEventListener('keydown', arm, true);
@@ -214,7 +220,8 @@ export const useHeroTrailer = (api: Api, videoRef: RefObject<HTMLVideoElement>, 
         return () => {
             cancelled = true;
             stop();
-            video.removeEventListener('playing', onPlaying);
+            video.removeEventListener('timeupdate', onTimeUpdate);
+            video.removeEventListener('waiting', stopShowing);
             video.removeEventListener('ended', stop);
             video.removeEventListener('error', stop);
             window.removeEventListener('keydown', arm, true);

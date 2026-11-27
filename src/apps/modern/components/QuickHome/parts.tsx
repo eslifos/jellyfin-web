@@ -277,6 +277,36 @@ export const Lazy: FC<{ id?: string, height: number, children: ReactNode }> = ({
 
 /* ---------- Banner ---------- */
 
+/**
+ * TV: the backdrop of the banner in a single <img> whose picture changes: the new one fades in once it has loaded
+ * (one picture per element: a previous one never stays under the next, as a ghost).
+ */
+const TvBackdrop: FC<{ api: Api, image?: { itemId: string, tag: string } }> = ({ api, image }) => {
+    const src = image ? imageUrl(api, image.itemId, 'Backdrop', image.tag, 1280) : undefined;
+    const [ loaded, setLoaded ] = useState<string>();
+    const onLoad = useCallback((e: React.SyntheticEvent<HTMLImageElement>) => setLoaded(e.currentTarget.getAttribute('src') ?? undefined), []);
+    if (!image || !src) return null;
+    return (
+        <img
+            className={loaded === src ? 'qh-hero-bg qh-hero-bg-tv is-loaded' : 'qh-hero-bg qh-hero-bg-tv'}
+            src={src}
+            srcSet={srcSet(api, image.itemId, 'Backdrop', image.tag, HERO_WIDTHS)}
+            sizes='100vw'
+            alt=''
+            onLoad={onLoad}
+        />
+    );
+};
+
+const heroClasses = (preview: boolean, trailer: boolean) =>
+    [ 'qh-hero', preview && 'qh-hero-preview', trailer && 'qh-hero-trailer' ].filter(Boolean).join(' ');
+
+/** The banner's own backdrop, as TvBackdrop takes it. */
+const ownBackdrop = (item: HomeCard) => (item.BackdropTag ? { itemId: item.Id, tag: item.BackdropTag } : undefined);
+
+/** A transparent picture as the poster of the trailer: Android's WebView draws a grey "play" icon without one. */
+const EMPTY_POSTER = 'data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7';
+
 export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ api, items, serverId }) => {
     const { user } = useApi();
     const [ index, setIndex ] = useState(0);
@@ -367,9 +397,7 @@ export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ a
     const note = noteLabel(item);
     const logo = imageUrl(api, item.Id, 'Logo', item.LogoTag, 600);
     const previewLogo = preview?.logo ? imageUrl(api, preview.logo.itemId, 'Logo', preview.logo.tag, 600) : undefined;
-    let classes = 'qh-hero';
-    if (preview) classes += ' qh-hero-preview';
-    if (trailerPlaying) classes += ' qh-hero-trailer';
+    const classes = heroClasses(!!preview, trailerPlaying);
 
     return (
         <section
@@ -384,18 +412,10 @@ export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ a
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
         >
-            {preview ? (
-                // TV: the card with the focus (its series' backdrop for an episode); at most 1920 px wide
-                preview.backdrop && (
-                    <img
-                        key={preview.id}
-                        className='qh-hero-bg qh-hero-bg-follow'
-                        src={imageUrl(api, preview.backdrop.itemId, 'Backdrop', preview.backdrop.tag, 1280)}
-                        srcSet={srcSet(api, preview.backdrop.itemId, 'Backdrop', preview.backdrop.tag, HERO_WIDTHS)}
-                        sizes='100vw'
-                        alt=''
-                    />
-                )
+            {tv ? (
+                // TV: one picture for everything it shows (the card with the focus, its series' backdrop for an
+                // episode, or the banner's own); at most 1920 px wide
+                <TvBackdrop api={api} image={preview ? preview.backdrop : ownBackdrop(item)} />
             ) : (
                 <img
                     key={item.Id}
@@ -407,7 +427,7 @@ export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ a
                     fetchPriority='high'
                 />
             )}
-            {tv && <video ref={videoRef} className='qh-hero-video' muted playsInline preload='none' disablePictureInPicture aria-hidden='true' />}
+            {tv && <video ref={videoRef} className='qh-hero-video' poster={EMPTY_POSTER} muted playsInline preload='none' disablePictureInPicture aria-hidden='true' />}
             <div className='qh-hero-shade' />
             {preview && (
                 <div key={preview.id} className='qh-hero-body qh-hero-follow' aria-live='polite'>
