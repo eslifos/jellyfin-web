@@ -25,6 +25,7 @@ import { useNavEntries } from '../HomeLibraryNav/useNavEntries';
 import { isSettingsSubPath } from '../FloatingNav/settingsPaths';
 import { MENU_ATTRIBUTE, closeTvMenu, focusNewScreen, installTvMenu } from './tvMenu';
 import { installTvFrameRate } from './tvFrameRate';
+import { installTvSettings } from './tvSettings';
 import { TV_LINK_EVENT, openPendingTvLink } from './tvLinks';
 
 /** Folded: icons only. The screens leave it this room (--tv-menu-width, AppOverrides.scss). */
@@ -43,6 +44,7 @@ const OPEN_SEARCH_EVENT = 'cosmicopensearch';
 // The remote reaches the menu on the TV layout (it acts only there)
 installTvMenu();
 installTvFrameRate();
+installTvSettings();
 
 const itemSx = (current: boolean) => ({
     display: 'flex', alignItems: 'center', gap: 2, width: '100%', boxSizing: 'border-box', flexShrink: 0,
