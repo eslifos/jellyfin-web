@@ -510,9 +510,58 @@ export const Row: FC<{ id?: string, title: string, hint?: string, accent?: strin
 /** Audiobooks and albums have square covers: never cut into a tall poster. */
 export const SQUARE_TYPES = new Set([ 'AudioBook', 'MusicAlbum', 'Audio', 'MusicArtist' ]);
 
+/** TV: the size of a landscape card (CSS px, as --qh-wide on TV); its pictures are asked at this size. */
+export const TV_CARD = { width: 300, height: 169 };
+
+/** A picture at the exact size of a TV card (fill, not fit), with its tag when known. */
+export const tvImageUrl = (api: Api, id: string, type: string, tag?: string | null) => {
+    const scale = Math.min(2, Math.max(1, Math.round(window.devicePixelRatio || 1)));
+    const size = `fillWidth=${TV_CARD.width * scale}&fillHeight=${TV_CARD.height * scale}&quality=80`;
+    const tagParam = tag ? '&tag=' + tag : '';
+    return `${api.basePath}/Items/${id}/Images/${type}?${size}${tagParam}`;
+};
+
+/**
+ * TV: a title as a 16:9 card, its backdrop with its logo on it (the name when it has none). The rows only bring the
+ * poster's tag, so the backdrop and logo are asked without one and the next picture is tried when one is missing:
+ * backdrop, thumb, then the poster itself (an episode: its own picture first).
+ */
+const TvLandscapeCard: FC<{ api: Api, card: HomeCard, serverId?: string }> = ({ api, card, serverId }) => {
+    const sources = useMemo(() => {
+        const backdrop = tvImageUrl(api, card.Id, 'Backdrop', card.BackdropTag);
+        const thumb = tvImageUrl(api, card.Id, 'Thumb');
+        const primary = tvImageUrl(api, card.Id, 'Primary', card.PrimaryTag);
+        return card.Type === 'Episode' ? [ primary, backdrop ] : [ backdrop, thumb, primary ];
+    }, [ api, card ]);
+    const [ source, setSource ] = useState(0);
+    const [ logoFailed, setLogoFailed ] = useState(false);
+    const onImageError = useCallback(() => setSource(i => i + 1), []);
+    const onLogoError = useCallback(() => setLogoFailed(true), []);
+    const image = sources[source];
+    // The poster, filled into 16:9, is the last resort: it is cut, so it goes dimmer under the name
+    const fallback = source === sources.length - 1 && card.Type !== 'Episode';
+    const logo = logoFailed ? undefined : imageUrl(api, card.Id, 'Logo', card.LogoTag, 400) ?? `${api.basePath}/Items/${card.Id}/Images/Logo?maxWidth=400&quality=80`;
+    return (
+        <a className='qh-card qh-card-tv' href={href({ Id: card.Id, Type: card.Type as BaseItemDto['Type'] }, serverId)} title={card.Name} aria-label={card.Name} {...{ [ITEM_ATTRIBUTE]: card.Id }}>
+            <span className={fallback ? 'qh-poster qh-tv-art is-fallback' : 'qh-poster qh-tv-art'}>
+                {image && <img key={image} src={image} alt='' loading='lazy' decoding='async' onError={onImageError} />}
+                <span className='qh-tv-shade' aria-hidden='true' />
+                {logo ?
+                    <img className='qh-tv-logo' src={logo} alt='' loading='lazy' decoding='async' onError={onLogoError} /> :
+                    <span className='qh-tv-name'>{card.Name}</span>}
+                {card.Done && <span className='qh-done' aria-hidden='true'>✓</span>}
+                {!card.Done && card.Progress && card.Progress > 0 ? <span className='qh-progress'><span style={{ width: `${Math.round(card.Progress * 100)}%` }} /></span> : null}
+            </span>
+        </a>
+    );
+};
+
 export const Card: FC<{ api: Api, card: HomeCard, shape: Shape, serverId?: string, rank?: number }> = ({ api, card, shape, serverId, rank }) => {
     const wide = shape === 'wide';
     const look = shape === 'poster' && SQUARE_TYPES.has(card.Type) ? 'square' : shape;
+    // TV: the rows of titles are landscape, with the logo (the Top 10 keeps its posters and numbers; covers and people
+    // keep their own shape)
+    if (layoutManager.tv && look === 'poster' && !rank) return <TvLandscapeCard api={api} card={card} serverId={serverId} />;
     return (
         <a className={`qh-card qh-card-${look}`} href={href({ Id: card.Id, Type: card.Type as BaseItemDto['Type'] }, serverId)} title={card.Name} {...{ [ITEM_ATTRIBUTE]: card.Id }}>
             {rank ? <span className='qh-rank' aria-hidden='true'>{rank}</span> : null}
@@ -593,8 +642,9 @@ export const Wide: FC<{ api: Api, card: ProgressCard, serverId?: string, onMenu?
                 {cover && <img className='qh-wide-blur' src={imageUrl(api, card.ImageItemId, card.ImageType, card.ImageTag, 80)} alt='' aria-hidden='true' loading='lazy' decoding='async' />}
                 <img
                     className={cover ? 'qh-wide-pic' : undefined}
-                    src={imageUrl(api, card.ImageItemId, card.ImageType, card.ImageTag, 400)}
-                    srcSet={srcSet(api, card.ImageItemId, card.ImageType, card.ImageTag, WIDE_WIDTHS)}
+                    // TV: at the exact size of the card (a cover is shown whole, not filled)
+                    src={layoutManager.tv && !cover ? tvImageUrl(api, card.ImageItemId, card.ImageType, card.ImageTag) : imageUrl(api, card.ImageItemId, card.ImageType, card.ImageTag, 400)}
+                    srcSet={layoutManager.tv && !cover ? undefined : srcSet(api, card.ImageItemId, card.ImageType, card.ImageTag, WIDE_WIDTHS)}
                     sizes='(max-width: 600px) 72vw, 300px'
                     alt=''
                     loading='lazy'
