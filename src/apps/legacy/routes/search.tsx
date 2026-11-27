@@ -6,8 +6,10 @@ import { useDebounceValue } from 'usehooks-ts';
 import SearchFields from 'apps/legacy/features/search/components/SearchFields';
 import SearchResults from 'apps/legacy/features/search/components/SearchResults';
 import SearchStart from 'apps/modern/components/SearchStart';
+import TvSearch from 'apps/modern/components/TvSearch';
 import { addRecentSearch } from 'apps/modern/components/SearchStart/recentSearches';
 import Page from 'components/Page';
+import layoutManager from 'components/layoutManager';
 import { useApi } from 'hooks/useApi';
 import useSearchParam from 'hooks/useSearchParam';
 import globalize from 'lib/globalize';
@@ -29,6 +31,15 @@ const Search: FC = () => {
     const onResultOpened = useCallback((e: React.MouseEvent<HTMLElement>) => {
         if ((e.target as HTMLElement).closest('a, button, .card, .itemAction')) remember(debouncedQuery);
     }, [ debouncedQuery, remember ]);
+
+    // TV: its own screen, with a keyboard for the remote (also the "Search" of the TV menu)
+    if (layoutManager.tv) {
+        return (
+            <Page id='searchPage' title={globalize.translate('Search')} className='mainAnimatedPage libraryPage allLibraryPage noSecondaryNavPage'>
+                <TvSearch />
+            </Page>
+        );
+    }
 
     return (
         <Page

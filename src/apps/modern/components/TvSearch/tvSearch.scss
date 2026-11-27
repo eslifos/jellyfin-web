@@ -1,0 +1,113 @@
+// TV search (TvSearch): the keyboard on the left, the results on the right
+.tvs {
+    display: grid;
+    grid-template-columns: 470px minmax(0, 1fr);
+    gap: 32px;
+    min-height: calc(100vh - 54px);
+    padding: 0 0 0 calc(var(--tv-menu-width, 0px) + 40px);
+    box-sizing: border-box;
+}
+
+// The keyboard stays put while the results scroll
+.tvs-side {
+    position: sticky;
+    top: 27px;
+    align-self: start;
+    display: flex;
+    flex-direction: column;
+    gap: 14px;
+}
+
+.tvs-query {
+    display: flex;
+    align-items: center;
+    min-height: 64px;
+    padding: 0 18px;
+    overflow: hidden;
+    border-radius: 14px;
+    background: rgba(255, 255, 255, 0.08);
+    border: 2px solid rgba(0, 164, 220, 0.45);
+    color: #fff;
+    font-size: 30px;
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+.tvs-placeholder {
+    color: rgba(255, 255, 255, 0.45);
+    font-weight: 600;
+}
+
+.tvs-caret {
+    width: 3px;
+    height: 34px;
+    margin-left: 4px;
+    background: #00a4dc;
+    animation: tvsBlink 1s steps(1) 3;
+}
+
+@keyframes tvsBlink {
+    50% { opacity: 0; }
+}
+
+.tvs-keys {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    gap: 8px;
+}
+
+.tvs-key {
+    display: grid;
+    place-items: center;
+    height: 64px;
+    padding: 0;
+    border: 0;
+    border-radius: 12px;
+    background: rgba(255, 255, 255, 0.07);
+    color: #fff;
+    font: inherit;
+    font-size: 36px;
+    font-weight: 700;
+    text-transform: lowercase;
+    cursor: pointer;
+
+    .MuiSvgIcon-root {
+        font-size: 34px;
+    }
+
+    &:focus {
+        outline: 4px solid #fff;
+        outline-offset: 2px;
+        background: #00a4dc;
+        box-shadow: 0 0 0 2px rgba(0, 164, 220, 0.9), 0 0 24px rgba(0, 164, 220, 0.6);
+    }
+}
+
+// Space, delete, clear, 123 and the voice: a row of their own
+.tvs-keys-actions {
+    grid-template-columns: repeat(4, 1fr);
+
+    .tvs-key {
+        font-size: 26px;
+    }
+
+    .tvs-key-wide {
+        grid-column: 1 / -1;
+        background: linear-gradient(135deg, rgba(0, 164, 220, 0.35), rgba(170, 92, 195, 0.35));
+    }
+}
+
+.tvs-results {
+    min-width: 0;
+
+    // The rows start at the column's edge (the page's gutter is the keyboard's)
+    .qh-search {
+        --qh-gutter: 0px;
+    }
+}
+
+.tvs-empty {
+    margin: 40px 0;
+    color: rgba(255, 255, 255, 0.7);
+    font-size: 26px;
+}

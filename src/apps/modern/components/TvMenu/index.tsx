@@ -22,7 +22,6 @@ import globalize from 'lib/globalize';
 import { UNIVERSES_KEY, type NavSettings, loadNavSettings } from '../HomeLibraryNav/navSettings';
 import { useNavEntries } from '../HomeLibraryNav/useNavEntries';
 import { isSettingsSubPath } from '../FloatingNav/settingsPaths';
-import SearchDialog from '../SearchDialog';
 import { MENU_ATTRIBUTE, closeTvMenu, focusNewScreen, installTvMenu } from './tvMenu';
 
 /** Folded: icons only. The screens leave it this room (--tv-menu-width, AppOverrides.scss). */
@@ -35,6 +34,8 @@ const ICON_SIZE = '32px';
 const ACCENT = '#00a4dc';
 /** The screen behind the open menu. */
 const DARKEN = 'rgba(0, 0, 0, 0.6)';
+/** The event the TV app fires with the search key of the remote. */
+const OPEN_SEARCH_EVENT = 'cosmicopensearch';
 
 // The remote reaches the menu on the TV layout (it acts only there)
 installTvMenu();
@@ -90,7 +91,6 @@ const TvMenu: FC = () => {
     const { user } = useApi();
     const { hasViews, entriesFor } = useNavEntries();
     const [ settings, setSettings ] = useState<NavSettings>(loadNavSettings);
-    const [ searchOpen, setSearchOpen ] = useState(false);
     const [ profilesOpen, setProfilesOpen ] = useState(false);
 
     // Display preferences may arrive after the first render (or the user changes)
@@ -104,6 +104,15 @@ const TvMenu: FC = () => {
         focusNewScreen();
     }, [ screenKey ]);
 
+    // The search key of the remote (sent by the TV app): the search screen
+    useEffect(() => {
+        const onOpenSearch = () => {
+            window.location.hash = '#/search';
+        };
+        window.addEventListener(OPEN_SEARCH_EVENT, onOpenSearch);
+        return () => window.removeEventListener(OPEN_SEARCH_EVENT, onOpenSearch);
+    }, []);
+
     // The screens leave the menu its room while it is there
     useEffect(() => {
         document.documentElement.style.setProperty('--tv-menu-width', `${FOLDED}px`);
@@ -112,8 +121,6 @@ const TvMenu: FC = () => {
         };
     }, []);
 
-    const openSearch = useCallback(() => setSearchOpen(true), []);
-    const closeSearch = useCallback(() => setSearchOpen(false), []);
     const openProfiles = useCallback(() => setProfilesOpen(true), []);
     const closeProfiles = useCallback(() => setProfilesOpen(false), []);
 
@@ -154,7 +161,7 @@ const TvMenu: FC = () => {
                 // OK: who is watching (the profiles of this server)
                     <Item icon={<UserAvatar user={user} />} label={user.Name || globalize.translate('Profile')} onClick={openProfiles} current={profilesOpen} />
                 )}
-                <Item icon={<SearchRoundedIcon />} label={globalize.translate('Search')} current={searchOpen} onClick={openSearch} />
+                <Item icon={<SearchRoundedIcon />} label={globalize.translate('Search')} to='/search' current={pathname === '/search'} />
                 <Item icon={<HomeRoundedIcon />} label={globalize.translate('Home')} to='/home' current={onHome && !onMyList} />
                 {libraries.map(e => (
                     <Item key={e.key} icon={e.icon} label={e.name} to={e.to} current={!!parentId && e.key === parentId} />
@@ -178,7 +185,6 @@ const TvMenu: FC = () => {
                 aria-hidden='true'
                 sx={{ position: 'fixed', inset: 0, zIndex: 1099, background: DARKEN, opacity: 0, pointerEvents: 'none', transition: 'opacity 0.2s' }}
             />
-            {createPortal(<SearchDialog open={searchOpen} onClose={closeSearch} />, document.body)}
             {createPortal(<ProfileSwitchDialog open={profilesOpen} onClose={closeProfiles} />, document.body)}
         </>
     );
