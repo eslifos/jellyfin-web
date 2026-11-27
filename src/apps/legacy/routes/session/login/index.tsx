@@ -290,7 +290,7 @@ const LoginPage = () => {
                         backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
                         ...ambientAnimation('jf-logo-glow 3s ease-in-out infinite, jf-float-logo 4s ease-in-out infinite')
                     }}
-                    aria-label='Jellyfin'
+                    aria-label='Jellyfin Cosmic'
                 />
 
                 {/* Tarjeta */}

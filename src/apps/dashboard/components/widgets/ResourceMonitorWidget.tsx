@@ -267,7 +267,7 @@ const ResourceMonitorWidget = () => {
                         label={globalize.translate('ResourceMemory')}
                         color={COLORS.memory}
                         value={memoryUsed != null ? getReadableSize(memoryUsed) : undefined}
-                        secondary={resources && memoryTotal ? `${globalize.translate('ResourceOf', getReadableSize(memoryTotal))} · Jellyfin ${getReadableSize(resources.ProcessMemoryBytes)}` : null}
+                        secondary={resources && memoryTotal ? `${globalize.translate('ResourceOf', getReadableSize(memoryTotal))} · Jellyfin Cosmic ${getReadableSize(resources.ProcessMemoryBytes)}` : null}
                         percent={memoryPercent}
                         history={history.memory}
                         historyMax={100}

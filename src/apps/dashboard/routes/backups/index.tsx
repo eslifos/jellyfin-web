@@ -149,7 +149,7 @@ const BackupCard: FC<{ backup: BackupManifestDto; latest: boolean; currentVersio
 
             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                 <Typography sx={{ fontSize: '0.74rem', color: 'rgba(255,255,255,0.5)' }}>
-                    Jellyfin <Box component='span' sx={{ fontFamily: 'monospace', color: otherVersion ? '#ffca28' : 'rgba(255,255,255,0.8)' }}>{backup.ServerVersion}</Box>
+                    Jellyfin Cosmic <Box component='span' sx={{ fontFamily: 'monospace', color: otherVersion ? '#ffca28' : 'rgba(255,255,255,0.8)' }}>{backup.ServerVersion}</Box>
                 </Typography>
                 {otherVersion && (
                     <Tooltip title={globalize.translate('BakOtherVersionHelp', currentVersion || '')}>

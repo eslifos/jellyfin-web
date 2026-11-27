@@ -51,7 +51,8 @@ const word = (w, h, light) => {
     const small = light ? 'rgba(255,255,255,0.82)' : '#3a4257';
     const big = light ? 'linear-gradient(100deg,#ffffff 0%,#7fd8ff 45%,#c48cf0 100%)' : 'linear-gradient(100deg,#0b7fc0 0%,#7b3fa0 100%)';
     return `<div id="b" style="width:${w}px;height:${h}px;display:flex;align-items:center;gap:${h * 0.06}px;font-family:'Segoe UI','Noto Sans',sans-serif">`
-        + `<div style="width:${h * 0.98}px;height:${h * 0.98}px;flex:0 0 auto">${markSvg().replace('<svg ', '<svg width="100%" height="100%" ')}</div>`
+        // The mark cut to its drawing (orbit and stars), so it is as big as the words
+        + `<div style="width:${h * 1.25}px;height:${h * 0.9}px;flex:0 0 auto">${markSvg().replace('viewBox="0 0 1024 1024"', 'viewBox="130 200 770 560"').replace('<svg ', '<svg width="100%" height="100%" ')}</div>`
         + '<div style="display:flex;flex-direction:column;line-height:1">'
         + `<span style="font-size:${h * 0.2}px;font-weight:600;color:${small};margin-left:${h * 0.02}px">Jellyfin</span>`
         + `<span style="font-size:${h * 0.46}px;font-weight:800;letter-spacing:-0.01em;background:${big};-webkit-background-clip:text;background-clip:text;color:transparent;padding-bottom:${h * 0.04}px">Cosmic</span>`
@@ -65,7 +66,7 @@ const tvBanner = (w, h) => {
         .map(([ x, y ]) => `<circle cx="${x}" cy="${y}" r="0.9" fill="#fff" opacity="0.7"/>`).join('');
     return `<div id="b" style="position:relative;width:${w}px;height:${h}px;overflow:hidden;background:radial-gradient(ellipse at 20% 30%,#1d3a63 0%,#0c1236 45%,#2a1648 100%)">`
         + `<svg viewBox="0 0 320 180" style="position:absolute;inset:0;width:100%;height:100%">${dots}</svg>`
-        + `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">${word(w * 0.86, h * 0.56, true).replace('id="b"', '')}</div></div>`;
+        + `<div style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center">${word(w * 0.97, h * 0.58, true).replace('id="b"', '')}</div></div>`;
 };
 
 const svgBox = (svg, size) => `<div id="b" style="width:${size}px;height:${size}px">${svg.replace('<svg ', '<svg width="100%" height="100%" ')}</div>`;

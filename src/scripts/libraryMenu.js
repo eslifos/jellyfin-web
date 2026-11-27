@@ -690,7 +690,7 @@ let navDrawerInstance;
 let mainDrawerButton;
 let headerHomeButton;
 let currentDrawerType;
-let documentTitle = 'Jellyfin';
+let documentTitle = 'Jellyfin Cosmic';
 let pageTitleElement;
 let headerBackButton;
 let headerUserButton;

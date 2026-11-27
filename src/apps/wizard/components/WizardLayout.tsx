@@ -37,7 +37,7 @@ const WizardLayout = ({ children, maxWidth = 640 }: WizardLayoutProps) => {
         <WizardBackground />
 
         <Box
-            aria-label='Jellyfin'
+            aria-label='Jellyfin Cosmic'
             sx={{
                 width: 220,
                 height: 56,

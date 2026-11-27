@@ -175,7 +175,7 @@ const FloatingDashboardNav: FC<FloatingDashboardNavProps> = ({ pinned, onToggleP
                             background: 'linear-gradient(135deg, #fff 30%, #00a4dc 100%)',
                             WebkitBackgroundClip: 'text', WebkitTextFillColor: 'transparent', backgroundClip: 'text'
                         }}>
-                            {systemInfo?.ServerName || 'Jellyfin'}
+                            {systemInfo?.ServerName || 'Jellyfin Cosmic'}
                         </Typography>
                         <Typography noWrap sx={{ fontSize: '0.72rem', color: TEXT_TERTIARY }}>
                             {getDisplayVersion(systemInfo?.Version)}
