@@ -143,8 +143,9 @@ export default function (view) {
         // Update trickplay data
         trickplayResolution = null;
 
-        const mediaSourceId = currentPlayer.streamInfo.mediaSource.Id;
-        const trickplayResolutions = item.Trickplay?.[mediaSourceId];
+        // No stream when the video stopped meanwhile (Back while it started)
+        const mediaSourceId = currentPlayer?.streamInfo?.mediaSource?.Id;
+        const trickplayResolutions = mediaSourceId ? item.Trickplay?.[mediaSourceId] : null;
         if (trickplayResolutions) {
             // Prefer highest resolution <= 20% of total screen resolution width
             let bestWidth;
@@ -1673,8 +1674,8 @@ export default function (view) {
         setBackdropTransparency(TRANSPARENCY_LEVEL.Full);
     });
     view.addEventListener('viewshow', function () {
-        // The remote, held while the video started (TV), is this screen's now
-        playbackScreenOpen();
+        // The remote, held while the video started (TV), is this screen's now; Back meanwhile cancelled it
+        const cancelledOnOpen = playbackScreenOpen();
         try {
             Events.on(playbackManager, 'playerchange', onPlayerChange);
             bindToPlayer(playbackManager.getCurrentPlayer());
@@ -1719,6 +1720,8 @@ export default function (view) {
             if (browser.firefox || browser.edge) {
                 dom.addEventListener(document, 'click', onClickCapture, { capture: true });
             }
+            // Back pressed while it started: it stops now, and the stop takes the screen back (onPlaybackStopped)
+            if (cancelledOnOpen) void playbackManager.stop();
         } catch {
             setBackdropTransparency(TRANSPARENCY_LEVEL.None); // reset state set in viewbeforeshow
             appRouter.goHome();

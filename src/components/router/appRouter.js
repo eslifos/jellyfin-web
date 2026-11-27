@@ -9,6 +9,7 @@ import alert from '../alert';
 import { handleTvBack } from 'apps/modern/components/TvMenu/tvMenu';
 import { openPlayer } from 'apps/modern/components/Player/events';
 import { closeOpenModal } from 'scripts/tvModals';
+import { cancelStartingPlayback, isStartingPlayback } from 'components/playback/tvPlaybackStart';
 import layoutManager from 'components/layoutManager';
 import { getItemQuery } from 'hooks/useItem';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
@@ -148,6 +149,11 @@ class AppRouter {
      */
     handleBack() {
         if (closeOpenModal()) return true;
+        // TV, a video starting: Back cancels it (its screen is about to open: going back now would race it)
+        if (isStartingPlayback()) {
+            cancelStartingPlayback();
+            return true;
+        }
         if (this.backHandler?.()) return true;
         if (layoutManager.tv) {
             const used = handleTvBack(this.isStartPage());
