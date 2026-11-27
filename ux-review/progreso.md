@@ -18,7 +18,7 @@ Lo actualiza `/aplicar-mejoras` después de cada mejora. Estados: **Pendiente**,
 | P10 · Seguir viendo y canal en Google TV | jellyfin-cosmic-tv + jellyfin-web | Hecho | e7fd35ab (TV), 5bab34343d (web) |
 | P11 · Frecuencia de pantalla, audio por HDMI y HDR | jellyfin-cosmic-tv + jellyfin-web | Hecho | 16b427e6 (TV), de9b9d37cf (web) |
 | P12 · Pantallas nativas de arranque, conexión y ajustes | jellyfin-cosmic-tv + jellyfin-web | Hecho | 6567cd20 (TV), bfa12e2f81 (web) |
-| P13 · Salvapantallas Cosmic | jellyfin-cosmic-tv | Pendiente en jellyfin-cosmic-tv | |
+| P13 · Salvapantallas Cosmic | jellyfin-cosmic-tv | Hecho | 0c0b6b76 (TV) |
 | P14 · Perfil infantil | jellyfin-web | Pendiente | |
 | P15 · Guía de TV en vivo para el control | jellyfin-web | Pendiente | |
 | P16 · Música a pantalla completa | jellyfin-web | Pendiente | |
