@@ -5,7 +5,7 @@
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
 import Typography from '@mui/material/Typography';
-import React, { type FC, useCallback } from 'react';
+import React, { type FC, useCallback, useEffect } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import Loading from 'components/loading/LoadingComponent';
@@ -14,6 +14,7 @@ import ProfilePicker from 'components/profiles/ProfilePicker';
 import { useProfiles } from 'components/profiles/useProfiles';
 import globalize from 'lib/globalize';
 import { useCustomLogo } from 'utils/customLogo';
+import { markProfilePickerShown } from 'utils/profiles';
 
 const getSafeTarget = (next: string | null) => (next && next.startsWith('/') && !next.startsWith('//') ? next : '/home');
 
@@ -23,6 +24,8 @@ const ProfilesPage: FC = () => {
     const target = getSafeTarget(searchParams.get('next'));
     const { list, isLoading, isError, busyId, refresh, select } = useProfiles();
     const { bannerUrl } = useCustomLogo();
+    // Shown (after a login, or opening the app on TV): not offered again in this opening
+    useEffect(markProfilePickerShown, []);
 
     const goTarget = useCallback(() => navigate(target, { replace: true }), [ navigate, target ]);
 

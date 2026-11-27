@@ -12,12 +12,13 @@ import FavoriteRoundedIcon from '@mui/icons-material/FavoriteRounded';
 import HomeRoundedIcon from '@mui/icons-material/HomeRounded';
 import SearchRoundedIcon from '@mui/icons-material/SearchRounded';
 import SettingsRoundedIcon from '@mui/icons-material/SettingsRounded';
-import { Link, useLocation } from 'react-router-dom';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 
 import ProfileSwitchDialog from 'components/profiles/ProfileSwitchDialog';
 import UserAvatar from 'components/UserAvatar';
 import { useApi } from 'hooks/useApi';
 import globalize from 'lib/globalize';
+import { fetchProfiles, shouldOfferProfilePicker } from 'utils/profiles';
 
 import { UNIVERSES_KEY, type NavSettings, loadNavSettings } from '../HomeLibraryNav/navSettings';
 import { useNavEntries } from '../HomeLibraryNav/useNavEntries';
@@ -88,6 +89,7 @@ const Item: FC<ItemProps> = ({ icon, label, current = false, to, onClick }) => {
 
 const TvMenu: FC = () => {
     const location = useLocation();
+    const navigate = useNavigate();
     const { user } = useApi();
     const { hasViews, entriesFor } = useNavEntries();
     const [ settings, setSettings ] = useState<NavSettings>(loadNavSettings);
@@ -103,6 +105,17 @@ const TvMenu: FC = () => {
     useEffect(() => {
         focusNewScreen();
     }, [ screenKey ]);
+
+    // Opening the app with several profiles in the account: "Who is watching?" first (once per opening; a profile
+    // chosen there reloads the app, which does not ask again)
+    useEffect(() => {
+        if (location.pathname !== '/home' || !shouldOfferProfilePicker()) return;
+        fetchProfiles()
+            .then(list => {
+                if (list && list.Profiles.length > 1) navigate('/profiles?next=%2Fhome', { replace: true });
+            })
+            .catch(err => console.warn('[TvMenu] could not load the profiles', err));
+    }, [ location.pathname, navigate ]);
 
     // The search key of the remote (sent by the TV app): the search screen
     useEffect(() => {

@@ -137,8 +137,37 @@ export const switchProfile = async (profileId: string, target = '/home') => {
     }
 
     // Full reload so every cached query, view and setting belongs to the new profile
+    try {
+        sessionStorage.setItem(SWITCHED_KEY, '1');
+    } catch {
+        // Not kept: "Who is watching?" may be offered once more on TV
+    }
     window.location.hash = `#${target}`;
     window.location.reload();
+};
+
+/** A profile was chosen (the app reloads as it): "Who is watching?" is not asked again on opening. */
+const SWITCHED_KEY = 'cosmicProfileSwitched';
+let pickerShown = false;
+
+/** "Who is watching?" was shown in this opening of the app (or a profile was just chosen there). */
+export const markProfilePickerShown = () => {
+    pickerShown = true;
+};
+
+/** Whether "Who is watching?" should open now: once per opening of the app, not after choosing a profile. */
+export const shouldOfferProfilePicker = () => {
+    if (pickerShown) return false;
+    pickerShown = true;
+    try {
+        if (sessionStorage.getItem(SWITCHED_KEY)) {
+            sessionStorage.removeItem(SWITCHED_KEY);
+            return false;
+        }
+    } catch {
+        // Without storage it is offered (choosing reloads, and then it is not offered: the flag is in memory)
+    }
+    return true;
 };
 
 /** Where to go after a login: the profile picker when the account has more than one profile. */

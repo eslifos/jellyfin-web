@@ -15,9 +15,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
 import StarIcon from '@mui/icons-material/Star';
-import React, { type FC, useCallback, useState } from 'react';
+import React, { type FC, useCallback, useEffect, useRef, useState } from 'react';
 
 import ConfirmDialog from 'components/ConfirmDialog';
+import layoutManager from 'components/layoutManager';
 import globalize from 'lib/globalize';
 import { getAvatarGradient, getInitial } from './avatarColors';
 import { createProfile, deleteProfile, getProfileImageUrl, type Profile, type ProfileList } from 'utils/profiles';
@@ -60,7 +61,20 @@ const tileSx = {
     '&:focus-visible': { outline: 'none' }
 };
 
-const ProfilePicker: FC<ProfilePickerProps> = ({ list, size = 132, onSelect, onChanged, busyId }) => {
+/** TV: read from the couch (avatars of 160 px, names of 28 px). */
+const TV_AVATAR = 160;
+
+const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect, onChanged, busyId }) => {
+    const tv = layoutManager.tv;
+    const size = tv ? TV_AVATAR : givenSize ?? 132;
+    // TV: the remote starts on the current profile (else the first one)
+    const tiles = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        if (!tv) return;
+        const buttons = tiles.current?.querySelectorAll<HTMLButtonElement>('button[data-profile-id]');
+        const current = list.Profiles.find(p => p.IsCurrent)?.Id;
+        ([ ...(buttons ?? []) ].find(b => b.dataset.profileId === current) ?? buttons?.[0])?.focus();
+    }, [ tv, list ]);
     const [ managing, setManaging ] = useState(false);
     const [ adding, setAdding ] = useState(false);
     const [ name, setName ] = useState('');
@@ -114,12 +128,12 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size = 132, onSelect, onC
                 onCancel={() => setToDelete(null)}
             />
 
-            <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: { xs: 3, sm: 4 } }}>
+            <Box ref={tiles} sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: tv ? 6 : { xs: 3, sm: 4 } }}>
                 {list.Profiles.map(profile => (
                     <Box
                         key={profile.Id}
                         component={managing ? 'div' : 'button'}
-                        {...(managing ? {} : { type: 'button' })}
+                        {...(managing ? {} : { type: 'button', 'data-profile-id': profile.Id })}
                         onClick={() => (managing ? undefined : onSelect(profile))}
                         disabled={profile.IsDisabled || Boolean(busyId)}
                         sx={{ ...tileSx, cursor: managing ? 'default' : 'pointer', opacity: busyId && busyId !== profile.Id ? 0.4 : 1 }}
@@ -132,9 +146,9 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size = 132, onSelect, onC
                                 </Box>
                             )}
                         </Box>
-                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, maxWidth: size + 20 }}>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, maxWidth: size + (tv ? 60 : 20) }}>
                             {profile.IsMaster && <StarIcon sx={{ fontSize: '0.95rem', color: '#ffca28' }} />}
-                            <Typography className='profile-name' noWrap sx={{ fontSize: '1rem', fontWeight: 600, color: profile.IsCurrent ? '#00a4dc' : 'rgba(255,255,255,0.65)', transition: 'color 0.2s' }}>
+                            <Typography className='profile-name' noWrap sx={{ fontSize: tv ? '28px' : '1rem', fontWeight: 600, color: profile.IsCurrent ? '#00a4dc' : 'rgba(255,255,255,0.65)', transition: 'color 0.2s' }}>
                                 {profile.Name}
                             </Typography>
                         </Box>

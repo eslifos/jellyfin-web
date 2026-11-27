@@ -1,3 +1,4 @@
+import type { ApiClient } from 'jellyfin-apiclient';
 import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import Box from '@mui/material/Box';
@@ -30,6 +31,8 @@ import { getPostLoginUrl } from 'utils/profiles';
 import WizardBackground from 'apps/wizard/components/WizardBackground';
 import { ambientAnimation } from 'utils/reducedMotion';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
+import layoutManager from 'components/layoutManager';
+import TvPhoneSignIn from './TvPhoneSignIn';
 
 interface PublicUser {
     Id?: string | null;
@@ -105,6 +108,13 @@ const LoginPage = () => {
             setSubmitting(false);
         }
     }, [ getApiClient, getTargetUrl, rememberMe ]);
+
+    // TV: signed in from the phone (Quick Connect approved there)
+    const onPhoneSignedIn = useCallback((userId: string | undefined, accessToken: string | undefined, apiClient: ApiClient) => {
+        Dashboard.onServerChanged(userId, accessToken, apiClient);
+        void getPostLoginUrl(getTargetUrl(), apiClient).then(url => Dashboard.navigate(url));
+    }, [ getTargetUrl ]);
+    const tvPhone = layoutManager.tv && quickConnectEnabled;
 
     const onUserCard = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
         const user = users.find(u => (u.Id ?? '') === e.currentTarget.dataset.userId);
@@ -280,18 +290,23 @@ const LoginPage = () => {
                     </Button>
                 </DialogContent>
             </Dialog>
-            <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', position: 'fixed', inset: 0, zIndex: 9999, p: 2, overflowY: 'auto' }}>
+            <Box sx={{ display: 'flex', flexDirection: tvPhone ? 'row' : 'column', gap: tvPhone ? 5 : 0, alignItems: 'center', justifyContent: 'center', position: 'fixed', inset: 0, zIndex: 9999, p: 2, overflowY: 'auto' }}>
 
                 {/* Logo */}
                 <Box
                     sx={{
-                        width: 220, height: 56, mb: 2.5, flexShrink: 0, zIndex: 9999, position: 'relative',
+                        width: 220, height: 56, mb: 2.5, flexShrink: 0, zIndex: 9999,
+                        // TV, in a row with the phone panel: the logo above both
+                        ...(tvPhone ? { position: 'absolute', top: 40, left: 'calc(50% - 110px)' } : { position: 'relative' }),
                         backgroundImage: `url(${bannerLight as string})`,
                         backgroundSize: 'contain', backgroundRepeat: 'no-repeat', backgroundPosition: 'center',
                         ...ambientAnimation('jf-logo-glow 3s ease-in-out infinite, jf-float-logo 4s ease-in-out infinite')
                     }}
                     aria-label='Jellyfin Cosmic'
                 />
+
+                {/* TV: the phone first (no typing with the remote); the name and password beside it */}
+                {tvPhone && <TvPhoneSignIn getApiClient={getApiClient} onSignedIn={onPhoneSignedIn} />}
 
                 {/* Tarjeta */}
                 <Paper

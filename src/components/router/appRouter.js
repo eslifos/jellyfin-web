@@ -155,6 +155,8 @@ class AppRouter {
             return true;
         }
         if (this.backHandler?.()) return true;
+        // TV, "Who is watching?" (where the app starts with several profiles): Back leaves the app
+        if (layoutManager.tv && window.location.hash.split('?')[0] === '#/profiles') return false;
         if (layoutManager.tv) {
             const used = handleTvBack(this.isStartPage());
             if (used !== null) return used;
