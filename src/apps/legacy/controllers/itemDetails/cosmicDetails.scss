@@ -605,3 +605,196 @@ $glass: rgba(8, 10, 22, 0.62);
         padding-right: 0;
     }
 }
+
+// ---------- TV (cosmicTvDetails.js) ----------
+.layout-tv #itemDetailPage {
+    // One row: the main button and the icons beside it
+    .mainDetailButtons {
+        flex-wrap: nowrap;
+    }
+
+    // The main button says what OK does: "Play", "Resume S2:E5 · 20 min left", "Next: S2:E6"
+    .mainDetailButtons .btnPlay {
+        display: inline-flex;
+        flex-direction: row;
+        flex-shrink: 0;
+        align-items: center;
+        gap: 0.4em;
+        width: auto;
+        min-width: 3.8em;
+        padding: 0 1.4em 0 0.9em;
+        border-radius: 999px;
+
+        .detailButton-label {
+            display: inline;
+            font-size: 1em;
+            font-weight: 700;
+            white-space: nowrap;
+            color: #fff;
+        }
+    }
+
+    // The others are icons: their name shows under the one with the focus
+    .mainDetailButtons .detailButton:not(.btnPlay) {
+        position: relative;
+        overflow: visible;
+    }
+
+    .mainDetailButtons .detailButton:not(.btnPlay):focus .detailButton-label {
+        display: block;
+        position: absolute;
+        top: calc(100% + 12px);
+        left: 50%;
+        transform: translateX(-50%);
+        font-size: var(--tv-min-text, 20px);
+        font-weight: 600;
+        white-space: nowrap;
+        color: #fff;
+        pointer-events: none;
+    }
+
+    // A series: its seasons and episodes take the place of the next up card and the season posters (they load
+    // later, so they are hidden here, not in code)
+    &.cosmicTvSeriesPage .nextUpSection,
+    &.cosmicTvSeriesPage #listChildrenCollapsible,
+    &.cosmicTvSeriesPage #childrenCollapsible {
+        display: none !important;
+    }
+
+    .cosmicTvEpisodes-body {
+        display: grid;
+        grid-template-columns: minmax(10em, 14em) 1fr;
+        gap: 1.4em;
+        align-items: start;
+        padding-bottom: 0.8em;
+    }
+
+    .cosmicTvSeasons {
+        position: sticky;
+        top: 1em;
+        display: flex;
+        flex-direction: column;
+        gap: 0.4em;
+    }
+
+    .cosmicTvSeason,
+    .cosmicTvEpisode {
+        border: 0;
+        font: inherit;
+        color: inherit;
+        text-align: left;
+        cursor: pointer;
+    }
+
+    .cosmicTvSeason {
+        padding: 0.55em 0.9em;
+        border-radius: 12px;
+        background: transparent;
+        color: rgba(255, 255, 255, 0.72);
+        font-weight: 600;
+
+        &[aria-selected='true'] {
+            color: #fff;
+            background: rgba(0, 164, 220, 0.18);
+            box-shadow: inset 4px 0 0 $accent;
+        }
+    }
+
+    .cosmicTvEpisodeList {
+        display: flex;
+        flex-direction: column;
+        gap: 0.7em;
+    }
+
+    .cosmicTvEpisode {
+        display: grid;
+        grid-template-columns: 14em 1fr;
+        gap: 1.1em;
+        align-items: center;
+        padding: 0.5em;
+        border-radius: 14px;
+        background: rgba(255, 255, 255, 0.03);
+    }
+
+    .cosmicTvEpisode-pending {
+        background: rgba(0, 164, 220, 0.09);
+    }
+
+    .cosmicTvSeason:focus,
+    .cosmicTvEpisode:focus {
+        outline: 4px solid #fff;
+        outline-offset: 2px;
+        box-shadow: 0 0 0 2px rgba(0, 164, 220, 0.9), 0 0 28px rgba(0, 164, 220, 0.65);
+    }
+
+    .cosmicTvEpisode-image {
+        position: relative;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        aspect-ratio: 16 / 9;
+        overflow: hidden;
+        border-radius: 10px;
+        background: rgba(255, 255, 255, 0.06);
+        color: rgba(255, 255, 255, 0.4);
+
+        img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+    }
+
+    .cosmicTvEpisode-progress {
+        position: absolute;
+        right: 0;
+        bottom: 0;
+        left: 0;
+        height: 5px;
+        background: rgba(0, 0, 0, 0.55);
+
+        > span {
+            display: block;
+            height: 100%;
+            background: $accent;
+        }
+    }
+
+    .cosmicTvEpisode-played {
+        position: absolute;
+        top: 0.3em;
+        right: 0.3em;
+        padding: 0.1em;
+        border-radius: 50%;
+        background: rgba(0, 0, 0, 0.6);
+        color: #fff;
+        font-size: 1em;
+    }
+
+    .cosmicTvEpisode-text {
+        display: flex;
+        flex-direction: column;
+        gap: 0.2em;
+        min-width: 0;
+    }
+
+    .cosmicTvEpisode-meta {
+        color: rgba(255, 255, 255, 0.65);
+        font-size: max(var(--tv-min-text, 20px), 0.8em);
+    }
+
+    .cosmicTvEpisode-title {
+        font-size: 1.1em;
+        font-weight: 700;
+    }
+
+    .cosmicTvEpisode-overview {
+        display: -webkit-box;
+        overflow: hidden;
+        -webkit-box-orient: vertical;
+        -webkit-line-clamp: 2;
+        line-clamp: 2;
+        color: rgba(255, 255, 255, 0.78);
+        font-size: max(var(--tv-min-text, 20px), 0.85em);
+    }
+}

@@ -38,6 +38,7 @@ import { download } from 'scripts/fileDownloader';
 import { canDownloadItem } from 'apps/modern/features/downloads/support';
 import { getReadableSize } from 'utils/file';
 import libraryMenu from 'scripts/libraryMenu';
+import { arrangeTvSections, renderTvEpisodes, setTvPlayLabels } from './cosmicTvDetails';
 import * as userSettings from 'scripts/settings/userSettings';
 import Dashboard from 'utils/dashboard';
 import Events from 'utils/events';
@@ -123,7 +124,9 @@ function getContextMenuOptions(item, user, button) {
         user: user,
         share: true,
         // TV: "Watch together" and "Play on" (there is no bar for them)
-        playElsewhere: layoutManager.tv
+        playElsewhere: layoutManager.tv,
+        // TV: what is watched from the couch; editing, identifying, refreshing or deleting is done on a computer
+        manage: !layoutManager.tv
     };
 }
 
@@ -624,6 +627,7 @@ function reloadPlayButtons(page, item) {
             const label = btnPlay.querySelector('.detailButton-label');
             if (label) label.textContent = btnPlay.title;
         }
+        setTvPlayLabels(page, item);
     } else {
         hideAll(page, 'btnPlay');
         hideAll(page, 'btnReplay');
@@ -1128,6 +1132,9 @@ function setInitialCollapsibleState(page, item, apiClient, context, user) {
         page.querySelector('#listChildrenCollapsible').classList.add('hide');
         page.querySelector('#childrenCollapsible').classList.add('hide');
     }
+
+    // TV: a series shows its seasons and episodes instead of the next up card and the season posters
+    renderTvEpisodes(page, item, apiClient);
 
     if (item.Type == 'Series') {
         renderSeriesSchedule(page, item);
@@ -2467,6 +2474,7 @@ export default function (view, params) {
         const apiClient = getApiClient();
 
         self._unmount = [];
+        arrangeTvSections(view);
 
         bindAll(view, '.btnPlay', 'click', onPlayClick);
         bindAll(view, '.btnReplay', 'click', onPlayClick);
