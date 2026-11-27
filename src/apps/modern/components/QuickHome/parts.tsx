@@ -16,6 +16,8 @@ import globalize from 'lib/globalize';
 import { itemRoute } from '../HomeFeed/feedUtils';
 import { tmdbImageUrl } from '../HomeFeed/tmdbImage';
 
+import { ITEM_ATTRIBUTE, tvTrailersEnabled, useFocusedCard, useHeroPreview, useHeroTrailer } from './tvHero';
+
 import './quickHome.scss';
 import { prefersReducedMotion, scrollBehavior } from 'utils/reducedMotion';
 
@@ -276,6 +278,7 @@ export const Lazy: FC<{ id?: string, height: number, children: ReactNode }> = ({
 /* ---------- Banner ---------- */
 
 export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ api, items, serverId }) => {
+    const { user } = useApi();
     const [ index, setIndex ] = useState(0);
     const [ paused, setPaused ] = useState(false);
     const [ inView, setInView ] = useState(true);
@@ -284,6 +287,15 @@ export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ a
     const touchX = useRef<number | null>(null);
     const count = items.length;
     const item = items[index % count];
+
+    // TV: the banner shows the card with the focus in any row, and the trailer of what it shows after 3 s
+    const tv = layoutManager.tv;
+    const videoRef = useRef<HTMLVideoElement>(null);
+    const [ trailers ] = useState(() => tv && tvTrailersEnabled());
+    const preview = useHeroPreview(api, user?.Id, useFocusedCard(ref, tv));
+    let trailerItemId = preview?.trailerItemId;
+    if (!preview && item && [ 'Movie', 'Series' ].includes(item.Type)) trailerItemId = item.Id;
+    const trailerPlaying = useHeroTrailer(api, videoRef, trailerItemId, trailers && inView);
 
     // TV: arriving at the home screen the remote is on "Play" of the banner
     useEffect(() => {
@@ -322,12 +334,13 @@ export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ a
     }, [ markBusy ]);
 
     useEffect(() => {
-        if (paused || busy || !inView || count < 2 || prefersReducedMotion()) return;
+        // Nor while it shows a card of the rows or a trailer plays
+        if (paused || busy || !inView || preview || trailerPlaying || count < 2 || prefersReducedMotion()) return;
         const timer = window.setInterval(() => {
             if (document.visibilityState === 'visible') setIndex(i => (i + 1) % count);
         }, HERO_DELAY);
         return () => window.clearInterval(timer);
-    }, [ paused, busy, inView, count ]);
+    }, [ paused, busy, inView, preview, trailerPlaying, count ]);
 
     const onPick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
         setIndex(Number(e.currentTarget.dataset.index ?? 0));
@@ -353,12 +366,16 @@ export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ a
 
     const note = noteLabel(item);
     const logo = imageUrl(api, item.Id, 'Logo', item.LogoTag, 600);
+    const previewLogo = preview?.logo ? imageUrl(api, preview.logo.itemId, 'Logo', preview.logo.tag, 600) : undefined;
+    let classes = 'qh-hero';
+    if (preview) classes += ' qh-hero-preview';
+    if (trailerPlaying) classes += ' qh-hero-trailer';
 
     return (
         <section
             ref={ref}
             id='qh-spotlight'
-            className='qh-hero'
+            className={classes}
             data-focus-row=''
             aria-roledescription='carousel'
             onMouseEnter={onEnter}
@@ -367,17 +384,45 @@ export const Hero: FC<{ api: Api, items: HomeCard[], serverId?: string }> = ({ a
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
         >
-            <img
-                key={item.Id}
-                className='qh-hero-bg'
-                src={imageUrl(api, item.Id, 'Backdrop', item.BackdropTag, 1280)}
-                srcSet={srcSet(api, item.Id, 'Backdrop', item.BackdropTag, HERO_WIDTHS)}
-                sizes='100vw'
-                alt=''
-                fetchPriority='high'
-            />
+            {preview ? (
+                // TV: the card with the focus (its series' backdrop for an episode); at most 1920 px wide
+                preview.backdrop && (
+                    <img
+                        key={preview.id}
+                        className='qh-hero-bg qh-hero-bg-follow'
+                        src={imageUrl(api, preview.backdrop.itemId, 'Backdrop', preview.backdrop.tag, 1280)}
+                        srcSet={srcSet(api, preview.backdrop.itemId, 'Backdrop', preview.backdrop.tag, HERO_WIDTHS)}
+                        sizes='100vw'
+                        alt=''
+                    />
+                )
+            ) : (
+                <img
+                    key={item.Id}
+                    className='qh-hero-bg'
+                    src={imageUrl(api, item.Id, 'Backdrop', item.BackdropTag, 1280)}
+                    srcSet={srcSet(api, item.Id, 'Backdrop', item.BackdropTag, HERO_WIDTHS)}
+                    sizes='100vw'
+                    alt=''
+                    fetchPriority='high'
+                />
+            )}
+            {tv && <video ref={videoRef} className='qh-hero-video' muted playsInline preload='none' disablePictureInPicture aria-hidden='true' />}
             <div className='qh-hero-shade' />
-            <div className='qh-hero-body'>
+            {preview && (
+                <div key={preview.id} className='qh-hero-body qh-hero-follow' aria-live='polite'>
+                    {previewLogo ?
+                        <img className='qh-hero-logo' src={previewLogo} alt={preview.name} /> :
+                        <h2 className='qh-hero-title'>{preview.name}</h2>}
+                    {preview.episode && <p className='qh-hero-episode'>{preview.episode}</p>}
+                    <div className='qh-hero-meta'>
+                        {preview.rating ? <span className='qh-star'>★ {preview.rating.toFixed(1)}</span> : null}
+                        {preview.meta.map(m => <span key={m}>{m}</span>)}
+                    </div>
+                    {preview.overview && <p className='qh-hero-overview'>{preview.overview}</p>}
+                </div>
+            )}
+            <div className='qh-hero-body qh-hero-own'>
                 {note && <span className='qh-hero-note'>{note}</span>}
                 {logo ?
                     <img className='qh-hero-logo' src={logo} alt={item.Name} /> :
@@ -449,7 +494,7 @@ export const Card: FC<{ api: Api, card: HomeCard, shape: Shape, serverId?: strin
     const wide = shape === 'wide';
     const look = shape === 'poster' && SQUARE_TYPES.has(card.Type) ? 'square' : shape;
     return (
-        <a className={`qh-card qh-card-${look}`} href={href({ Id: card.Id, Type: card.Type as BaseItemDto['Type'] }, serverId)} title={card.Name}>
+        <a className={`qh-card qh-card-${look}`} href={href({ Id: card.Id, Type: card.Type as BaseItemDto['Type'] }, serverId)} title={card.Name} {...{ [ITEM_ATTRIBUTE]: card.Id }}>
             {rank ? <span className='qh-rank' aria-hidden='true'>{rank}</span> : null}
             <span className='qh-poster'>
                 <img
@@ -521,6 +566,7 @@ export const Wide: FC<{ api: Api, card: ProgressCard, serverId?: string, onMenu?
             className='qh-wide'
             onClick={onPlay}
             title={card.Name}
+            {...{ [ITEM_ATTRIBUTE]: card.Id }}
             {...(onMenu ? { onContextMenu, onTouchStart, onTouchEnd: cancelPress, onTouchMove: cancelPress, onTouchCancel: cancelPress } : {})}
         >
             <span className={cover ? 'qh-wide-img qh-wide-cover' : 'qh-wide-img'}>
@@ -567,7 +613,7 @@ export const UpcomingCard: FC<{ api: Api, release: Upcoming, serverId?: string }
     const episode = release.Kind === 'Episode' && release.SeasonNumber != null ? `T${release.SeasonNumber}:E${release.EpisodeNumber ?? '?'}` : release.CollectionName;
     const image = sources[source];
     return (
-        <a className='qh-wide qh-upcoming' href={target ? href({ Id: target, Type: release.Kind === 'Episode' ? 'Series' : 'Movie' }, serverId) : undefined}>
+        <a className='qh-wide qh-upcoming' href={target ? href({ Id: target, Type: release.Kind === 'Episode' ? 'Series' : 'Movie' }, serverId) : undefined} {...(target ? { [ITEM_ATTRIBUTE]: target } : {})}>
             <span className='qh-wide-img'>
                 {image && <img key={image} src={image} alt='' loading='lazy' decoding='async' referrerPolicy='no-referrer' onError={onError} />}
                 <span className='qh-date'>{date}</span>
@@ -601,6 +647,12 @@ export const Spotlight: FC<{ api: Api, items: HomeCard[], title: string, accent?
     const onPlay = useCallback(() => {
         if (item) void playbackManager.play({ ids: [ item.Id ], serverId });
     }, [ item, serverId ]);
+    // TV: another title with the focus still on the dice; the banner above follows it as if the focus had arrived
+    const spot = useRef<HTMLDivElement>(null);
+    useEffect(() => {
+        const active = document.activeElement;
+        if (layoutManager.tv && active && spot.current?.contains(active)) active.dispatchEvent(new FocusEvent('focusin', { bubbles: true }));
+    }, [ item?.Id ]);
 
     if (!item) return null;
     const logo = imageUrl(api, item.Id, 'Logo', item.LogoTag, 500);
@@ -612,7 +664,7 @@ export const Spotlight: FC<{ api: Api, items: HomeCard[], title: string, accent?
                 <h3 className='qh-row-title'>{title}</h3>
                 <span className='qh-row-hint'>{globalize.translate('HfSpotlightHelp')}</span>
             </header>
-            <div className='qh-spot'>
+            <div ref={spot} className='qh-spot' {...{ [ITEM_ATTRIBUTE]: item.Id }}>
                 {item.BackdropTag ? (
                     <img
                         key={item.Id}

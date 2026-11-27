@@ -71,6 +71,17 @@ export const dialogOpen = () => isStartingPlayback()
     || [ ...document.querySelectorAll('.dialogContainer .dialog.opened, [role="dialog"], [role="menu"], .MuiPopover-root') ]
         .some(el => el.getClientRects().length > 0 && getComputedStyle(el).visibility !== 'hidden');
 
+/** Sideways only: the item whole inside its row (the page itself is scrolled apart). */
+const revealInRow = (item: HTMLElement, behavior: ScrollBehavior) => {
+    const scroller = item.parentElement?.closest<HTMLElement>('.qh-scroller');
+    if (!scroller) return;
+    const box = scroller.getBoundingClientRect();
+    const rect = item.getBoundingClientRect();
+    const margin = 24;
+    if (rect.left < box.left + margin) scroller.scrollBy({ left: rect.left - box.left - margin, behavior });
+    else if (rect.right > box.right - margin) scroller.scrollBy({ left: rect.right - box.right + margin, behavior });
+};
+
 export const useTvRows = (rootRef: RefObject<HTMLElement>) => {
     useEffect(() => {
         if (!layoutManager.tv) return;
@@ -82,6 +93,17 @@ export const useTvRows = (rootRef: RefObject<HTMLElement>) => {
             const behavior = scrollBehavior();
             // The first row (the banner) shows the top of the page; any other row goes to the middle of the screen
             if (first) window.scrollTo({ top: 0, behavior });
+            // A banner that stays on top (the home screen): the row goes right below it, not under it
+            const hero = first ? null : row.closest('.qh')?.querySelector<HTMLElement>('.qh-hero');
+            if (hero && getComputedStyle(hero).position === 'sticky') {
+                revealInRow(item, behavior);
+                const rowTop = row.getBoundingClientRect().top + window.scrollY;
+                const itemBottom = item.getBoundingClientRect().bottom + window.scrollY;
+                // The row's title right under the banner; if the row is taller than what is left, its item whole
+                const top = Math.max(rowTop - hero.offsetHeight - 8, itemBottom + 24 - window.innerHeight);
+                window.scrollTo({ top: Math.max(0, top), behavior });
+                return;
+            }
             item.scrollIntoView({ block: first ? 'nearest' : 'center', inline: 'nearest', behavior });
         };
 

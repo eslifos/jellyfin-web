@@ -131,11 +131,11 @@ const QuickLibrary: FC<{ libraryId: string, name?: string, accent?: string, them
 
     // The server did not answer and nothing was kept from before: say so instead of loading forever
     if (api && !page && pageQuery.isError) {
-        return <div ref={root} className='qh'><LoadErrorState error={pageQuery.error} onRetry={retry} /></div>;
+        return <div ref={root} data-tv-own-scroll='' className='qh'><LoadErrorState error={pageQuery.error} onRetry={retry} /></div>;
     }
 
     if (!api || !page) {
-        return <div ref={root} className='qh qh-loading' aria-busy='true'><div className='qh-skeleton-hero' /><div className='qh-skeleton-row' /><div className='qh-skeleton-row' /></div>;
+        return <div ref={root} data-tv-own-scroll='' className='qh qh-loading' aria-busy='true'><div className='qh-skeleton-hero' /><div className='qh-skeleton-row' /><div className='qh-skeleton-row' /></div>;
     }
 
     const block = page.Block;
@@ -156,7 +156,7 @@ const QuickLibrary: FC<{ libraryId: string, name?: string, accent?: string, them
     const upcoming = block?.Upcoming ?? [];
 
     return (
-        <div ref={root} className='qh qh-library' style={{ '--qh-accent': accent } as React.CSSProperties}>
+        <div ref={root} data-tv-own-scroll='' className='qh qh-library' style={{ '--qh-accent': accent } as React.CSSProperties}>
             {block?.Hero && block.Hero.length > 0 ?
                 <Hero api={api} items={block.Hero} serverId={serverId} /> :
                 <LibraryTitle name={block?.Name ?? name ?? ''} type={type} />}

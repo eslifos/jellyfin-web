@@ -32,6 +32,7 @@ import { queryClient } from 'utils/query/queryClient';
 
 import HomeSectionsEditor from 'apps/modern/components/HomeFeed/HomeSectionsEditor';
 import { loadHomeSections, orderSections, saveHomeSections } from 'apps/modern/components/HomeFeed/homeSections';
+import { TV_TRAILERS_SETTING } from 'apps/modern/components/QuickHome/tvHero';
 
 import { Card, Check, SaveButton, SavedSnackbar, Sel } from '../components/PreferencesUi';
 import { TEXT_TERTIARY } from 'themes/cosmic/textColors';
@@ -153,6 +154,7 @@ const HomePreferencesPage: FC = () => {
 
     const [ tvHome, setTvHome ] = useState('');
     const [ hidePlayed, setHidePlayed ] = useState(false);
+    const [ tvTrailers, setTvTrailers ] = useState(true);
     const [ homeOrder, setHomeOrder ] = useState<string[]>([]);
     const [ homeHidden, setHomeHidden ] = useState<string[]>([]);
     const [ latestExcludes, setLatestExcludes ] = useState<string[]>([]);
@@ -181,6 +183,7 @@ const HomePreferencesPage: FC = () => {
             setMyMediaExcludes(config?.MyMediaExcludes ?? []);
             setGroupedFolders(config?.GroupedFolders ?? []);
             setTvHome(settings.get('tvhome') || '');
+            setTvTrailers(settings.get(TV_TRAILERS_SETTING) !== 'false');
             const homeSections = loadHomeSections(settings);
             setHomeOrder(orderSections(viewsResult, homeSections));
             setHomeHidden(homeSections.hidden);
@@ -233,6 +236,7 @@ const HomePreferencesPage: FC = () => {
             user.Configuration.OrderedViews = views.map(v => v.Id ?? '').filter(Boolean);
 
             settings.set('tvhome', tvHome);
+            settings.set(TV_TRAILERS_SETTING, String(tvTrailers));
             saveHomeSections({ order: homeOrder, hidden: homeHidden }, settings);
             Object.entries(landings).forEach(([ id, value ]) => {
                 settings.set(`landing-${id}`, value);
@@ -246,7 +250,7 @@ const HomePreferencesPage: FC = () => {
         } finally {
             setSaving(false);
         }
-    }, [ apiClient, userId, settings, hidePlayed, latestExcludes, myMediaExcludes, groupedFolders, views, tvHome, homeOrder, homeHidden, landings ]);
+    }, [ apiClient, userId, settings, hidePlayed, latestExcludes, myMediaExcludes, groupedFolders, views, tvHome, tvTrailers, homeOrder, homeHidden, landings ]);
 
     // Libraries that have at least one per-library option
     const perLibraryViews = views.filter(item => (
@@ -271,6 +275,9 @@ const HomePreferencesPage: FC = () => {
                                     <MenuItem value='horizontal'>{globalize.translate('Horizontal')}</MenuItem>
                                     <MenuItem value='vertical'>{globalize.translate('Vertical')}</MenuItem>
                                 </Sel>
+                            )}
+                            {layoutManager.tv && (
+                                <Check label={globalize.translate('TvAutoTrailers')} checked={tvTrailers} onChange={setTvTrailers} />
                             )}
                             <Check label={globalize.translate('HideWatchedContentFromLatestMedia')} checked={hidePlayed} onChange={setHidePlayed} />
                             <Divider sx={{ borderColor: 'rgba(0,164,220,0.12)', my: 1.5 }} />

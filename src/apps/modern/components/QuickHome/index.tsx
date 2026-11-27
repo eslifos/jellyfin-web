@@ -72,7 +72,7 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
     // The server did not answer and nothing was kept from before: say so instead of loading forever
     if (api && !page && pageQuery.isError) {
         return (
-            <div ref={root} className='qh'>
+            <div ref={root} data-tv-own-scroll='' className='qh'>
                 {nav}
                 <LoadErrorState error={pageQuery.error} onRetry={retryPage} />
             </div>
@@ -80,7 +80,7 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
     }
 
     if (!api || !page) {
-        return <div ref={root} className='qh qh-loading' aria-busy='true'><div className='qh-skeleton-hero' />{nav}<div className='qh-skeleton-row' /><div className='qh-skeleton-row' /></div>;
+        return <div ref={root} data-tv-own-scroll='' className='qh qh-loading' aria-busy='true'><div className='qh-skeleton-hero' />{nav}<div className='qh-skeleton-row' /><div className='qh-skeleton-row' /></div>;
     }
 
     // Anything to watch: the banner, a row of a library or a row of the user
@@ -166,7 +166,7 @@ const QuickHome: FC<{ nav?: ReactNode }> = ({ nav }) => {
     }
 
     return (
-        <div ref={root} className='qh'>
+        <div ref={root} data-tv-own-scroll='' className='qh'>
             {/* The banner always goes on top, edge to edge, then the one row of libraries and universes */}
             {page.Hero.length > 0 && <Hero api={api} items={page.Hero} serverId={serverId} />}
             {nav}

@@ -581,6 +581,8 @@ export function scrollToElement(element, smooth) {
 
 if (isEnabled()) {
     dom.addEventListener(window, 'focusin', function(e) {
+        // Pages that place what has the focus themselves (the home screen by rows, under its banner: useTvRows)
+        if (e.target?.closest?.('[data-tv-own-scroll]')) return;
         setTimeout(function() {
             scrollToElement(e.target, useSmoothScroll());
         }, 0);
