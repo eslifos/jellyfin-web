@@ -247,6 +247,13 @@ $muted: rgba(255, 255, 255, 0.62);
     padding: 0 0.5em;
 }
 
+// Open, it takes the focus of the keys (the remote scrolls it): where the focus is must be seen
+.cosmicOsdDetailsBody:focus-visible {
+    outline: 3px solid rgba(0, 164, 220, 0.7);
+    outline-offset: 4px;
+    border-radius: 12px;
+}
+
 .cosmicOsdDetails-expanded .cosmicOsdDetailsBody {
     max-height: 44vh;
     overflow-y: auto;

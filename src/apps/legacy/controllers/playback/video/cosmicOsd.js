@@ -14,6 +14,7 @@ import datetime from 'scripts/datetime';
 import globalize from 'lib/globalize';
 import { ServerConnections } from 'lib/jellyfin-apiclient';
 import toast from 'components/toast/toast';
+import { scrollBehavior } from 'utils/reducedMotion';
 import { getSubtitleStatus, onSubtitleStatus } from 'components/playback/subtitleStatus';
 import { getVideoElement, promptRemotePlayback, watchRemotePlayback } from 'components/playback/remotePlayback';
 import './cosmicOsd.scss';
@@ -723,8 +724,31 @@ export default function createCosmicOsd(view, hooks) {
         view.classList.toggle('cosmicOsd-detailsOpen', expanded);
         const toggle = details.querySelector('.cosmicOsdDetailsToggle');
         toggle.setAttribute('aria-expanded', expanded ? 'true' : 'false');
-        if (!expanded) detailsBody.scrollTop = 0;
+        // Open, its text takes the focus so the keys (the remote) can scroll it; closed, it leaves the focus order
+        detailsBody.tabIndex = expanded ? 0 : -1;
+        if (expanded) {
+            if (layoutManager.tv) setTimeout(() => focusManager.focus(detailsBody), 50);
+        } else {
+            if (detailsBody.contains(document.activeElement)) focusManager.focus(toggle);
+            detailsBody.scrollTop = 0;
+        }
         hooks.onChange();
+    }
+
+    /** Up / down in the open details scroll their text (most of it cannot take the focus); at its ends, the usual keys. */
+    function onDetailsKeyDown(e) {
+        if (e.target !== detailsBody || (e.key !== 'ArrowDown' && e.key !== 'ArrowUp')) return;
+        const step = detailsBody.clientHeight * 0.6;
+        const max = detailsBody.scrollHeight - detailsBody.clientHeight;
+        if (e.key === 'ArrowDown' && detailsBody.scrollTop < max - 1) {
+            detailsBody.scrollBy({ top: step, behavior: scrollBehavior() });
+        } else if (e.key === 'ArrowUp' && detailsBody.scrollTop > 0) {
+            detailsBody.scrollBy({ top: -step, behavior: scrollBehavior() });
+        } else {
+            return;
+        }
+        e.preventDefault();
+        e.stopPropagation();
     }
 
     const isExpanded = () => details.classList.contains('cosmicOsdDetails-expanded');
@@ -745,6 +769,7 @@ export default function createCosmicOsd(view, hooks) {
         if (openPanel === 'settings' && (settingsView === 'main' || settingsView === 'subtitles')) void renderSettings();
     });
     details.querySelector('.cosmicOsdDetailsToggle').addEventListener('click', onDetailsToggle);
+    detailsBody.addEventListener('keydown', onDetailsKeyDown);
     btnQueue.addEventListener('click', toggleQueue);
     btnCast.addEventListener('click', onCastClick);
 
@@ -781,6 +806,8 @@ export default function createCosmicOsd(view, hooks) {
             stopSubtitleStatus();
             settingsPanel.removeEventListener('click', onSettingsClick);
             queuePanel.removeEventListener('click', onQueueClick);
+            details.querySelector('.cosmicOsdDetailsToggle').removeEventListener('click', onDetailsToggle);
+            detailsBody.removeEventListener('keydown', onDetailsKeyDown);
             btnQueue.removeEventListener('click', toggleQueue);
             btnCast.removeEventListener('click', onCastClick);
             stopCastWatch?.();
