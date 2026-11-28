@@ -1286,3 +1286,17 @@
         text-shadow: 0 2px 8px rgba(0, 0, 0, 0.9);
     }
 }
+
+/* ---------- Kids profile: bigger cards, easier to aim at and to recognize ---------- */
+
+body.cosmic-kids {
+    .qh {
+        --qh-card: clamp(150px, 40vw, 230px);
+        --qh-wide: clamp(260px, 82vw, 380px);
+    }
+
+    // TV: the landscape cards (their pictures are asked at this size, KIDS_TV_CARD)
+    .qh-card-tv {
+        width: 400px;
+    }
+}

@@ -896,3 +896,44 @@ button::-moz-focus-inner {
     transform: scale(1.4, 1.4);
     transition: 0.2s;
 }
+
+// Kids profile (utils/kidsMode): the library grids with fewer, bigger cards
+body.cosmic-kids {
+    .portraitCard,
+    .squareCard {
+        width: 50%;
+    }
+
+    .backdropCard {
+        width: 100%;
+    }
+
+    @media (min-width: 43.75em) {
+        .portraitCard,
+        .squareCard {
+            width: 33.333333333333333333333333333333%;
+        }
+
+        .backdropCard {
+            width: 50%;
+        }
+    }
+
+    @media (min-width: 75em) {
+        .portraitCard,
+        .squareCard {
+            width: 25%;
+        }
+
+        .backdropCard {
+            width: 33.333333333333333333333333333333%;
+        }
+    }
+
+    @media (min-width: 100em) {
+        .portraitCard,
+        .squareCard {
+            width: 20%;
+        }
+    }
+}

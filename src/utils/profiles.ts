@@ -5,6 +5,9 @@
  * profile is a hidden Jellyfin user, so watch progress, playlists and
  * favorites are separate. Switching asks the server for a session of the
  * profile and hands it to the api client like a normal login.
+ *
+ * A profile can be a kids profile (only the libraries chosen for it), and the
+ * account can have a PIN, typed with the remote to leave a secondary profile.
  */
 import type { ApiClient } from 'jellyfin-apiclient';
 
@@ -17,12 +20,18 @@ export interface Profile {
     IsMaster: boolean
     IsCurrent: boolean
     IsDisabled: boolean
+    /** Only the libraries chosen for it (servers before kids profiles do not send it). */
+    IsKids?: boolean
+    /** The libraries of a kids profile. */
+    KidsLibraryIds?: string[]
 }
 
 export interface ProfileList {
     MasterId: string
     MaxProfiles: number
     CanManage: boolean
+    /** The account has a PIN to leave its secondary profiles. */
+    HasPin?: boolean
     Profiles: Profile[]
 }
 
@@ -80,6 +89,34 @@ export const deleteProfile = async (profileId: string, apiClient?: ApiClient) =>
     await client.ajax({ type: 'DELETE', url: client.getUrl(`Profiles/${profileId}`) });
 };
 
+/** Makes a profile a kids profile that sees only `libraryIds`, or (`isKids` false) a normal one again. */
+export const setKidsProfile = async (profileId: string, isKids: boolean, libraryIds: string[] = [], apiClient?: ApiClient): Promise<Profile> => {
+    const client = getClient(apiClient);
+    if (!client) throw new Error('No api client');
+    return client.ajax({
+        type: 'POST',
+        url: client.getUrl(`Profiles/${profileId}/Kids`),
+        data: JSON.stringify({ IsKids: isKids, LibraryIds: isKids ? libraryIds : [] }),
+        contentType: 'application/json',
+        dataType: 'json'
+    }) as Promise<Profile>;
+};
+
+/** Sets the PIN of the account (4 to 8 digits), or removes it with `null`. */
+export const setProfilePin = async (pin: string | null, apiClient?: ApiClient) => {
+    const client = getClient(apiClient);
+    if (!client) throw new Error('No api client');
+    await client.ajax({
+        type: 'POST',
+        url: client.getUrl('Profiles/Pin'),
+        data: JSON.stringify({ Pin: pin ?? '' }),
+        contentType: 'application/json'
+    });
+};
+
+/** A PIN is 4 to 8 digits. */
+export const isValidPin = (pin: string) => /^\d{4,8}$/.test(pin);
+
 const statusOf = (err: unknown) => (err as { status?: number } | undefined)?.status;
 
 const askAccountPassword = async (wrong: boolean): Promise<string | null> => {
@@ -100,36 +137,64 @@ const askAccountPassword = async (wrong: boolean): Promise<string | null> => {
     }
 };
 
+const askAccountPin = async (problem?: 'wrong' | 'locked'): Promise<string | null> => {
+    const { askPin } = await import('components/profiles/PinDialog');
+    const { default: globalize } = await import('lib/globalize');
+    const message = { wrong: 'ProfilePinWrong', locked: 'ProfilePinLocked' };
+    return askPin({
+        title: globalize.translate('ProfilePinTitle'),
+        description: globalize.translate(problem ? message[problem] : 'ProfilePinHelp'),
+        error: Boolean(problem)
+    });
+};
+
+/** What leaving a secondary profile asks for: the PIN of the account when it has one, else its password. */
+const askSecret = (hasPin: boolean, status: number | undefined, wrong: boolean) => {
+    if (!hasPin) return askAccountPassword(wrong);
+    if (status === 429) return askAccountPin('locked');
+    return askAccountPin(wrong ? 'wrong' : undefined);
+};
+
+/** The body of a switch: the PIN or the password typed, nothing before asking. */
+const switchBody = (secret: string | null | undefined, hasPin: boolean) => {
+    if (!secret) return {};
+    return hasPin ? { Pin: secret } : { Password: secret };
+};
+
 /**
  * Switches the session to another profile and reloads the app on `target`.
- * Leaving a secondary profile needs the account password (the server answers 428 until it is sent).
+ * Leaving a secondary profile needs the account PIN (`hasPin`) or else its password (the server answers 428 until
+ * one is sent, 403 when it is wrong and 429 after too many wrong PINs).
  */
-export const switchProfile = async (profileId: string, target = '/home') => {
+export const switchProfile = async (profileId: string, target = '/home', hasPin = false) => {
     const client = getClient();
     if (!client) throw new Error('No api client');
 
-    let password: string | null | undefined;
-    let wrong = false;
+    let secret: string | null | undefined;
     let result: AuthResult | undefined;
-    for (let attempt = 0; attempt < 4 && !result; attempt++) {
+    for (let attempt = 0; attempt < 6 && !result; attempt++) {
         try {
             result = await client.ajax({
                 type: 'POST',
                 url: client.getUrl(`Profiles/${profileId}/Switch`),
-                data: JSON.stringify(password ? { Password: password } : {}),
+                data: JSON.stringify(switchBody(secret, hasPin)),
                 contentType: 'application/json',
                 dataType: 'json'
             }) as AuthResult;
         } catch (err) {
             const status = statusOf(err);
-            if (status !== 428 && !(status === 403 && password)) throw err;
-            wrong = status === 403;
-            password = await askAccountPassword(wrong);
-            if (!password) return; // cancelled: stay on the current profile
+            const wrong = status === 403 && Boolean(secret);
+            if (status !== 428 && status !== 429 && !wrong) throw err;
+            secret = await askSecret(hasPin, status, wrong);
+            if (!secret) return; // cancelled: stay on the current profile
         }
     }
     if (!result) throw new Error('Profile switch failed');
+    await enterProfile(client, result, target);
+};
 
+/** The session of the new profile, and the app opened again with it on `target`. */
+const enterProfile = async (client: LegacyClient, result: AuthResult, target: string) => {
     if (client.onAuthenticated) {
         await client.onAuthenticated(client, result);
     } else {

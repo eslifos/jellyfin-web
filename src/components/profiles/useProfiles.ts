@@ -33,13 +33,13 @@ export const useProfiles = (enabled = true) => {
         }
         setBusyId(profile.Id);
         try {
-            await switchProfile(profile.Id, target);
+            await switchProfile(profile.Id, target, Boolean(list?.HasPin));
         } catch (err) {
             console.error('[useProfiles] failed to switch profile', err);
             setBusyId(null);
             setIsError(true);
         }
-    }, []);
+    }, [ list?.HasPin ]);
 
     return { list, isLoading, isError, busyId, refresh, select };
 };

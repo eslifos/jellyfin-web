@@ -20,6 +20,7 @@ import { ITEM_ATTRIBUTE, tvTrailersEnabled, useFocusedCard, useHeroPreview, useH
 
 import './quickHome.scss';
 import { prefersReducedMotion, scrollBehavior } from 'utils/reducedMotion';
+import { isKidsMode } from 'utils/kidsMode';
 
 /* ---------- Data ---------- */
 
@@ -512,11 +513,14 @@ export const SQUARE_TYPES = new Set([ 'AudioBook', 'MusicAlbum', 'Audio', 'Music
 
 /** TV: the size of a landscape card (CSS px, as --qh-wide on TV); its pictures are asked at this size. */
 export const TV_CARD = { width: 300, height: 169 };
+/** TV, kids profile: bigger cards (quickHome.scss, .cosmic-kids). */
+export const KIDS_TV_CARD = { width: 400, height: 225 };
 
 /** A picture at the exact size of a TV card (fill, not fit), with its tag when known. */
 export const tvImageUrl = (api: Api, id: string, type: string, tag?: string | null) => {
     const scale = Math.min(2, Math.max(1, Math.round(window.devicePixelRatio || 1)));
-    const size = `fillWidth=${TV_CARD.width * scale}&fillHeight=${TV_CARD.height * scale}&quality=80`;
+    const card = isKidsMode() ? KIDS_TV_CARD : TV_CARD;
+    const size = `fillWidth=${card.width * scale}&fillHeight=${card.height * scale}&quality=80`;
     const tagParam = tag ? '&tag=' + tag : '';
     return `${api.basePath}/Items/${id}/Images/${type}?${size}${tagParam}`;
 };

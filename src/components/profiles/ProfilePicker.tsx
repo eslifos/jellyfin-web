@@ -1,6 +1,7 @@
 /**
  * "Who's watching?" profile picker: avatars of the account profiles, add a
- * profile (up to the server limit) and manage mode to delete profiles.
+ * profile (up to the server limit) and manage mode to delete profiles, make one
+ * a kids profile and set the PIN that leaves them.
  */
 import Avatar from '@mui/material/Avatar';
 import Box from '@mui/material/Box';
@@ -11,6 +12,8 @@ import TextField from '@mui/material/TextField';
 import Typography from '@mui/material/Typography';
 import AddIcon from '@mui/icons-material/Add';
 import CheckIcon from '@mui/icons-material/Check';
+import ChildCareIcon from '@mui/icons-material/ChildCare';
+import PinIcon from '@mui/icons-material/Pin';
 import CloseIcon from '@mui/icons-material/Close';
 import DeleteIcon from '@mui/icons-material/Delete';
 import EditIcon from '@mui/icons-material/Edit';
@@ -21,7 +24,30 @@ import ConfirmDialog from 'components/ConfirmDialog';
 import layoutManager from 'components/layoutManager';
 import globalize from 'lib/globalize';
 import { getAvatarGradient, getInitial } from './avatarColors';
-import { createProfile, deleteProfile, getProfileImageUrl, type Profile, type ProfileList } from 'utils/profiles';
+import KidsProfileDialog from './KidsProfileDialog';
+import { askPin } from './PinDialog';
+import { createProfile, deleteProfile, getProfileImageUrl, type Profile, type ProfileList, setProfilePin } from 'utils/profiles';
+
+/** The mark of a kids profile on its avatar. */
+const KidsBadge: FC<{ size: number }> = ({ size }) => (
+    <Box
+        aria-hidden='true'
+        sx={{
+            position: 'absolute', left: '50%', bottom: -10, transform: 'translateX(-50%)', display: 'flex', alignItems: 'center', gap: 0.5,
+            px: 1, py: 0.25, borderRadius: '999px', fontSize: Math.max(11, size * 0.09), fontWeight: 800, color: '#1a1300',
+            background: 'linear-gradient(135deg, #ffd54f, #ffb300)', boxShadow: '0 4px 12px rgba(0,0,0,0.4)', whiteSpace: 'nowrap'
+        }}
+    >
+        <ChildCareIcon sx={{ fontSize: '1.1em' }} />
+        {globalize.translate('ProfileKidsBadge')}
+    </Box>
+);
+
+const manageButtonSx = {
+    borderRadius: '10px', px: 1.75, fontWeight: 600, color: '#ffca28',
+    borderColor: 'rgba(255,202,40,0.45)', background: 'rgba(255,202,40,0.08)',
+    '&:hover': { borderColor: '#ffca28', background: 'rgba(255,202,40,0.18)' }
+};
 
 const ProfileAvatar: FC<{ profile: Profile; size: number; highlighted?: boolean }> = ({ profile, size, highlighted }) => {
     return (
@@ -81,9 +107,13 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
     const [ saving, setSaving ] = useState(false);
     const [ error, setError ] = useState('');
     const [ toDelete, setToDelete ] = useState<Profile | null>(null);
+    const [ kidsProfile, setKidsProfile ] = useState<Profile | null>(null);
+    const [ notice, setNotice ] = useState('');
 
     const canAdd = list.CanManage && list.Profiles.length < list.MaxProfiles;
     const hasRemovable = list.CanManage && list.Profiles.some(p => !p.IsMaster);
+    // Kids profiles and the PIN need a server that has them (it always says whether there is a PIN)
+    const supportsKids = list.HasPin !== undefined;
 
     const onCreate = useCallback(async () => {
         const value = name.trim();
@@ -102,6 +132,31 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
             setSaving(false);
         }
     }, [ name, list.MasterId, onChanged ]);
+
+    /** A new PIN, typed twice, or removed. */
+    const onChangePin = useCallback(async (remove: boolean) => {
+        setError('');
+        setNotice('');
+        let pin: string | null = null;
+        if (!remove) {
+            pin = await askPin({ title: globalize.translate('ProfilePinNewTitle'), description: globalize.translate('ProfilePinNewHelp') });
+            if (!pin) return;
+            const again = await askPin({ title: globalize.translate('ProfilePinConfirmTitle') });
+            if (again === null) return;
+            if (again !== pin) {
+                setError(globalize.translate('ProfilePinMismatch'));
+                return;
+            }
+        }
+        try {
+            await setProfilePin(pin);
+            setNotice(globalize.translate(remove ? 'ProfilePinRemoved' : 'ProfilePinSaved'));
+            onChanged();
+        } catch (err) {
+            console.error('[ProfilePicker] PIN change failed', err);
+            setError(globalize.translate('ProfilePinSaveError'));
+        }
+    }, [ onChanged ]);
 
     const onConfirmDelete = useCallback(async () => {
         if (!toDelete) return;
@@ -127,6 +182,7 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
                 onConfirm={onConfirmDelete}
                 onCancel={() => setToDelete(null)}
             />
+            <KidsProfileDialog profile={kidsProfile} onClose={() => setKidsProfile(null)} onSaved={onChanged} />
 
             <Box ref={tiles} sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: tv ? 6 : { xs: 3, sm: 4 } }}>
                 {list.Profiles.map(profile => (
@@ -140,6 +196,7 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
                     >
                         <Box className='profile-avatar' sx={{ position: 'relative' }}>
                             <ProfileAvatar profile={profile} size={size} highlighted={profile.IsCurrent} />
+                            {profile.IsKids && <KidsBadge size={size} />}
                             {busyId === profile.Id && (
                                 <Box sx={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(0,0,0,0.45)', borderRadius: '22%' }}>
                                     <CircularProgress sx={{ color: '#00a4dc' }} />
@@ -152,6 +209,20 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
                                 {profile.Name}
                             </Typography>
                         </Box>
+                        {managing && supportsKids && !profile.IsMaster && (
+                            <Button
+                                size='small'
+                                variant='outlined'
+                                startIcon={<ChildCareIcon />}
+                                onClick={e => {
+                                    e.stopPropagation();
+                                    setKidsProfile(profile);
+                                }}
+                                sx={manageButtonSx}
+                            >
+                                {globalize.translate(profile.IsKids ? 'ProfileKidsEdit' : 'ProfileKidsMake')}
+                            </Button>
+                        )}
                         {managing && !profile.IsMaster && (
                             <Button
                                 size='small'
@@ -222,6 +293,21 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
             </Box>
 
             {error && <Typography sx={{ color: '#ef5350', fontSize: '0.88rem' }}>{error}</Typography>}
+            {notice && <Typography sx={{ color: '#4caf50', fontSize: '0.88rem' }}>{notice}</Typography>}
+
+            {/* The PIN of the account: it leaves the secondary profiles (a kids profile) with the remote */}
+            {managing && supportsKids && list.CanManage && (
+                <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 1 }}>
+                    <Button variant='outlined' startIcon={<PinIcon />} onClick={() => void onChangePin(false)} sx={manageButtonSx}>
+                        {globalize.translate(list.HasPin ? 'ProfilePinChange' : 'ProfilePinCreate')}
+                    </Button>
+                    {list.HasPin && (
+                        <Button variant='outlined' onClick={() => void onChangePin(true)} sx={{ ...manageButtonSx, color: 'rgba(255,255,255,0.7)', borderColor: 'rgba(255,255,255,0.25)', background: 'transparent' }}>
+                            {globalize.translate('ProfilePinRemove')}
+                        </Button>
+                    )}
+                </Box>
+            )}
 
             <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 1 }}>
                 {hasRemovable && (

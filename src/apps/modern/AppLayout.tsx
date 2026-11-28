@@ -11,6 +11,7 @@ import ThemeCss from 'components/ThemeCss';
 import layoutManager from 'components/layoutManager';
 import { PUBLIC_PATHS } from 'components/router/appRouter';
 import { useApi } from 'hooks/useApi';
+import { applyKidsMode } from 'utils/kidsMode';
 
 import Player from './components/Player';
 import FloatingNav from './components/FloatingNav';
@@ -31,6 +32,8 @@ export const Component = () => {
         if (user) {
             initCardBadges();
             initCollectionCollage();
+            // A kids profile: bigger cards
+            void applyKidsMode();
         }
     }, [ user ]);
 
