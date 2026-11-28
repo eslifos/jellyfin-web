@@ -3897,6 +3897,8 @@
     "ProfilePinCreate": "Create PIN",
     "ProfilePinChange": "Change PIN",
     "ProfilePinRemove": "Remove PIN",
+    "ProfilePinRemoveConfirm": "To leave a kids profile, the account password will be asked instead of the PIN.",
+    "ProfilePinRemoveTitle": "Remove the PIN?",
     "ProfileKidsTitle": "Kids profile: {0}",
     "ProfileKidsHelp": "A kids profile only sees the libraries you choose, with bigger cards. Leaving it asks for the PIN (or the password) of the account.",
     "ProfileKidsSwitch": "Kids profile",

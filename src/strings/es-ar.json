@@ -3897,6 +3897,8 @@
     "ProfilePinCreate": "Crear PIN",
     "ProfilePinChange": "Cambiar PIN",
     "ProfilePinRemove": "Quitar PIN",
+    "ProfilePinRemoveConfirm": "Para salir de un perfil infantil se pedirá la contraseña de la cuenta en lugar del PIN.",
+    "ProfilePinRemoveTitle": "¿Quitar el PIN?",
     "ProfileKidsTitle": "Perfil infantil: {0}",
     "ProfileKidsHelp": "Un perfil infantil solo ve las bibliotecas que elijas, con tarjetas más grandes. Para salir de él se pide el PIN (o la contraseña) de la cuenta.",
     "ProfileKidsSwitch": "Perfil infantil",

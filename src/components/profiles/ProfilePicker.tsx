@@ -88,6 +88,12 @@ const tileSx = {
     '&:focus-visible': { outline: 'none' }
 };
 
+/**
+ * After a change that takes away the focused button (Remove PIN, a deleted profile), the remote goes on from a button
+ * that is still there, instead of from nowhere.
+ */
+const refocus = (button: React.RefObject<HTMLButtonElement | null>) => window.setTimeout(() => button.current?.focus(), 300);
+
 /** TV: read from the couch (avatars of 160 px, names of 28 px). */
 const TV_AVATAR = 160;
 
@@ -110,8 +116,10 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
     const [ toDelete, setToDelete ] = useState<Profile | null>(null);
     const [ kidsProfile, setKidsProfile ] = useState<Profile | null>(null);
     const [ notice, setNotice ] = useState('');
+    const [ confirmRemovePin, setConfirmRemovePin ] = useState(false);
     const addButton = useRef<HTMLButtonElement>(null);
     const manageButton = useRef<HTMLButtonElement>(null);
+    const pinButton = useRef<HTMLButtonElement>(null);
 
     // Back (the remote, Escape) first stops adding a profile or managing them, with the focus back on its button;
     // without this it left the screen (on a TV, "Who is watching?" closes the app)
@@ -177,6 +185,7 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
             console.error('[ProfilePicker] PIN change failed', err);
             setError(globalize.translate('ProfilePinSaveError'));
         }
+        refocus(pinButton);
     }, [ onChanged ]);
 
     const onConfirmDelete = useCallback(async () => {
@@ -190,6 +199,7 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
             console.error('[ProfilePicker] delete failed', err);
             setError(globalize.translate('ProfilesDeleteError'));
         }
+        refocus(manageButton);
     }, [ toDelete, onChanged ]);
 
     return (
@@ -202,6 +212,18 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
                 confirmButtonColor='error'
                 onConfirm={onConfirmDelete}
                 onCancel={() => setToDelete(null)}
+            />
+            <ConfirmDialog
+                open={confirmRemovePin}
+                title={globalize.translate('ProfilePinRemoveTitle')}
+                text={globalize.translate('ProfilePinRemoveConfirm')}
+                confirmButtonText={globalize.translate('ProfilePinRemove')}
+                confirmButtonColor='error'
+                onConfirm={() => {
+                    setConfirmRemovePin(false);
+                    void onChangePin(true);
+                }}
+                onCancel={() => setConfirmRemovePin(false)}
             />
             <KidsProfileDialog profile={kidsProfile} onClose={() => setKidsProfile(null)} onSaved={onChanged} />
 
@@ -323,11 +345,11 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
             {/* The PIN of the account: it leaves the secondary profiles (a kids profile) with the remote */}
             {managing && supportsKids && list.CanManage && (
                 <Box sx={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center', gap: 1 }}>
-                    <Button variant='outlined' startIcon={<PinIcon />} onClick={() => void onChangePin(false)} sx={manageButtonSx}>
+                    <Button variant='outlined' ref={pinButton} startIcon={<PinIcon />} onClick={() => void onChangePin(false)} sx={manageButtonSx}>
                         {globalize.translate(list.HasPin ? 'ProfilePinChange' : 'ProfilePinCreate')}
                     </Button>
                     {list.HasPin && (
-                        <Button variant='outlined' onClick={() => void onChangePin(true)} sx={{ ...manageButtonSx, color: 'rgba(255,255,255,0.7)', borderColor: 'rgba(255,255,255,0.25)', background: 'transparent' }}>
+                        <Button variant='outlined' onClick={() => setConfirmRemovePin(true)} sx={{ ...manageButtonSx, color: 'rgba(255,255,255,0.7)', borderColor: 'rgba(255,255,255,0.25)', background: 'transparent' }}>
                             {globalize.translate('ProfilePinRemove')}
                         </Button>
                     )}
