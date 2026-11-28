@@ -22,6 +22,7 @@ import React, { type FC, useCallback, useEffect, useRef, useState } from 'react'
 
 import ConfirmDialog from 'components/ConfirmDialog';
 import layoutManager from 'components/layoutManager';
+import { appRouter } from 'components/router/appRouter';
 import globalize from 'lib/globalize';
 import { getAvatarGradient, getInitial } from './avatarColors';
 import KidsProfileDialog from './KidsProfileDialog';
@@ -109,6 +110,26 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
     const [ toDelete, setToDelete ] = useState<Profile | null>(null);
     const [ kidsProfile, setKidsProfile ] = useState<Profile | null>(null);
     const [ notice, setNotice ] = useState('');
+    const addButton = useRef<HTMLButtonElement>(null);
+    const manageButton = useRef<HTMLButtonElement>(null);
+
+    // Back (the remote, Escape) first stops adding a profile or managing them, with the focus back on its button;
+    // without this it left the screen (on a TV, "Who is watching?" closes the app)
+    useEffect(() => {
+        if (!adding && !managing) return;
+        appRouter.setBackHandler(() => {
+            if (adding) {
+                setAdding(false);
+                setName('');
+                window.setTimeout(() => addButton.current?.focus());
+            } else {
+                setManaging(false);
+                window.setTimeout(() => manageButton.current?.focus());
+            }
+            return true;
+        });
+        return () => appRouter.setBackHandler(null);
+    }, [ adding, managing ]);
 
     const canAdd = list.CanManage && list.Profiles.length < list.MaxProfiles;
     const hasRemovable = list.CanManage && list.Profiles.some(p => !p.IsMaster);
@@ -256,7 +277,11 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
                                 size='small'
                                 value={name}
                                 onChange={e => setName(e.target.value)}
-                                onKeyDown={e => { if (e.key === 'Enter') void onCreate(); if (e.key === 'Escape') setAdding(false); }}
+                                onKeyDown={e => {
+                                    if (e.key === 'Enter') void onCreate();
+                                    // TV: Escape is Back, which the back handler above takes (with the focus back)
+                                    if (e.key === 'Escape' && !tv) setAdding(false);
+                                }}
                                 placeholder={globalize.translate('ProfilesNamePlaceholder')}
                                 slotProps={{ htmlInput: { maxLength: 32 } }}
                                 sx={{
@@ -275,7 +300,7 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
                             </Box>
                         </Box>
                     ) : (
-                        <Box component='button' type='button' onClick={() => setAdding(true)} sx={tileSx}>
+                        <Box component='button' type='button' ref={addButton} onClick={() => setAdding(true)} sx={tileSx}>
                             <Box className='profile-avatar'>
                                 <Box sx={{
                                     width: size, height: size, borderRadius: '22%', display: 'flex', alignItems: 'center', justifyContent: 'center',
@@ -314,6 +339,7 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
                     <Button
                         variant='outlined'
                         startIcon={managing ? <CheckIcon /> : <EditIcon />}
+                        ref={manageButton}
                         onClick={() => setManaging(value => !value)}
                         sx={{
                             borderRadius: '12px', px: 3, color: managing ? '#00a4dc' : 'rgba(255,255,255,0.7)',

@@ -34,10 +34,6 @@ const ProfileSwitchDialog: FC<{ open: boolean; onClose: () => void }> = ({ open,
             }}
             slotProps={{ backdrop: { sx: { background: 'rgba(4,4,12,0.7)', backdropFilter: 'blur(6px)' } } }}
         >
-            <IconButton onClick={onClose} aria-label={globalize.translate('ButtonClose')} sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(255,255,255,0.6)' }}>
-                <CloseIcon />
-            </IconButton>
-
             <Typography component='h2' sx={{
                 textAlign: 'center', mb: 4, fontSize: { xs: '1.6rem', md: '2.2rem' }, fontWeight: 800,
                 background: 'linear-gradient(135deg, #fff 25%, #00a4dc 65%, #aa5cc3 100%)',
@@ -61,6 +57,11 @@ const ProfileSwitchDialog: FC<{ open: boolean; onClose: () => void }> = ({ open,
             {isError && (
                 <Typography sx={{ textAlign: 'center', color: '#ef5350', mt: 2 }}>{globalize.translate('ProfilesLoadError')}</Typography>
             )}
+
+            {/* Last in the focus order (on the top right corner): the remote starts on the profiles, not on closing */}
+            <IconButton onClick={onClose} aria-label={globalize.translate('ButtonClose')} sx={{ position: 'absolute', top: 12, right: 12, color: 'rgba(255,255,255,0.6)' }}>
+                <CloseIcon />
+            </IconButton>
         </Dialog>
     );
 };

@@ -4,12 +4,12 @@
  */
 import Box from '@mui/material/Box';
 import Button from '@mui/material/Button';
-import Checkbox from '@mui/material/Checkbox';
+import ButtonBase from '@mui/material/ButtonBase';
 import CircularProgress from '@mui/material/CircularProgress';
 import Dialog from '@mui/material/Dialog';
-import FormControlLabel from '@mui/material/FormControlLabel';
-import Switch from '@mui/material/Switch';
 import Typography from '@mui/material/Typography';
+import CheckBoxIcon from '@mui/icons-material/CheckBox';
+import CheckBoxOutlineBlankIcon from '@mui/icons-material/CheckBoxOutlineBlank';
 import React, { type FC, useCallback, useEffect, useMemo, useState } from 'react';
 
 import { useUserViews } from 'hooks/api/useUserViews';
@@ -18,6 +18,34 @@ import { type Profile, setKidsProfile } from 'utils/profiles';
 
 /** Libraries of something to watch or hear (not live TV or playlists, which are not of one library). */
 const NOT_LIBRARIES = new Set([ 'livetv', 'playlists', 'boxsets' ]);
+
+/**
+ * A switch or a check box as one row that is a button: OK on the remote (Enter) toggles it, as a click does (the
+ * switches and check boxes of Material UI only take the space bar), and the focus shows on the whole row.
+ */
+const ToggleRow: FC<{ kind: 'switch' | 'checkbox'; checked: boolean; label: string; onToggle: () => void }> = ({ kind, checked, label, onToggle }) => (
+    <ButtonBase
+        role={kind}
+        aria-checked={checked}
+        onClick={onToggle}
+        sx={{
+            width: '100%', justifyContent: 'flex-start', gap: 1.5, px: 1.5, py: 1, borderRadius: '12px',
+            color: '#fff', fontSize: '16px', textAlign: 'left',
+            '&:hover': { background: 'rgba(255,255,255,0.06)' },
+            '&:focus, &.Mui-focusVisible': { outline: 'none', background: 'rgba(0,164,220,0.22)', boxShadow: 'inset 0 0 0 2px #00a4dc' }
+        }}
+    >
+        {kind === 'checkbox' && (checked ?
+            <CheckBoxIcon sx={{ color: '#00a4dc' }} /> :
+            <CheckBoxOutlineBlankIcon sx={{ color: 'rgba(255,255,255,0.6)' }} />)}
+        <Box component='span' sx={{ flexGrow: 1 }}>{label}</Box>
+        {kind === 'switch' && (
+            <Box aria-hidden='true' sx={{ position: 'relative', width: 44, height: 24, borderRadius: '12px', flexShrink: 0, background: checked ? '#00a4dc' : 'rgba(255,255,255,0.25)', transition: 'background 0.15s' }}>
+                <Box sx={{ position: 'absolute', top: 3, left: checked ? 23 : 3, width: 18, height: 18, borderRadius: '50%', background: '#fff', transition: 'left 0.15s' }} />
+            </Box>
+        )}
+    </ButtonBase>
+);
 
 interface KidsProfileDialogProps {
     profile: Profile | null;
@@ -91,11 +119,9 @@ const KidsProfileDialog: FC<KidsProfileDialogProps> = ({ profile, onClose, onSav
                 {globalize.translate('ProfileKidsHelp')}
             </Typography>
 
-            <FormControlLabel
-                sx={{ mt: 2 }}
-                control={<Switch checked={isKids} onChange={e => setIsKids(e.target.checked)} />}
-                label={globalize.translate('ProfileKidsSwitch')}
-            />
+            <Box sx={{ mt: 2 }}>
+                <ToggleRow kind='switch' checked={isKids} label={globalize.translate('ProfileKidsSwitch')} onToggle={() => setIsKids(value => !value)} />
+            </Box>
 
             {isKids && (
                 <Box sx={{ mt: 1.5, display: 'flex', flexDirection: 'column' }}>
@@ -104,10 +130,12 @@ const KidsProfileDialog: FC<KidsProfileDialogProps> = ({ profile, onClose, onSav
                     </Typography>
                     {isPending && <CircularProgress size={24} sx={{ color: '#00a4dc', my: 1 }} />}
                     {libraries.map(view => (
-                        <FormControlLabel
+                        <ToggleRow
                             key={view.Id}
-                            control={<Checkbox checked={chosen.has(view.Id!)} onChange={() => toggle(view.Id!)} />}
-                            label={view.Name}
+                            kind='checkbox'
+                            checked={chosen.has(view.Id!)}
+                            label={view.Name ?? ''}
+                            onToggle={() => toggle(view.Id!)}
                         />
                     ))}
                     {chosen.size === 0 && (

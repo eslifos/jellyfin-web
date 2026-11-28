@@ -119,22 +119,15 @@ export const isValidPin = (pin: string) => /^\d{4,8}$/.test(pin);
 
 const statusOf = (err: unknown) => (err as { status?: number } | undefined)?.status;
 
+/** The password of the account, in a dialog of the same kind as the profile one (so the focus stays in it). */
 const askAccountPassword = async (wrong: boolean): Promise<string | null> => {
-    const [ { default: prompt }, { default: globalize } ] = await Promise.all([
-        import('components/prompt/prompt'),
-        import('lib/globalize')
-    ]);
-    try {
-        return await prompt({
-            title: globalize.translate('ProfileSwitchPasswordTitle'),
-            label: globalize.translate('LabelPassword'),
-            description: globalize.translate(wrong ? 'ProfileSwitchPasswordWrong' : 'ProfileSwitchPasswordHelp'),
-            inputType: 'password',
-            confirmText: globalize.translate('ButtonOk')
-        }) as string;
-    } catch {
-        return null; // cancelled
-    }
+    const { askPassword } = await import('components/profiles/PasswordDialog');
+    const { default: globalize } = await import('lib/globalize');
+    return askPassword({
+        title: globalize.translate('ProfileSwitchPasswordTitle'),
+        description: globalize.translate(wrong ? 'ProfileSwitchPasswordWrong' : 'ProfileSwitchPasswordHelp'),
+        error: wrong
+    });
 };
 
 const askAccountPin = async (problem?: 'wrong' | 'locked'): Promise<string | null> => {

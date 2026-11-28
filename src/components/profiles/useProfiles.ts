@@ -34,6 +34,8 @@ export const useProfiles = (enabled = true) => {
         setBusyId(profile.Id);
         try {
             await switchProfile(profile.Id, target, Boolean(list?.HasPin));
+            // Still here: the PIN or password was cancelled, the profiles can be chosen again
+            setBusyId(null);
         } catch (err) {
             console.error('[useProfiles] failed to switch profile', err);
             setBusyId(null);
