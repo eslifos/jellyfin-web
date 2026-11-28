@@ -19,7 +19,7 @@ Lo actualiza `/aplicar-mejoras` después de cada mejora. Estados: **Pendiente**,
 | P11 · Frecuencia de pantalla, audio por HDMI y HDR | jellyfin-cosmic-tv + jellyfin-web | Hecho | 16b427e6 (TV), de9b9d37cf (web) |
 | P12 · Pantallas nativas de arranque, conexión y ajustes | jellyfin-cosmic-tv + jellyfin-web | Hecho | 6567cd20 (TV), bfa12e2f81 (web) |
 | P13 · Salvapantallas Cosmic | jellyfin-cosmic-tv | Hecho | 0c0b6b76 (TV) |
-| P14 · Perfil infantil | jellyfin-web | Pendiente | |
+| P14 · Perfil infantil | jellyfin-web + jellyfin | Hecho (el servidor necesita reconstruir la imagen) | 2d0827f683 (web), 55cb827713 (servidor) |
 | P15 · Guía de TV en vivo para el control | jellyfin-web | Pendiente | |
 | P16 · Música a pantalla completa | jellyfin-web | Pendiente | |
 | P17 · Voz con el Asistente | jellyfin-cosmic-tv | Pendiente en jellyfin-cosmic-tv | |
