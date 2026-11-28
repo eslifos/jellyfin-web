@@ -121,6 +121,13 @@ const ProfilePicker: FC<ProfilePickerProps> = ({ list, size: givenSize, onSelect
     const manageButton = useRef<HTMLButtonElement>(null);
     const pinButton = useRef<HTMLButtonElement>(null);
 
+    // The notices of managing (PIN saved, removed) and its errors belong to it: they go when it ends
+    useEffect(() => {
+        if (managing) return;
+        setNotice('');
+        setError('');
+    }, [ managing ]);
+
     // Back (the remote, Escape) first stops adding a profile or managing them, with the focus back on its button;
     // without this it left the screen (on a TV, "Who is watching?" closes the app)
     useEffect(() => {

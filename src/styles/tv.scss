@@ -77,6 +77,13 @@ html.layout-tv {
         outline-offset: -4px;
     }
 
+    // The rows of a list in a dialog (switches, check boxes): the border inside the row and no growing, so the focus
+    // does not cover the title above them or the row next to it
+    .cosmic-toggle-row.MuiButtonBase-root#{$tv}:focus {
+        transform: none;
+        outline-offset: -4px;
+    }
+
     // A video loading over the screen (before its own screen opens): the TV menu is not over its black
     body:has(> .videoPlayerContainer-onTop) :is([data-tv-menu], [data-tv-menu-shade]) {
         display: none;

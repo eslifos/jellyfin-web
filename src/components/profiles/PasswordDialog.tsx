@@ -71,7 +71,7 @@ export const PasswordDialog: FC<PasswordDialogProps> = ({ open, title, descripti
                 sx={{ mt: 3 }}
             />
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3 }}>
-                <Button onClick={onCancel} sx={{ color: 'rgba(255,255,255,0.75)' }}>{globalize.translate('ButtonCancel')}</Button>
+                <Button variant='text' onClick={onCancel} sx={{ color: 'rgba(255,255,255,0.75)' }}>{globalize.translate('ButtonCancel')}</Button>
                 <Button variant='contained' onClick={submit} disabled={!password}>{globalize.translate('ButtonOk')}</Button>
             </Box>
         </Dialog>

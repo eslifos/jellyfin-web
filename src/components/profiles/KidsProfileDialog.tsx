@@ -25,6 +25,7 @@ const NOT_LIBRARIES = new Set([ 'livetv', 'playlists', 'boxsets' ]);
  */
 const ToggleRow: FC<{ kind: 'switch' | 'checkbox'; checked: boolean; label: string; onToggle: () => void }> = ({ kind, checked, label, onToggle }) => (
     <ButtonBase
+        className='cosmic-toggle-row'
         role={kind}
         aria-checked={checked}
         onClick={onToggle}
@@ -149,7 +150,7 @@ const KidsProfileDialog: FC<KidsProfileDialogProps> = ({ profile, onClose, onSav
             {error && <Typography sx={{ mt: 1.5, color: '#ef5350', fontSize: '14px' }}>{error}</Typography>}
 
             <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1, mt: 3 }}>
-                <Button onClick={onClose} sx={{ color: 'rgba(255,255,255,0.7)' }}>{globalize.translate('ButtonCancel')}</Button>
+                <Button variant='text' onClick={onClose} sx={{ color: 'rgba(255,255,255,0.75)' }}>{globalize.translate('ButtonCancel')}</Button>
                 <Button variant='contained' onClick={() => void onSave()} disabled={!canSave}>
                     {saving ? <CircularProgress size={20} /> : globalize.translate('Save')}
                 </Button>
